@@ -1,0 +1,98 @@
+#pragma kernel GenerateNoise
+
+static const uint numthreads = 8;
+
+RWStructuredBuffer<float> _Values;
+
+int _ChunkWidth;
+int _ChunkHeight;
+
+
+int indexFromCoord(int x, int y, int z)
+{
+    return x + _ChunkWidth * (y + _ChunkHeight * z);
+}
+
+
+float rand(float2 uv)
+{
+    return frac(sin(dot(uv, float2(12.9898,78.233))) * 43758.5453);
+}
+
+float noise(float2 position, float frequency)
+{
+    float unit = _ChunkWidth / frequency;
+    float2 ij = floor(position/unit);
+    float2 xy = fmod(position, unit)/unit;
+    xy = 0.5 * (1 - cos(3.1415 * xy));
+
+    float a = rand(ij + float2(0,0));
+    float b = rand(ij + float2(1,0));
+    float c = rand(ij + float2(0,1));
+    float d = rand(ij + float2(1,1));
+
+    float x1 = lerp(a, b, xy.x);
+    float x2 = lerp(c, d, xy.x);
+
+    return lerp(x1, x2, xy.y);
+}
+
+
+float perlinNoise(float2 position, int resolution)
+{
+    float persistance = 0.5;
+    float n = 0;
+    float normK = 0;
+    float frequency = 4;
+    float amplitude = 1;
+    float iCount = 0;
+
+    for (int i = 0; i<50; i++)
+    {
+        n += amplitude * noise(position, frequency);
+        frequency *= 2;
+        normK += amplitude;
+        amplitude *= persistance;
+        if (iCount == resolution)
+        {
+            break;
+        }
+        iCount ++;
+    }
+    float nf = n/normK;
+    return nf*nf*nf*nf;
+
+}
+
+
+[numthreads(numthreads, numthreads, numthreads)]
+void GenerateNoise (uint3 id : SV_DispatchThreadID)
+{
+
+    if (id.x >= _ChunkWidth || id.y >= _ChunkHeight || id.z >= _ChunkWidth)
+    {
+        return;
+    }
+
+
+    float currentHeight = _ChunkHeight * perlinNoise(id.xz, 2);
+    float newHeight = id.y;
+
+    if (id.y <= currentHeight - 0.5)
+    {
+        newHeight = 0;
+    } else if (id.y > currentHeight + 0.5)
+    {
+        newHeight = 1;
+    } else if (id.y > currentHeight)
+    {
+        newHeight = id.y - currentHeight;
+    } else if (id.y < currentHeight)
+    {
+        newHeight = currentHeight - id.y;
+    }
+
+    _Values[indexFromCoord(id.x, id.y, id.z)] = newHeight;
+
+
+}
