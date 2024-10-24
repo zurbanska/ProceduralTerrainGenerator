@@ -6,6 +6,8 @@ RWStructuredBuffer<float> _Values;
 
 int _ChunkWidth;
 int _ChunkHeight;
+float _OffsetX;
+float _OffsetZ;
 
 
 int indexFromCoord(int x, int y, int z)
@@ -69,13 +71,15 @@ float perlinNoise(float2 position, int resolution)
 void GenerateNoise (uint3 id : SV_DispatchThreadID)
 {
 
-    if (id.x >= _ChunkWidth || id.y >= _ChunkHeight || id.z >= _ChunkWidth)
+    if (id.x > _ChunkWidth || id.y > _ChunkHeight || id.z > _ChunkWidth)
     {
         return;
     }
 
+    float globalX = id.x + _OffsetX;
+    float globalZ = id.z + _OffsetZ;
 
-    float currentHeight = _ChunkHeight * perlinNoise(id.xz, 2);
+    float currentHeight = _ChunkHeight * perlinNoise(float2(globalX, globalZ), 2);
     float newHeight = id.y;
 
     if (id.y <= currentHeight - 0.5)

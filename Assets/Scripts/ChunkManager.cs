@@ -9,14 +9,14 @@ public class ChunkManager : MonoBehaviour
     private MeshGenerator meshGenerator;
 
 
-    public void GenerateChunk(int width, int height, float isoLevel)
+    public void GenerateChunk(Vector2 coord, int width, int height, float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel)
     {
         noiseGenerator = new NoiseGenerator(noiseShader);
         meshGenerator = new MeshGenerator(marchingCubesShader);
 
-
-        float[] densityMap = noiseGenerator.GenerateNoise(width, height);
-
+        // width & height must be 1 greater than the chunk coord multiplier for the chunk offset
+        // to account for the extra vertex needed for last voxel of row in each axis
+        float[] densityMap = noiseGenerator.GenerateNoise(width, height, new Vector2(coord.x * (width - 1), coord.y * (width - 1)), octaves, persistence, lacunarity, scale, groundLevel);
         Mesh mesh = meshGenerator.GenerateMesh(width, height, isoLevel, densityMap);
 
         MeshFilter mf = gameObject.AddComponent<MeshFilter>();

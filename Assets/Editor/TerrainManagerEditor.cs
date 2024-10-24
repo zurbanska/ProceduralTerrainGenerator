@@ -11,12 +11,12 @@ public class TerrainManagerEditor : Editor
 
         if (DrawDefaultInspector ())
         {
-            terrain.CreateChunk();
+            terrain.GenerateChunks();
         }
 
         if (GUILayout.Button ("Generate"))
         {
-            terrain.CreateChunk();
+            terrain.GenerateChunks();
         }
     }
 }
