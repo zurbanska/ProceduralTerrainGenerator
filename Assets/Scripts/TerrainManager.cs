@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Data.Common;
 using UnityEngine;
 
 public class TerrainManager : MonoBehaviour
@@ -14,6 +16,7 @@ public class TerrainManager : MonoBehaviour
 
     public int renderDistance;
 
+    public int lod = 1;
 
     public int octaves = 3;
     public float persistence = 0.5f;
@@ -64,13 +67,39 @@ public class TerrainManager : MonoBehaviour
         chunkManager.noiseShader = noiseShader;
         chunkManager.marchingCubesShader = marchingCubesShader;
 
-        chunkManager.GenerateChunk(coord, chunkWidth, chunkHeight, isoLevel, octaves, persistence, lacunarity, scale, groundLevel);
+        chunkManager.GenerateChunk(coord, chunkWidth, chunkHeight, isoLevel, octaves, persistence, lacunarity, scale, groundLevel, lod);
     }
 
     private void DeleteChunks()
     {
         while (transform.childCount > 0) {
             DestroyImmediate(transform.GetChild(0).gameObject);
+        }
+    }
+
+    private void OnValidate() {
+
+        // chunk width and height have to be multiples of 8 and greater or equal 8
+        chunkWidth = Mathf.Max(8, chunkWidth);
+        if (chunkWidth % 8 != 0)
+        {
+            chunkWidth = Mathf.RoundToInt(chunkWidth / 8.0f) * 8;
+        }
+
+        chunkHeight = Mathf.Max(chunkHeight, chunkWidth);
+        if (chunkHeight % 8 != 0)
+        {
+            chunkHeight = Mathf.RoundToInt(chunkHeight / 8.0f) * 8;
+        }
+
+        // level of detail reduction has to be less than half of chunk width
+        if (lod > chunkWidth / 2)
+        {
+            lod = chunkWidth / 2;
+        }
+        if (lod < 1)
+        {
+            lod = 1;
         }
     }
 

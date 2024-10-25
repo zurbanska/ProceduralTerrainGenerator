@@ -10,6 +10,8 @@ float _IsoLevel;
 int _ChunkWidth;
 int _ChunkHeight;
 
+int _CubeSize;
+
 
 struct Triangle {
     float3 a, b, c;
@@ -19,21 +21,24 @@ AppendStructuredBuffer<Triangle> _Triangles;
 
 int indexFromCoord(int x, int y, int z)
 {
+    x = x * _CubeSize;
+    y = y * _CubeSize;
+    z = z * _CubeSize;
     return x + (_ChunkWidth) * (y + (_ChunkHeight) * z);
 }
 
 float3 interp(float3 edgeVertex1, float valueAtVertex1, float3 edgeVertex2, float valueAtVertex2)
 {
-    return (edgeVertex1 + (_IsoLevel - valueAtVertex1) * (edgeVertex2 - edgeVertex1) / (valueAtVertex2 - valueAtVertex1));
+    float3 pos = (edgeVertex1 + (_IsoLevel - valueAtVertex1) * (edgeVertex2 - edgeVertex1) / (valueAtVertex2 - valueAtVertex1));
+    return pos * _CubeSize;
 }
 
 [numthreads(8,8,8)]
 void March(uint3 id : SV_DispatchThreadID)
 {
-    if (id.x >= _ChunkWidth - 1|| id.y >= _ChunkHeight - 1 || id.z >= _ChunkWidth - 1)
-    {
+    // return if index out of range
+    if (id.x * _CubeSize >= _ChunkWidth - _CubeSize || id.y * _CubeSize >= _ChunkHeight - _CubeSize || id.z * _CubeSize >= _ChunkWidth - _CubeSize)
         return;
-    }
 
     float cubeValues[8] = {
         _DensityValues[indexFromCoord(id.x, id.y, (id.z + 1))],
@@ -75,9 +80,14 @@ void March(uint3 id : SV_DispatchThreadID)
 
         Triangle tri;
 
-        tri.a = interp(cornerOffsets[e00], cubeValues[e00], cornerOffsets[e01], cubeValues[e01]) + id;
-        tri.b = interp(cornerOffsets[e10], cubeValues[e10], cornerOffsets[e11], cubeValues[e11]) + id;
-        tri.c = interp(cornerOffsets[e20], cubeValues[e20], cornerOffsets[e21], cubeValues[e21]) + id;
+        tri.a = interp(cornerOffsets[e00], cubeValues[e00], cornerOffsets[e01], cubeValues[e01]) + id * _CubeSize;
+        tri.b = interp(cornerOffsets[e10], cubeValues[e10], cornerOffsets[e11], cubeValues[e11]) + id * _CubeSize;
+        tri.c = interp(cornerOffsets[e20], cubeValues[e20], cornerOffsets[e21], cubeValues[e21]) + id * _CubeSize;
+
+        // tri.a = interp(cornerOffsets[e00] * _CubeSize, cubeValues[e00], cornerOffsets[e01] * _CubeSize, cubeValues[e01]) + id * _CubeSize;
+        // tri.b = interp(cornerOffsets[e10] * _CubeSize, cubeValues[e10], cornerOffsets[e11] * _CubeSize, cubeValues[e11]) + id * _CubeSize;
+        // tri.c = interp(cornerOffsets[e20] * _CubeSize, cubeValues[e20], cornerOffsets[e21] * _CubeSize, cubeValues[e21]) + id * _CubeSize;
+
         _Triangles.Append(tri);
     }
 

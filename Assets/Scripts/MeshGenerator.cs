@@ -29,8 +29,10 @@ public class MeshGenerator
         densityBuffer.Release();
     }
 
-    public Mesh GenerateMesh(int width, int height, float isoLevel, float[] densityMap)
+    public Mesh GenerateMesh(int width, int height, float isoLevel, float[] densityMap, int lod)
     {
+        int cubeSize = lod;
+
         CreateBuffers(width, height);
 
         densityBuffer.SetData(densityMap);
@@ -41,9 +43,13 @@ public class MeshGenerator
         marchingCubesShader.SetInt("_ChunkWidth", width);
         marchingCubesShader.SetInt("_ChunkHeight", height);
         marchingCubesShader.SetFloat("_IsoLevel", isoLevel);
+        marchingCubesShader.SetInt("_CubeSize", cubeSize);
+
+        float numThreadsXZ = width / cubeSize;
+        float numThreadsY = height / cubeSize;
 
         // Dispatch shader
-        marchingCubesShader.Dispatch(0, Mathf.CeilToInt(width / 8.0f), Mathf.CeilToInt(height / 8.0f), Mathf.CeilToInt(width / 8.0f));
+        marchingCubesShader.Dispatch(0, Mathf.CeilToInt(numThreadsXZ / 8.0f), Mathf.CeilToInt(numThreadsY / 8.0f), Mathf.CeilToInt(numThreadsXZ / 8.0f));
 
         // Retrieve triangle data
         ComputeBuffer.CopyCount(trianglesBuffer, triangleCountBuffer, 0);
