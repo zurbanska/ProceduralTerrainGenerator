@@ -1,30 +1,35 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class ChunkManager : MonoBehaviour
 {
-    public ComputeShader marchingCubesShader;
-    public ComputeShader noiseShader;
 
-    private NoiseGenerator noiseGenerator;
-    private MeshGenerator meshGenerator;
+    public NoiseGenerator noiseGenerator;
+    public MeshGenerator meshGenerator;
+    private float[] densityMap;
+
+
+    private void GenerateDensityMap(int width, int height, Vector2 offset, int octaves, float persistence, float lacunarity, float scale, float groundLevel)
+    {
+        densityMap = noiseGenerator.GenerateNoise(width, height, offset, octaves, persistence, lacunarity, scale, groundLevel);
+    }
 
 
     public void GenerateChunk(Vector2 coord, int width, int height, float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int lod)
     {
-        noiseGenerator = new NoiseGenerator(noiseShader);
-        meshGenerator = new MeshGenerator(marchingCubesShader);
+        // adding 1 to the width and height to account for the extra vertices at the edges of chunk
+        width++;
+        height++;
 
-        // width & height must be 1 greater than the chunk coord multiplier for the chunk offset
-        // to account for the extra vertex needed for last voxel of row in each axis
+        // chunk coord multiplier has to be the actual (-1) width of chunk in voxel cubes
         float[] densityMap = noiseGenerator.GenerateNoise(width, height, new Vector2(coord.x * (width - 1), coord.y * (width - 1)), octaves, persistence, lacunarity, scale, groundLevel);
         Mesh mesh = meshGenerator.GenerateMesh(width, height, isoLevel, densityMap, lod);
 
-        MeshFilter mf = gameObject.AddComponent<MeshFilter>();
-        MeshRenderer mr = gameObject.AddComponent<MeshRenderer>();
+        MeshFilter mf = gameObject.GetComponent<MeshFilter>();
+        MeshRenderer mr = gameObject.GetComponent<MeshRenderer>();
 
         mf.mesh = mesh;
         mr.material = new Material(Shader.Find("Standard"));
     }
-
 
 }

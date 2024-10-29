@@ -31,46 +31,14 @@ public class NoiseGenerator
         noiseShader.SetFloat("lacunarity", lacunarity);
         noiseShader.SetFloat("groundLevel", groundLevel);
 
-        noiseShader.Dispatch(0, width / 8, height / 8, width / 8);
+        int numThreadsXZ = Mathf.CeilToInt(width / 8);
+        int numThreadsY = Mathf.CeilToInt(height / 8);
+
+        noiseShader.Dispatch(0, numThreadsXZ, numThreadsY, numThreadsXZ);
 
         valuesBuffer.GetData(noiseValues);
 
         valuesBuffer.Release();
-
-        // for (int x = 0; x < width; x++)
-        // {
-        //     for (int y = 0; y < height ; y++)
-        //     {
-        //         for (int z = 0; z < width ; z++)
-        //         {
-        //             float globalX = (x + offset.x) * 0.05f;
-        //             float globalZ = (z + offset.y) * 0.05f;
-        //             float currentHeight = height * Mathf.PerlinNoise(globalX, globalZ);
-        //             // currentHeight = Random.value;
-
-        //             float density = 0;
-
-        //             if (y <= currentHeight - 0.5f)
-        //             {
-        //                 density = 0f;
-        //             }
-        //             else if (y > currentHeight + 0.5f)
-        //             {
-        //                 density = 1f;
-        //             }
-        //             else if (y > currentHeight)
-        //             {
-        //                 density = y - currentHeight;
-        //             }
-        //             else if (y < currentHeight)
-        //             {
-        //                 density = currentHeight - y;
-        //             }
-
-        //             noiseValues[x + width * (y + height * z)] = density;
-        //         }
-        //     }
-        // }
 
         return noiseValues;
     }

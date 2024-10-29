@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Data.Common;
 using UnityEngine;
 
 public class TerrainManager : MonoBehaviour
@@ -23,6 +22,13 @@ public class TerrainManager : MonoBehaviour
     public float lacunarity = 0.4f;
     public float scale = 1;
 
+
+    [SerializeField] private Transform viewer;
+    private Dictionary<Vector2, TerrainChunk> terrainChunkDictionary = new Dictionary<Vector2, TerrainChunk>(); // distionary of all created chunks and their coords
+    private List<Vector2> chunksVisibleLastUpdate = new List<Vector2>(); // list of chunk coords that were visible last update
+    private Vector2 lastChunkCoord;
+
+
     // Start is called before the first frame update
     void Start()
     {
@@ -32,14 +38,48 @@ public class TerrainManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // get viewer's chunk coord
+        Vector2 currentChunkCoord = new Vector2(Mathf.FloorToInt(viewer.transform.position.x / chunkWidth), Mathf.FloorToInt(viewer.transform.position.z / chunkWidth));
+
+        if (currentChunkCoord != lastChunkCoord) // only update chunks if viewer moved chunks
+        {
+            lastChunkCoord = currentChunkCoord;
+
+            // disable chunks that were visible last update but are beyond render distance now
+            foreach (var chunkCoord in chunksVisibleLastUpdate)
+            {
+                if ((currentChunkCoord - chunkCoord).sqrMagnitude >= (renderDistance * renderDistance))
+                {
+                    DisableChunk(chunkCoord);
+                }
+            }
+
+            chunksVisibleLastUpdate.Clear();
+
+            // enable/disable chunks based on render distance
+            for (int i = -renderDistance; i < renderDistance; i++)
+            {
+                for (int j = -renderDistance; j < renderDistance; j++)
+                {
+                    if ((i * i) + (j * j) < (renderDistance * renderDistance))
+                    {
+                        EnableChunk(new Vector2(i, j) + currentChunkCoord, (i * i) + (j * j));
+                        chunksVisibleLastUpdate.Add(new Vector2(i, j) + currentChunkCoord);
+                    } else DisableChunk(new Vector2(i, j) + currentChunkCoord);
+                }
+            }
+
+        }
 
     }
+
+
 
     public void GenerateChunks()
     {
         DeleteChunks();
 
-        Vector2 viewerPosition = new Vector2(transform.position.x / chunkWidth, transform.position.z / chunkWidth);
+        Vector2 viewerPosition = new Vector2(Mathf.FloorToInt(viewer.transform.position.x / chunkWidth), Mathf.FloorToInt(viewer.transform.position.z / chunkWidth));
 
         // generate chunks that are in render distance
         for (int i = -renderDistance; i < renderDistance; i++)
@@ -48,34 +88,46 @@ public class TerrainManager : MonoBehaviour
                 {
                     if ((i * i) + (j * j) < (renderDistance * renderDistance))
                     {
-                        CreateChunk(new Vector2(i, j) + viewerPosition);
+                        EnableChunk(new Vector2(i, j) + viewerPosition, (i * i) + (j * j));
                     }
                 }
             }
     }
 
+
     public void CreateChunk(Vector2 coord)
     {
-        GameObject newChunk = new GameObject("Terrain Chunk");
-        newChunk.transform.parent = transform;
-
-        // real voxel with of chunk is 1 lesser than chunkWidth (chunkWidth is the num of vertices created in X and Z axes)
-        newChunk.transform.position = new Vector3(coord.x * (chunkWidth - 1), 0, coord.y * (chunkWidth - 1));
-
-        ChunkManager chunkManager = newChunk.AddComponent<ChunkManager>();
-
-        chunkManager.noiseShader = noiseShader;
-        chunkManager.marchingCubesShader = marchingCubesShader;
-
-        chunkManager.GenerateChunk(coord, chunkWidth, chunkHeight, isoLevel, octaves, persistence, lacunarity, scale, groundLevel, lod);
+        TerrainChunk newChunk = new TerrainChunk(coord, transform, chunkWidth, chunkHeight, noiseShader, marchingCubesShader);
+        newChunk.GenerateMesh(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, lod);
+        terrainChunkDictionary.Add(new Vector2(coord.x, coord.y), newChunk);
     }
 
     private void DeleteChunks()
     {
+        terrainChunkDictionary.Clear();
+        chunksVisibleLastUpdate.Clear();
         while (transform.childCount > 0) {
             DestroyImmediate(transform.GetChild(0).gameObject);
         }
     }
+
+    private void DisableChunk(Vector2 coord)
+    {
+        if (terrainChunkDictionary.ContainsKey(coord))
+        {
+            terrainChunkDictionary[coord].DisableChunk();
+        }
+    }
+
+    private void EnableChunk(Vector2 coord, float distance)
+    {
+            if (terrainChunkDictionary.ContainsKey(coord))
+            {
+                // terrainChunkDictionary[coord].GenerateMesh(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, lod);
+                terrainChunkDictionary[coord].EnableChunk();
+            } else CreateChunk(coord);
+    }
+
 
     private void OnValidate() {
 
@@ -101,6 +153,65 @@ public class TerrainManager : MonoBehaviour
         {
             lod = 1;
         }
+    }
+
+
+    public struct TerrainChunk
+    {
+        GameObject chunkObject;
+
+        private Vector2 coord;
+        // private Mesh mesh;
+        int width;
+        int height;
+        ComputeShader noiseShader;
+        ComputeShader marchingCubesShader;
+
+        ChunkManager chunkManager;
+        // private int lod;
+        // private int meshLod;
+        // private bool isVisible;
+
+        public TerrainChunk(Vector2 coord, Transform parent, int width, int height, ComputeShader noiseShader, ComputeShader marchingCubesShader)
+        {
+            this.coord = coord;
+            this.width = width;
+            this.height = height;
+            this.noiseShader = noiseShader;
+            this.marchingCubesShader = marchingCubesShader;
+
+            chunkObject = new GameObject("Terrain Chunk");
+            chunkObject.transform.parent = parent.transform;
+            chunkObject.transform.position = new Vector3(coord.x * width, 0, coord.y * width);
+
+            chunkObject.AddComponent<MeshFilter>();
+            chunkObject.AddComponent<MeshRenderer>();
+
+            ChunkManager chunkManager = chunkObject.AddComponent<ChunkManager>();
+            chunkManager.noiseGenerator = new NoiseGenerator(noiseShader);
+            chunkManager.meshGenerator = new MeshGenerator(marchingCubesShader);
+            this.chunkManager = chunkManager;
+
+            // mesh = new Mesh();
+        }
+
+
+        public void GenerateMesh(float isolevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int lod)
+        {
+            chunkManager.GenerateChunk(coord, width, height, isolevel, octaves, persistence, lacunarity, scale, groundLevel, lod);
+        }
+
+        public void DisableChunk()
+        {
+            chunkObject.SetActive(false);
+        }
+
+        public void EnableChunk()
+        {
+            chunkObject.SetActive(true);
+        }
+
+
     }
 
 
