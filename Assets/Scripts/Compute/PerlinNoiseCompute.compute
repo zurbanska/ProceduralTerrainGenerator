@@ -245,13 +245,12 @@ void GenerateNoise (uint3 id : SV_DispatchThreadID)
     float globalY = id.y * (1 / scale);
     float globalZ = (id.z + _OffsetZ) * (1 / scale);
 
-    // 2D NOISE
-    // float currentDensity = _ChunkHeight * fractalNoise2D(float2(globalX, globalZ), octaves, persistence, lacunarity) + groundLevel;
 
-    // 3D NOISE
-    float currentDensity = _ChunkHeight * fractalNoise3D(float3(globalX, globalY, globalZ), octaves, persistence, lacunarity) + groundLevel;
+    float noiseValue = fractalNoise3D(float3(globalX, globalY, globalZ), octaves, persistence, lacunarity);
+    float currentDensity = _ChunkHeight * clamp(noiseValue, -0.9, 0.9) * 1.2; // noise multiplier
+    currentDensity += groundLevel;
 
-    float newDensity = currentDensity;
+    float newDensity = 1;
 
 
     if (id.y <= currentDensity - 0.5)
@@ -268,10 +267,15 @@ void GenerateNoise (uint3 id : SV_DispatchThreadID)
         newDensity = currentDensity - id.y;
     }
 
-    if (id.y <= 1 || id.y >= _ChunkHeight - 1)
+    if (id.y <= 1)
+    {
+        newDensity = 0;
+    }
+    if (id.y >= _ChunkHeight - 1)
     {
         newDensity = 1;
     }
+
 
     // assign density to array of noise values
     _Values[indexFromCoord(id.x, id.y, id.z)] = newDensity;

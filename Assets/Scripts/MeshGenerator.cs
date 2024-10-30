@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class MeshGenerator
@@ -29,7 +30,7 @@ public class MeshGenerator
         densityBuffer.Release();
     }
 
-    public Mesh GenerateMesh(int width, int height, float isoLevel, float[] densityMap, int lod)
+    public Mesh GenerateMesh(int width, int height, float isoLevel, float[] densityMap, int lod, Gradient gradient)
     {
         int cubeSize = lod;
 
@@ -66,6 +67,8 @@ public class MeshGenerator
 
         Vector3[] meshVertices = new Vector3[triangles.Length * 3];
         int[] meshTriangles = new int[triangles.Length * 3];
+        Vector2[] meshUVs = new Vector2[meshVertices.Length];
+        Color[] meshColors = new Color[meshVertices.Length];
 
         for (int i = 0; i < triangles.Length; i++)
         {
@@ -78,10 +81,22 @@ public class MeshGenerator
             meshTriangles[startIndex] = startIndex;
             meshTriangles[startIndex + 1] = startIndex + 1;
             meshTriangles[startIndex + 2] = startIndex + 2;
+
+            meshUVs[startIndex] = new Vector2(meshVertices[startIndex].x / width, meshVertices[startIndex].z / width);
+            meshUVs[startIndex + 1] = new Vector2(meshVertices[startIndex + 1].x / width, meshVertices[startIndex + 1].z / width);
+            meshUVs[startIndex + 2] = new Vector2(meshVertices[startIndex + 2].x / width, meshVertices[startIndex + 2].z / width);
+
+            meshColors[startIndex] = gradient.Evaluate(Mathf.InverseLerp(0, height, meshVertices[startIndex].y));
+            meshColors[startIndex+1] = gradient.Evaluate(Mathf.InverseLerp(0, height, meshVertices[startIndex+1].y));
+            meshColors[startIndex+2] = gradient.Evaluate(Mathf.InverseLerp(0, height, meshVertices[startIndex+2].y));
+
+
         }
 
         mesh.vertices = meshVertices;
         mesh.triangles = meshTriangles;
+        mesh.uv = meshUVs;
+        mesh.colors = meshColors;
         mesh.RecalculateNormals();
 
         ReleaseBuffers();

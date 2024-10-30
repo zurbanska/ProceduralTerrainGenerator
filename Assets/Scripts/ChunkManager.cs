@@ -15,7 +15,7 @@ public class ChunkManager : MonoBehaviour
     }
 
 
-    public void GenerateChunk(Vector2 coord, int width, int height, float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int lod)
+    public void GenerateChunk(Vector2 coord, int width, int height, float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int lod, Material material, Gradient gradient)
     {
         // adding 1 to the width and height to account for the extra vertices at the edges of chunk
         width++;
@@ -23,13 +23,13 @@ public class ChunkManager : MonoBehaviour
 
         // chunk coord multiplier has to be the actual (-1) width of chunk in voxel cubes
         float[] densityMap = noiseGenerator.GenerateNoise(width, height, new Vector2(coord.x * (width - 1), coord.y * (width - 1)), octaves, persistence, lacunarity, scale, groundLevel);
-        Mesh mesh = meshGenerator.GenerateMesh(width, height, isoLevel, densityMap, lod);
+        Mesh mesh = meshGenerator.GenerateMesh(width, height, isoLevel, densityMap, lod, gradient);
 
         MeshFilter mf = gameObject.GetComponent<MeshFilter>();
         MeshRenderer mr = gameObject.GetComponent<MeshRenderer>();
 
         mf.mesh = mesh;
-        mr.material = new Material(Shader.Find("Standard"));
+        mr.material = material;
     }
 
 }
