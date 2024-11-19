@@ -25,6 +25,9 @@ public class TerrainManager : MonoBehaviour
     public float lacunarity = 0.4f;
     public float scale = 1;
 
+    public float seed = 0;
+    public bool randomSeed = false;
+
 
     [SerializeField] private Transform viewer;
     private Dictionary<Vector2, TerrainChunk> terrainChunkDictionary = new Dictionary<Vector2, TerrainChunk>(); // dictionary of all created chunks and their coords
@@ -42,6 +45,7 @@ public class TerrainManager : MonoBehaviour
         Vector2 currentChunkCoord = new Vector2(Mathf.FloorToInt(viewer.transform.position.x / chunkWidth), Mathf.FloorToInt(viewer.transform.position.z / chunkWidth));
         lastChunkCoord = currentChunkCoord;
         UpdateChunks(currentChunkCoord);
+        if (randomSeed) seed = Random.value * 10000000;
     }
 
     // Update is called once per frame
@@ -107,9 +111,11 @@ public class TerrainManager : MonoBehaviour
     }
 
 
+    // used in editor
     public void GenerateChunks()
     {
         DeleteChunks();
+         if (randomSeed) seed = Random.value * 10000000;
 
         Vector2 viewerPosition = new Vector2(Mathf.FloorToInt(viewer.transform.position.x / chunkWidth), Mathf.FloorToInt(viewer.transform.position.z / chunkWidth));
 
@@ -133,8 +139,7 @@ public class TerrainManager : MonoBehaviour
 
     public void CreateChunk(Vector2 coord, int chunkLod)
     {
-        TerrainChunk newChunk = new TerrainChunk(coord, transform, chunkWidth, chunkHeight, noiseShader, marchingCubesShader, material, gradient);
-        // newChunk.GenerateMesh(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod);
+        TerrainChunk newChunk = new TerrainChunk(coord, transform, chunkWidth, chunkHeight, noiseShader, marchingCubesShader, material, gradient, seed);
         newChunk.EnableChunkLOD(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod);
         terrainChunkDictionary[coord] = newChunk;
     }

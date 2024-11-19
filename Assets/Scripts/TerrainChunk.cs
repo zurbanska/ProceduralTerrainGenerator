@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TerrainChunk : MonoBehaviour
+public class TerrainChunk
 {
 
     private GameObject chunk;
@@ -15,6 +15,7 @@ public class TerrainChunk : MonoBehaviour
 
     public Material material;
     public Gradient gradient;
+    public float seed;
 
     public int lod;
     public Mesh mesh;
@@ -23,7 +24,7 @@ public class TerrainChunk : MonoBehaviour
     public float[] densityValues;
 
 
-    public TerrainChunk(Vector2 coord, Transform parent, int width, int height, ComputeShader noiseShader, ComputeShader meshShader, Material material, Gradient gradient)
+    public TerrainChunk(Vector2 coord, Transform parent, int width, int height, ComputeShader noiseShader, ComputeShader meshShader, Material material, Gradient gradient, float seed)
     {
         this.coord = coord;
         this.width = width;
@@ -31,6 +32,7 @@ public class TerrainChunk : MonoBehaviour
 
         this.material = material;
         this.gradient = gradient;
+        this.seed = seed;
 
         noiseGenerator = new NoiseGenerator(noiseShader);
         meshGenerator = new MeshGenerator(meshShader);
@@ -52,7 +54,7 @@ public class TerrainChunk : MonoBehaviour
 
     public Mesh GenerateMesh(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod)
     {
-        densityValues ??= noiseGenerator.GenerateNoise(width + 1, height + 1, new Vector2(coord.x * width, coord.y * width), octaves, persistence, lacunarity, scale, groundLevel);
+        densityValues ??= noiseGenerator.GenerateNoise(width + 1, height + 1, new Vector2(coord.x * width, coord.y * width), octaves, persistence, lacunarity, scale, groundLevel, seed);
 
         MeshRenderer mr = chunk.GetComponent<MeshRenderer>();
         mr.material = material;

@@ -12,7 +12,7 @@ public class NoiseGenerator
     }
 
 
-    public float[] GenerateNoise(int width, int height, Vector2 offset, int octaves, float persistence, float lacunarity, float scale, float groundLevel)
+    public float[] GenerateNoise(int width, int height, Vector2 offset, int octaves, float persistence, float lacunarity, float scale, float groundLevel, float seed)
     {
 
         float[] noiseValues = new float[width * height * width]; // 1D array of noise values
@@ -30,6 +30,7 @@ public class NoiseGenerator
         noiseShader.SetFloat("persistence", persistence);
         noiseShader.SetFloat("lacunarity", lacunarity);
         noiseShader.SetFloat("groundLevel", groundLevel);
+        noiseShader.SetFloat("seed", seed);
 
         int numThreadsXZ = Mathf.CeilToInt(width / 8);
         int numThreadsY = Mathf.CeilToInt(height / 8);
