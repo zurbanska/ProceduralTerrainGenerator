@@ -36,6 +36,12 @@ float3 interp(float3 edgeVertex1, float valueAtVertex1, float3 edgeVertex2, floa
 [numthreads(8,8,8)]
 void March(uint3 id : SV_DispatchThreadID)
 {
+
+    bool isLeftEdge = id.x == 0;
+    bool isRightEdge = id.x == _ChunkWidth - _CubeSize - 1;
+    bool isUpEdge = id.z == _ChunkWidth - _CubeSize - 1;
+    bool isDownEdge = id.z == 0;
+
     // return if index out of range
     if (id.x * _CubeSize >= _ChunkWidth - _CubeSize || id.y * _CubeSize >= _ChunkHeight - _CubeSize || id.z * _CubeSize >= _ChunkWidth - _CubeSize)
         return;
@@ -83,10 +89,6 @@ void March(uint3 id : SV_DispatchThreadID)
         tri.a = interp(cornerOffsets[e00], cubeValues[e00], cornerOffsets[e01], cubeValues[e01]) + id * _CubeSize;
         tri.b = interp(cornerOffsets[e10], cubeValues[e10], cornerOffsets[e11], cubeValues[e11]) + id * _CubeSize;
         tri.c = interp(cornerOffsets[e20], cubeValues[e20], cornerOffsets[e21], cubeValues[e21]) + id * _CubeSize;
-
-        // tri.a = interp(cornerOffsets[e00] * _CubeSize, cubeValues[e00], cornerOffsets[e01] * _CubeSize, cubeValues[e01]) + id * _CubeSize;
-        // tri.b = interp(cornerOffsets[e10] * _CubeSize, cubeValues[e10], cornerOffsets[e11] * _CubeSize, cubeValues[e11]) + id * _CubeSize;
-        // tri.c = interp(cornerOffsets[e20] * _CubeSize, cubeValues[e20], cornerOffsets[e21] * _CubeSize, cubeValues[e21]) + id * _CubeSize;
 
         _Triangles.Append(tri);
     }

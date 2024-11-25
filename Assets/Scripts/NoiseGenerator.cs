@@ -4,7 +4,7 @@ public class NoiseGenerator
 {
 
     private ComputeShader noiseShader;
-    private ComputeBuffer valuesBuffer;
+    public ComputeBuffer valuesBuffer;
 
     public NoiseGenerator(ComputeShader noiseShader)
     {

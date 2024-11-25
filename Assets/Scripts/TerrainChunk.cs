@@ -1,5 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class TerrainChunk
 {
@@ -23,6 +26,8 @@ public class TerrainChunk
 
     public float[] densityValues;
 
+    public Dictionary<Vector2, int> neighborLods = new Dictionary<Vector2, int>();
+
 
     public TerrainChunk(Vector2 coord, Transform parent, int width, int height, ComputeShader noiseShader, ComputeShader meshShader, Material material, Gradient gradient, float seed)
     {
@@ -39,7 +44,8 @@ public class TerrainChunk
 
         lod = -1;
 
-        chunk = new GameObject("Terrain Chunk");
+        // create chunk object
+        chunk = new GameObject("Terrain Chunk " + coord);
         chunk.transform.parent = parent;
         chunk.transform.position = new Vector3(coord.x * width, 0, coord.y * width);
 
@@ -52,16 +58,31 @@ public class TerrainChunk
     }
 
 
-    public Mesh GenerateMesh(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod)
+    // public LodMesh GenerateMesh(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod)
+    // {
+    //     densityValues ??= noiseGenerator.GenerateNoise(width + 1, height + 1, new Vector2(coord.x * width, coord.y * width), octaves, persistence, lacunarity, scale, groundLevel, seed);
+
+    //     Mesh mesh = meshGenerator.GenerateMesh(width + 1, height + 1, isoLevel, densityValues, meshLod, gradient);
+    //     LodMesh lodMesh = new LodMesh(meshLod, mesh);
+
+    //     return lodMesh;
+    // }
+
+    public LodMesh GenerateMeshAsync(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod)
     {
-        densityValues ??= noiseGenerator.GenerateNoise(width + 1, height + 1, new Vector2(coord.x * width, coord.y * width), octaves, persistence, lacunarity, scale, groundLevel, seed);
+        if (densityValues == null)
+        {
+            densityValues = noiseGenerator.GenerateNoise(width + 1, height + 1, new Vector2(coord.x * width, coord.y * width), octaves, persistence, lacunarity, scale, groundLevel, seed);
+            AsyncGPUReadback.WaitAllRequests();
+        }
+        meshGenerator.CreateBuffers(width + 1, height + 1);
+        Mesh mesh = meshGenerator.GenerateMesh(width + 1, height + 1, isoLevel, densityValues, meshLod, gradient);
 
-        MeshRenderer mr = chunk.GetComponent<MeshRenderer>();
-        mr.material = material;
+        AsyncGPUReadback.WaitAllRequests();
 
-        mesh = meshGenerator.GenerateMesh(width + 1, height + 1, isoLevel, densityValues, meshLod, gradient);
-        return mesh;
+        return new LodMesh(meshLod, mesh);
     }
+
 
     public void DisableChunk()
     {
@@ -73,32 +94,38 @@ public class TerrainChunk
         chunk.SetActive(true);
     }
 
-    public void EnableChunkLOD(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod)
+
+    public void EnableChunkLOD(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod, Dictionary<Vector2, int> neighborLods)
     {
-        MeshFilter mf = chunk.GetComponent<MeshFilter>();
-        MeshCollider mc = chunk.GetComponent<MeshCollider>();
 
         foreach (var LodMesh in LodMeshes)
         {
             if (LodMesh.lod == meshLod)
             {
-                mf.mesh = LodMesh.mesh;
-                mc.sharedMesh = LodMesh.mesh;
+                SetMesh(LodMesh);
                 lod = LodMesh.lod;
-                break;
+                chunk.SetActive(true);
+                return;
             }
         }
-        if (lod != meshLod)
-        {
-            Mesh newMesh = GenerateMesh(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, meshLod);
-            mf.mesh = newMesh;
-            mc.sharedMesh = newMesh;
-            lod = meshLod;
-            LodMeshes.Add(new LodMesh(meshLod, newMesh));
-        }
-        // SpawnGrass();
+
+        LodMesh newMesh = GenerateMeshAsync(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, meshLod);
+
+        // Set new mesh
+        SetMesh(newMesh);
+        lod = meshLod;
         chunk.SetActive(true);
     }
+
+
+    private void SetMesh(LodMesh lodMesh)
+    {
+        chunk.GetComponent<MeshFilter>().mesh = lodMesh.mesh;
+        chunk.GetComponent<MeshCollider>().sharedMesh = lodMesh.mesh;
+
+        chunk.GetComponent<MeshRenderer>().material = material;
+    }
+
 
     public bool IsVisible()
     {
@@ -114,7 +141,7 @@ public class TerrainChunk
     {
         if (mesh == null || lod != 1) return;
 
-        Vector3[] vertices = mesh.vertices;
+        Vector3[] vertices = mesh.vertices; // tutaj musisz zrobic array z kazdego child element mesh vertices i po tym iterowac dopiero
         Vector3[] normals = mesh.normals;
 
         List<Vector3> grassPositions = new List<Vector3>();

@@ -44,8 +44,9 @@ public class TerrainManager : MonoBehaviour
         DeleteChunks();
         Vector2 currentChunkCoord = new Vector2(Mathf.FloorToInt(viewer.transform.position.x / chunkWidth), Mathf.FloorToInt(viewer.transform.position.z / chunkWidth));
         lastChunkCoord = currentChunkCoord;
-        UpdateChunks(currentChunkCoord);
         if (randomSeed) seed = Random.value * 10000000;
+        UpdateChunks(currentChunkCoord);
+        // UpdateChunks(currentChunkCoord);
     }
 
     // Update is called once per frame
@@ -110,12 +111,40 @@ public class TerrainManager : MonoBehaviour
         return chunkLod;
     }
 
+    private Dictionary<Vector2, int> GetNeighborLODS(Vector2 coord)
+    {
+        Vector2[] directions = new Vector2[]
+        {
+            Vector2.left,
+            Vector2.right,
+            Vector2.up,
+            Vector2.down
+        };
+
+        Dictionary<Vector2, int> neighborLODs = new Dictionary<Vector2, int>();
+
+        foreach (var direction in directions)
+        {
+            Vector2 neighborCoord = coord + direction;
+            if (terrainChunkDictionary.TryGetValue(neighborCoord, out TerrainChunk neighborChunk))
+            {
+                neighborLODs[direction] = neighborChunk.lod;
+            } else {
+                float dist = (neighborCoord - coord).sqrMagnitude;
+                neighborLODs[direction] = lods[^1].lod;;
+            }
+        }
+
+        return neighborLODs;
+
+    }
+
 
     // used in editor
     public void GenerateChunks()
     {
         DeleteChunks();
-         if (randomSeed) seed = Random.value * 10000000;
+        if (randomSeed) seed = Random.value * 10000000;
 
         Vector2 viewerPosition = new Vector2(Mathf.FloorToInt(viewer.transform.position.x / chunkWidth), Mathf.FloorToInt(viewer.transform.position.z / chunkWidth));
 
@@ -134,13 +163,29 @@ public class TerrainManager : MonoBehaviour
                     }
                 }
             }
+
+        // // doubled code for debugging
+        // for (int i = -renderDistance; i < renderDistance; i++)
+        //     {
+        //         for (int j = -renderDistance; j < renderDistance; j++)
+        //         {
+        //             Vector2 chunkCoord = new Vector2(i, j) + viewerPosition;
+        //             float distance = (i * i) + (j * j);
+
+        //             if (distance < renderDistance * renderDistance)
+        //             {
+        //                 int chunkLod = GetChunkLOD(distance);
+        //                 EnableChunk(chunkCoord, chunkLod);
+        //             }
+        //         }
+        //     }
     }
 
 
     public void CreateChunk(Vector2 coord, int chunkLod)
     {
         TerrainChunk newChunk = new TerrainChunk(coord, transform, chunkWidth, chunkHeight, noiseShader, marchingCubesShader, material, gradient, seed);
-        newChunk.EnableChunkLOD(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod);
+        newChunk.EnableChunkLOD(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod, GetNeighborLODS(coord));
         terrainChunkDictionary[coord] = newChunk;
     }
 
@@ -171,7 +216,7 @@ public class TerrainManager : MonoBehaviour
     {
         if (terrainChunkDictionary.ContainsKey(coord))
         {
-            terrainChunkDictionary[coord].EnableChunkLOD(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod);
+            terrainChunkDictionary[coord].EnableChunkLOD(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod, GetNeighborLODS(coord));
         } else CreateChunk(coord, chunkLod);
     }
 

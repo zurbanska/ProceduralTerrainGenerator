@@ -1,0 +1,222 @@
+#pragma kernel March
+
+// lookup tables for modified marching cubes algorithm
+#include "./MarchingTableNew.hlsl"
+
+
+RWStructuredBuffer<float> _DensityValues;
+RWStructuredBuffer<float3> _VertexCache;
+groupshared float3 _VertexCacheShared[512];
+
+
+float _IsoLevel;
+int _ChunkWidth;
+int _ChunkHeight;
+
+int _CubeSize;
+
+
+struct Triangle {
+    float3 a, b, c;
+};
+
+AppendStructuredBuffer<Triangle> _Triangles;
+
+
+// converts (x, y, z) coordinates to linear index for the density values buffer
+int indexFromCoord(int x, int y, int z)
+{
+    x = x * _CubeSize;
+    y = y * _CubeSize;
+    z = z * _CubeSize;
+    return x + (_ChunkWidth) * (y + (_ChunkHeight) * z);
+}
+
+
+// returns position of new vertex to be created, based on values and position of endpoints of edge it is stationed on
+float3 interp(float3 edgeVertex1, float3 edgeVertex2, float valueAtVertex1, float valueAtVertex2)
+{
+    float delta = valueAtVertex2 - valueAtVertex1;
+    return (abs(delta) < 1e-6) ? valueAtVertex1 : (edgeVertex1 + (_IsoLevel - valueAtVertex1) * (edgeVertex2 - edgeVertex1) / (valueAtVertex2 - valueAtVertex1)) * _CubeSize;
+}
+
+
+// compute the case index for a cube based on corner density values
+uint calculateCaseIndex(float cornerValues[8]) {
+    uint caseIndex = 0;
+    for (uint i = 0; i < 8; ++i) {
+        caseIndex |= (cornerValues[i] < _IsoLevel) << i;
+    }
+    return caseIndex;
+}
+
+
+int generateEdgeKey2(int x, int y, int z, int edgeStart, int edgeEnd) {
+    int edgeIndex;
+    if (edgeEnd != 7) return 0;
+    else if (edgeStart == 5) edgeIndex = 1;
+    else if (edgeStart == 6) edgeIndex = 2;
+    else if (edgeStart == 3) edgeIndex = 3;
+    else return 0;
+
+    return x | (y << 10) | (z << 20) | (edgeIndex << 30);
+}
+
+
+int generateEdgeKey(int x, int y, int z, int edgeIndex) {
+    return x | (y << 10) | (z << 20) | (edgeIndex << 30);
+}
+
+
+bool isApproximatelyEqual(float3 a, float3 b, float epsilon)
+{
+     return all(abs(a - b) < epsilon);
+}
+
+
+[numthreads(8,8,8)]
+void March(uint3 id : SV_DispatchThreadID, uint3 localId : SV_GroupThreadID)
+{
+
+    // check if cube is on the edge of the terrain chunk
+    bool isLeftEdge = id.x == 0;
+    bool isDownEdge = id.z == 0;
+    bool isRightEdge = id.x == _ChunkWidth - _CubeSize - 1;
+    bool isUpEdge = id.z == _ChunkWidth - _CubeSize - 1;
+
+    // return if cube index out of range
+    if (id.x * _CubeSize >= _ChunkWidth - _CubeSize || id.y * _CubeSize >= _ChunkHeight - _CubeSize || id.z * _CubeSize >= _ChunkWidth - _CubeSize)
+        return;
+
+    // density values of cube corners
+    float cornerValues[8] = {
+        _DensityValues[indexFromCoord(id.x, id.y, id.z)],
+        _DensityValues[indexFromCoord(id.x + 1, id.y, id.z)],
+        _DensityValues[indexFromCoord(id.x, id.y + 1, id.z)],
+        _DensityValues[indexFromCoord(id.x + 1, id.y + 1, id.z)],
+        _DensityValues[indexFromCoord(id.x, id.y, id.z + 1)],
+        _DensityValues[indexFromCoord(id.x + 1, id.y, id.z + 1)],
+        _DensityValues[indexFromCoord(id.x, id.y + 1, id.z + 1)],
+        _DensityValues[indexFromCoord(id.x + 1, id.y + 1, id.z + 1)]
+    };
+
+
+    // // get the case index
+    int caseIndex = calculateCaseIndex(cornerValues);
+
+    // // skip empty cases (no geometry)
+    if (caseIndex == 0 || caseIndex == 255) return;
+
+
+    // // get cell and edge data for specified case and class
+    uint classIndex = regularCellClass[caseIndex];
+    RegularCellData cell = regularCellData[classIndex];
+
+    uint vertexCount = (cell.geometryCounts >> 4) & 0xF; // high nibble
+    uint triangleCount = cell.geometryCounts & 0xF; // low nibble
+
+    uint vertexData[15] = cell.vertexIndex;
+    uint edgeData[12] = regularVertexData[caseIndex];
+
+
+    // Workgroup size
+    uint3 groupSize = uint3(8, 8, 8);
+     // Calculate local cube index within the workgroup
+    uint cubeIndex = localId.x + localId.y * groupSize.x + localId.z * groupSize.x * groupSize.y;
+
+     // precompute interpolated vertices
+    float3 vertices[15];
+
+    for (uint j = 0; vertexData[j] != -1; j++) {
+        uint edge = edgeData[vertexData[j]];
+
+        uint edgeStart = (edge >> 4) & 0xF;
+        uint edgeEnd = edge & 0xF;
+
+        int edgeIndex = 0;
+        if (edgeEnd != 7) {
+            if (edgeStart == 5) edgeIndex = 1;
+            else if (edgeStart == 6) edgeIndex = 2;
+            else if (edgeStart == 3) edgeIndex = 3;
+        }
+
+        uint highByte = edge >> 8;
+        // uint createVertex = (highByte & 0x08) != 0;  // Bit 8 (value 8) indicates a new vertex needs to be created
+        uint moveX = (highByte & 0x01) != 0;  // Bit 1 (value 1) indicates movement along x axis
+        uint moveY = (highByte & 0x02) != 0;  // Bit 2 (value 2) indicates movement along y axis
+        uint moveZ = (highByte & 0x04) != 0;  // Bit 4 (value 4) indicates movement along z axis
+        uint reuseEdgeIndex = (edge >> 8) &0xF;
+
+        uint sharedMemoryIndex = cubeIndex * 3 + edgeIndex;
+
+        uint reuseCubeIndex = (localId.x - moveX) + (localId.y - moveY) * groupSize.x + (localId.z - moveZ) * groupSize.x * groupSize.y;
+        uint reuseSharedMemoryIndex = reuseCubeIndex * 3 + reuseEdgeIndex;
+
+        if ((edge >> 8) & 0x8) {
+            // Create vertex
+            float3 vert = interp(cornerOffsets[edgeStart], cornerOffsets[edgeEnd], cornerValues[edgeStart], cornerValues[edgeEnd]) + id * _CubeSize;
+            vertices[j] = vert;
+            if (edgeIndex != 0)
+                _VertexCacheShared[sharedMemoryIndex] = vert;
+        }  else {
+            GroupMemoryBarrier();
+            float3 cachedVert = _VertexCacheShared[reuseSharedMemoryIndex];
+            if (all(cachedVert == 0)) {
+                float3 vert = interp(cornerOffsets[edgeStart], cornerOffsets[edgeEnd], cornerValues[edgeStart], cornerValues[edgeEnd]) + id * _CubeSize;
+                vertices[j] = vert;
+                if (edgeIndex != 0)
+                    _VertexCacheShared[sharedMemoryIndex] = vert;
+            } else {
+                vertices[j] = cachedVert;
+            }
+        }
+
+    }
+
+    // for (int i = 0; vertexData[i] != -1; i += 3)
+    // {
+
+    //     uint edge0 = edgeData[vertexData[i]];
+    //     uint edgeStart0 = (edge0 >> 4) & 0xF;
+    //     uint edgeEnd0 = edge0 & 0xF;
+
+    //     uint edge1 = edgeData[vertexData[i+1]];
+    //     uint edgeStart1 = (edge1 >> 4) & 0xF;
+    //     uint edgeEnd1 = edge1 & 0xF;
+
+    //     uint edge2 = edgeData[vertexData[i+2]];
+    //     uint edgeStart2 = (edge2 >> 4) & 0xF;
+    //     uint edgeEnd2 = edge2 & 0xF;
+
+
+    //     Triangle tri;
+
+    //     tri.c = interp(cornerOffsets[edgeStart0], cornerOffsets[edgeEnd0], cornerValues[edgeStart0], cornerValues[edgeEnd0]) + id * _CubeSize;
+    //     tri.b = interp(cornerOffsets[edgeStart1], cornerOffsets[edgeEnd1], cornerValues[edgeStart1], cornerValues[edgeEnd1]) + id * _CubeSize;
+    //     tri.a = interp(cornerOffsets[edgeStart2], cornerOffsets[edgeEnd2], cornerValues[edgeStart2], cornerValues[edgeEnd2]) + id * _CubeSize;
+
+    //     _Triangles.Append(tri);
+    // }
+
+
+    for (uint i = 0; vertexData[i] != -1; i += 3)
+    {
+
+        Triangle tri;
+        tri.c = vertices[i];
+        tri.b = vertices[i + 1];
+        tri.a = vertices[i + 2];
+
+        if (isApproximatelyEqual(tri.a, tri.b, 1e-6) ||
+        isApproximatelyEqual(tri.b, tri.c, 1e-6) ||
+        isApproximatelyEqual(tri.c, tri.a, 1e-6))
+        {
+            continue;
+        }
+
+        _Triangles.Append(tri);
+
+    }
+
+
+}

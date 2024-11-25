@@ -60,7 +60,8 @@ Shader "Custom/Terrain"
 
                 // float3 newNormal = float3(i.normal.x, i.normal.x, i.normal.x) * 0.3;
 
-                return float4(i.color * lightFallOff + float3(0.1, 0.15, 0), 0);
+                // return float4(i.color * lightFallOff + float3(0.1, 0.15, 0), 0);
+                return float4(i.color, 1);
             }
             ENDCG
         }
