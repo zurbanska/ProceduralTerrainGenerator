@@ -5,6 +5,7 @@ Shader "Custom/Terrain"
         _MainTex ("Texture", 2D) = "white" {}
         _Texture1 ("Texture 1", 2D) = "white" {}
         _Texture2 ("Texture 2", 2D) = "white" {}
+
     }
     SubShader
     {
@@ -56,12 +57,12 @@ Shader "Custom/Terrain"
 
                 float3 normal = i.normal;
                 float3 lightDir = _WorldSpaceLightPos0.xyz;
+                float3 newNormal = float3(i.normal.x, i.normal.y, i.normal.z) * 0.3;
                 float3 lightFallOff = max(0.4, dot(lightDir, normal));
 
-                // float3 newNormal = float3(i.normal.x, i.normal.x, i.normal.x) * 0.3;
 
-                // return float4(i.color * lightFallOff + float3(0.1, 0.15, 0), 0);
-                return float4(i.color, 1);
+                return float4(i.color * lightFallOff + float3(0.1, 0.15, 0), 0);
+                // return float4(i.color, 1);
             }
             ENDCG
         }

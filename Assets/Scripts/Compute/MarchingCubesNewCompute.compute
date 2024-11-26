@@ -6,7 +6,7 @@
 
 RWStructuredBuffer<float> _DensityValues;
 RWStructuredBuffer<float3> _VertexCache;
-groupshared float3 _VertexCacheShared[512];
+// groupshared float3 _VertexCacheShared[512];
 
 
 float _IsoLevel;
@@ -119,104 +119,104 @@ void March(uint3 id : SV_DispatchThreadID, uint3 localId : SV_GroupThreadID)
     uint edgeData[12] = regularVertexData[caseIndex];
 
 
-    // Workgroup size
-    uint3 groupSize = uint3(8, 8, 8);
-     // Calculate local cube index within the workgroup
-    uint cubeIndex = localId.x + localId.y * groupSize.x + localId.z * groupSize.x * groupSize.y;
+    // // Workgroup size
+    // uint3 groupSize = uint3(8, 8, 8);
+    //  // Calculate local cube index within the workgroup
+    // uint cubeIndex = localId.x + localId.y * groupSize.x + localId.z * groupSize.x * groupSize.y;
 
      // precompute interpolated vertices
     float3 vertices[15];
 
-    for (uint j = 0; vertexData[j] != -1; j++) {
-        uint edge = edgeData[vertexData[j]];
+    // for (uint j = 0; vertexData[j] != -1; j++) {
+    //     uint edge = edgeData[vertexData[j]];
 
-        uint edgeStart = (edge >> 4) & 0xF;
-        uint edgeEnd = edge & 0xF;
+    //     uint edgeStart = (edge >> 4) & 0xF;
+    //     uint edgeEnd = edge & 0xF;
 
-        int edgeIndex = 0;
-        if (edgeEnd != 7) {
-            if (edgeStart == 5) edgeIndex = 1;
-            else if (edgeStart == 6) edgeIndex = 2;
-            else if (edgeStart == 3) edgeIndex = 3;
-        }
+    //     int edgeIndex = 0;
+    //     if (edgeEnd != 7) {
+    //         if (edgeStart == 5) edgeIndex = 1;
+    //         else if (edgeStart == 6) edgeIndex = 2;
+    //         else if (edgeStart == 3) edgeIndex = 3;
+    //     }
 
-        uint highByte = edge >> 8;
-        // uint createVertex = (highByte & 0x08) != 0;  // Bit 8 (value 8) indicates a new vertex needs to be created
-        uint moveX = (highByte & 0x01) != 0;  // Bit 1 (value 1) indicates movement along x axis
-        uint moveY = (highByte & 0x02) != 0;  // Bit 2 (value 2) indicates movement along y axis
-        uint moveZ = (highByte & 0x04) != 0;  // Bit 4 (value 4) indicates movement along z axis
-        uint reuseEdgeIndex = (edge >> 8) &0xF;
+    //     uint highByte = edge >> 8;
+    //     // uint createVertex = (highByte & 0x08) != 0;  // Bit 8 (value 8) indicates a new vertex needs to be created
+    //     uint moveX = (highByte & 0x01) != 0;  // Bit 1 (value 1) indicates movement along x axis
+    //     uint moveY = (highByte & 0x02) != 0;  // Bit 2 (value 2) indicates movement along y axis
+    //     uint moveZ = (highByte & 0x04) != 0;  // Bit 4 (value 4) indicates movement along z axis
+    //     uint reuseEdgeIndex = (edge >> 8) &0xF;
 
-        uint sharedMemoryIndex = cubeIndex * 3 + edgeIndex;
+    //     uint sharedMemoryIndex = cubeIndex * 3 + edgeIndex;
 
-        uint reuseCubeIndex = (localId.x - moveX) + (localId.y - moveY) * groupSize.x + (localId.z - moveZ) * groupSize.x * groupSize.y;
-        uint reuseSharedMemoryIndex = reuseCubeIndex * 3 + reuseEdgeIndex;
+    //     uint reuseCubeIndex = (localId.x - moveX) + (localId.y - moveY) * groupSize.x + (localId.z - moveZ) * groupSize.x * groupSize.y;
+    //     uint reuseSharedMemoryIndex = reuseCubeIndex * 3 + reuseEdgeIndex;
 
-        if ((edge >> 8) & 0x8) {
-            // Create vertex
-            float3 vert = interp(cornerOffsets[edgeStart], cornerOffsets[edgeEnd], cornerValues[edgeStart], cornerValues[edgeEnd]) + id * _CubeSize;
-            vertices[j] = vert;
-            if (edgeIndex != 0)
-                _VertexCacheShared[sharedMemoryIndex] = vert;
-        }  else {
-            GroupMemoryBarrier();
-            float3 cachedVert = _VertexCacheShared[reuseSharedMemoryIndex];
-            if (all(cachedVert == 0)) {
-                float3 vert = interp(cornerOffsets[edgeStart], cornerOffsets[edgeEnd], cornerValues[edgeStart], cornerValues[edgeEnd]) + id * _CubeSize;
-                vertices[j] = vert;
-                if (edgeIndex != 0)
-                    _VertexCacheShared[sharedMemoryIndex] = vert;
-            } else {
-                vertices[j] = cachedVert;
-            }
-        }
+    //     if ((edge >> 8) & 0x8) {
+    //         // Create vertex
+    //         float3 vert = interp(cornerOffsets[edgeStart], cornerOffsets[edgeEnd], cornerValues[edgeStart], cornerValues[edgeEnd]) + id * _CubeSize;
+    //         vertices[j] = vert;
+    //         if (edgeIndex != 0)
+    //             _VertexCacheShared[sharedMemoryIndex] = vert;
+    //     }  else {
+    //         GroupMemoryBarrier();
+    //         float3 cachedVert = _VertexCacheShared[reuseSharedMemoryIndex];
+    //         if (all(cachedVert == 0)) {
+    //             float3 vert = interp(cornerOffsets[edgeStart], cornerOffsets[edgeEnd], cornerValues[edgeStart], cornerValues[edgeEnd]) + id * _CubeSize;
+    //             vertices[j] = vert;
+    //             if (edgeIndex != 0)
+    //                 _VertexCacheShared[sharedMemoryIndex] = vert;
+    //         } else {
+    //             vertices[j] = cachedVert;
+    //         }
+    //     }
 
-    }
-
-    // for (int i = 0; vertexData[i] != -1; i += 3)
-    // {
-
-    //     uint edge0 = edgeData[vertexData[i]];
-    //     uint edgeStart0 = (edge0 >> 4) & 0xF;
-    //     uint edgeEnd0 = edge0 & 0xF;
-
-    //     uint edge1 = edgeData[vertexData[i+1]];
-    //     uint edgeStart1 = (edge1 >> 4) & 0xF;
-    //     uint edgeEnd1 = edge1 & 0xF;
-
-    //     uint edge2 = edgeData[vertexData[i+2]];
-    //     uint edgeStart2 = (edge2 >> 4) & 0xF;
-    //     uint edgeEnd2 = edge2 & 0xF;
-
-
-    //     Triangle tri;
-
-    //     tri.c = interp(cornerOffsets[edgeStart0], cornerOffsets[edgeEnd0], cornerValues[edgeStart0], cornerValues[edgeEnd0]) + id * _CubeSize;
-    //     tri.b = interp(cornerOffsets[edgeStart1], cornerOffsets[edgeEnd1], cornerValues[edgeStart1], cornerValues[edgeEnd1]) + id * _CubeSize;
-    //     tri.a = interp(cornerOffsets[edgeStart2], cornerOffsets[edgeEnd2], cornerValues[edgeStart2], cornerValues[edgeEnd2]) + id * _CubeSize;
-
-    //     _Triangles.Append(tri);
     // }
 
-
-    for (uint i = 0; vertexData[i] != -1; i += 3)
+    for (int i = 0; vertexData[i] != -1; i += 3)
     {
 
-        Triangle tri;
-        tri.c = vertices[i];
-        tri.b = vertices[i + 1];
-        tri.a = vertices[i + 2];
+        uint edge0 = edgeData[vertexData[i]];
+        uint edgeStart0 = (edge0 >> 4) & 0xF;
+        uint edgeEnd0 = edge0 & 0xF;
 
-        if (isApproximatelyEqual(tri.a, tri.b, 1e-6) ||
-        isApproximatelyEqual(tri.b, tri.c, 1e-6) ||
-        isApproximatelyEqual(tri.c, tri.a, 1e-6))
-        {
-            continue;
-        }
+        uint edge1 = edgeData[vertexData[i+1]];
+        uint edgeStart1 = (edge1 >> 4) & 0xF;
+        uint edgeEnd1 = edge1 & 0xF;
+
+        uint edge2 = edgeData[vertexData[i+2]];
+        uint edgeStart2 = (edge2 >> 4) & 0xF;
+        uint edgeEnd2 = edge2 & 0xF;
+
+
+        Triangle tri;
+
+        tri.c = interp(cornerOffsets[edgeStart0], cornerOffsets[edgeEnd0], cornerValues[edgeStart0], cornerValues[edgeEnd0]) + id * _CubeSize;
+        tri.b = interp(cornerOffsets[edgeStart1], cornerOffsets[edgeEnd1], cornerValues[edgeStart1], cornerValues[edgeEnd1]) + id * _CubeSize;
+        tri.a = interp(cornerOffsets[edgeStart2], cornerOffsets[edgeEnd2], cornerValues[edgeStart2], cornerValues[edgeEnd2]) + id * _CubeSize;
 
         _Triangles.Append(tri);
-
     }
+
+
+    // for (uint i = 0; vertexData[i] != -1; i += 3)
+    // {
+
+    //     Triangle tri;
+    //     tri.c = vertices[i];
+    //     tri.b = vertices[i + 1];
+    //     tri.a = vertices[i + 2];
+
+    //     if (isApproximatelyEqual(tri.a, tri.b, 1e-6) ||
+    //     isApproximatelyEqual(tri.b, tri.c, 1e-6) ||
+    //     isApproximatelyEqual(tri.c, tri.a, 1e-6))
+    //     {
+    //         continue;
+    //     }
+
+    //     _Triangles.Append(tri);
+
+    // }
 
 
 }

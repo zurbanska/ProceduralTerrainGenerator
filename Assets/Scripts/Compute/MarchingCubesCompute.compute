@@ -30,17 +30,47 @@ int indexFromCoord(int x, int y, int z)
 float3 interp(float3 edgeVertex1, float valueAtVertex1, float3 edgeVertex2, float valueAtVertex2)
 {
     float3 pos = (edgeVertex1 + (_IsoLevel - valueAtVertex1) * (edgeVertex2 - edgeVertex1) / (valueAtVertex2 - valueAtVertex1));
-    return pos * _CubeSize;
+    // return (edgeVertex1 + edgeVertex2) * 0.5 * _CubeSize;
+    pos *= _CubeSize;
+    pos.y -= _CubeSize * 0.75;
+    return pos;
 }
+
+bool vertexOnEdge(float3 vertex) {
+    return vertex.x == 0 || vertex.x == _ChunkWidth - 1 || vertex.z == 0 || vertex.z == _ChunkWidth - 1;
+};
+
+
+// float3 edgeWallDirection(float cubeValues[8], float h) {
+//     float topBottomDif = cubeValues[4] + cubeValues[5] + cubeValues[6] + cubeValues[7] - cubeValues[0] + cubeValues[1] + cubeValues[2] + cubeValues[3];
+
+//     float leftRightDif = cubeValues[0] + cubeValues[3] + cubeValues[4] + cubeValues[7] - cubeValues[1] + cubeValues[2] + cubeValues[5] + cubeValues[6];
+
+//     float frontBackDif = cubeValues[2] + cubeValues[3] + cubeValues[6] + cubeValues[7] - cubeValues[0] + cubeValues[1] + cubeValues[4] + cubeValues[5];
+
+//     if (abs(topBottomDif) >= abs(leftRightDif) && abs(topBottomDif) >= abs(frontBackDif)) {
+//         return topBottomDif > 0 ? float3(0, -h, 0) : float3(0, h, 0);
+//     }
+//     if (abs(leftRightDif) >= abs(topBottomDif) && abs(leftRightDif) >= abs(frontBackDif)) {
+//         return leftRightDif > 0 ? float3(h, 0, 0) : float3(-h, 0, 0);
+//     }
+//     if (abs(frontBackDif) >= abs(topBottomDif) && abs(frontBackDif) >= abs(leftRightDif)) {
+//         return frontBackDif > 0 ? float3(0, 0, -h) : float3(0, 0, h);
+//     }
+//     else return float3(0, -h, 0);
+// }
+
 
 [numthreads(8,8,8)]
 void March(uint3 id : SV_DispatchThreadID)
 {
 
-    bool isLeftEdge = id.x == 0;
-    bool isRightEdge = id.x == _ChunkWidth - _CubeSize - 1;
-    bool isUpEdge = id.z == _ChunkWidth - _CubeSize - 1;
-    bool isDownEdge = id.z == 0;
+    bool isLeftEdge = id.x * _CubeSize == 0;
+    bool isRightEdge = id.x * _CubeSize >= _ChunkWidth - _CubeSize - 1;
+    bool isUpEdge = id.z * _CubeSize >= _ChunkWidth - _CubeSize - 1;
+    bool isDownEdge = id.z * _CubeSize == 0;
+
+    bool isEdge = isRightEdge || isLeftEdge || isUpEdge || isDownEdge;
 
     // return if index out of range
     if (id.x * _CubeSize >= _ChunkWidth - _CubeSize || id.y * _CubeSize >= _ChunkHeight - _CubeSize || id.z * _CubeSize >= _ChunkWidth - _CubeSize)
@@ -68,6 +98,8 @@ void March(uint3 id : SV_DispatchThreadID)
     if (cubeValues[6] < _IsoLevel) cubeIndex |= 64;
     if (cubeValues[7] < _IsoLevel) cubeIndex |= 128;
 
+    if (cubeIndex == 0 || cubeIndex == 255) return;
+
     int edges[] = triTable[cubeIndex];
 
     for (int i = 0; edges[i] != -1; i += 3)
@@ -86,11 +118,70 @@ void March(uint3 id : SV_DispatchThreadID)
 
         Triangle tri;
 
-        tri.a = interp(cornerOffsets[e00], cubeValues[e00], cornerOffsets[e01], cubeValues[e01]) + id * _CubeSize;
-        tri.b = interp(cornerOffsets[e10], cubeValues[e10], cornerOffsets[e11], cubeValues[e11]) + id * _CubeSize;
-        tri.c = interp(cornerOffsets[e20], cubeValues[e20], cornerOffsets[e21], cubeValues[e21]) + id * _CubeSize;
+        float3 v1 = interp(cornerOffsets[e00], cubeValues[e00], cornerOffsets[e01], cubeValues[e01]) + id * _CubeSize;
+        float3 v2 = interp(cornerOffsets[e10], cubeValues[e10], cornerOffsets[e11], cubeValues[e11]) + id * _CubeSize;
+        float3 v3 = interp(cornerOffsets[e20], cubeValues[e20], cornerOffsets[e21], cubeValues[e21]) + id * _CubeSize;
+
+        tri.a = v1;
+        tri.b = v2;
+        tri.c = v3;
 
         _Triangles.Append(tri);
+
+        // height of wall seam around chunk
+        float h = _CubeSize;
+
+        if (vertexOnEdge(v1) && vertexOnEdge(v2))
+        {
+            Triangle tri2;
+            tri2.c = v1;
+            tri2.b = v2;
+            tri2.a = float3(v1.x, v1.y - h, v1.z);
+            // tri2.a = float3(v1.x, v1.y, v1.z) + edgeWallDirection(cubeValues, h);
+            _Triangles.Append(tri2);
+
+            Triangle tri3;
+            tri3.c = v2;
+            tri3.b = float3(v2.x, v2.y - h, v2.z);
+            tri3.a = float3(v1.x, v1.y - h, v1.z);
+            // tri3.b = float3(v2.x, v2.y, v2.z) + edgeWallDirection(cubeValues, h);
+            // tri3.a = float3(v1.x, v1.y, v1.z) + edgeWallDirection(cubeValues, h);
+            _Triangles.Append(tri3);
+        }
+
+        if (vertexOnEdge(v2) && vertexOnEdge(v3))
+        {
+            Triangle tri2;
+            tri2.c = v2;
+            tri2.b = v3;
+            tri2.a = float3(v2.x, v2.y - h, v2.z);
+            _Triangles.Append(tri2);
+
+            Triangle tri3;
+            tri3.c = float3(v3.x, v3.y - h, v3.z);
+            tri3.b = float3(v2.x, v2.y - h, v2.z);
+            tri3.a = v3;
+            _Triangles.Append(tri3);
+        }
+
+        if (vertexOnEdge(v3) && vertexOnEdge(v1))
+        {
+            Triangle tri2;
+            tri2.c = v3;
+            tri2.b = v1;
+            tri2.a = float3(v3.x, v3.y - h, v3.z);
+            _Triangles.Append(tri2);
+
+            Triangle tri3;
+            tri3.c = v1;
+            tri3.b = float3(v1.x, v1.y - h, v1.z);
+            tri3.a = float3(v3.x, v3.y - h, v3.z);
+            _Triangles.Append(tri3);
+        }
+
+
     }
+
+
 
 }

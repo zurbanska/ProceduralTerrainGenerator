@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -83,6 +85,63 @@ public class TerrainChunk
         return new LodMesh(meshLod, mesh);
     }
 
+    public void RequestMeshData(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod, Action<LodMesh> callback)
+    {
+        // Run the mesh generation asynchronously
+        CoroutineRunner.Instance.RunCoroutine(GenerateMeshDataAsync(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, meshLod, callback));
+    }
+
+    private IEnumerator GenerateMeshDataAsync(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod, Action<LodMesh> callback)
+    {
+        // Ensure density values are initialized
+        if (densityValues == null)
+        {
+            densityValues = noiseGenerator.GenerateNoise(
+                width + 1,
+                height + 1,
+                new Vector2(coord.x * width, coord.y * width),
+                octaves,
+                persistence,
+                lacunarity,
+                scale,
+                groundLevel,
+                seed);
+
+            // Wait for GPU readback to complete
+            AsyncGPUReadback.WaitAllRequests();
+
+        }
+
+        // Prepare mesh generator buffers
+        meshGenerator.CreateBuffers(width + 1, height + 1);
+
+        // Generate the mesh
+        Mesh mesh = null;
+
+        yield return new WaitUntil(() =>
+        {
+            mesh = meshGenerator.GenerateMesh(
+                width + 1,
+                height + 1,
+                isoLevel,
+                densityValues,
+                meshLod,
+                gradient);
+
+            return true;
+        });
+
+
+        // Invoke the callback with the generated mesh data
+        LodMesh result = new LodMesh(meshLod, mesh);
+        callback?.Invoke(result);
+    }
+
+    void OnMeshDataReceived(LodMesh lodMesh)
+    {
+        SetMesh(lodMesh);
+    }
+
 
     public void DisableChunk()
     {
@@ -110,9 +169,11 @@ public class TerrainChunk
         }
 
         LodMesh newMesh = GenerateMeshAsync(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, meshLod);
-
-        // Set new mesh
         SetMesh(newMesh);
+
+        // doesnt work in editor, only in game mode
+        // RequestMeshData(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, meshLod, OnMeshDataReceived);
+
         lod = meshLod;
         chunk.SetActive(true);
     }
@@ -134,35 +195,7 @@ public class TerrainChunk
 
     public void DestroyChunk()
     {
-        Object.DestroyImmediate(chunk);
-    }
-
-    void SpawnGrass()
-    {
-        if (mesh == null || lod != 1) return;
-
-        Vector3[] vertices = mesh.vertices; // tutaj musisz zrobic array z kazdego child element mesh vertices i po tym iterowac dopiero
-        Vector3[] normals = mesh.normals;
-
-        List<Vector3> grassPositions = new List<Vector3>();
-
-        for (int i = 0; i < vertices.Length; i++)
-        {
-            Vector3 vertexWorldPos = chunk.transform.TransformPoint(vertices[i]);
-            // Vector3 normal = normals[i];
-            grassPositions.Add(vertexWorldPos);
-
-        }
-
-        for (int i = 0; i < 10; i++)
-        {
-            int grassid = Random.Range(0, grassPositions.Count - 1);
-            GameObject grass = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            grass.transform.parent = chunk.transform;
-            grass.transform.position = grassPositions[grassid];
-            grass.transform.up = normals[grassid];
-
-        }
+        UnityEngine.Object.DestroyImmediate(chunk);
     }
 
 
@@ -175,6 +208,32 @@ public class TerrainChunk
         {
             this.lod = lod;
             this.mesh = mesh;
+        }
+    }
+
+
+
+    public class CoroutineRunner : MonoBehaviour
+    {
+        private static CoroutineRunner _instance;
+
+        public static CoroutineRunner Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    var runnerGameObject = new GameObject("CoroutineRunner");
+                    _instance = runnerGameObject.AddComponent<CoroutineRunner>();
+                    DontDestroyOnLoad(runnerGameObject);
+                }
+                return _instance;
+            }
+        }
+
+        public void RunCoroutine(IEnumerator coroutine)
+        {
+            StartCoroutine(coroutine);
         }
     }
 
