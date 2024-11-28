@@ -1,8 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -30,8 +28,9 @@ public class TerrainChunk
 
     public Dictionary<Vector2, int> neighborLods = new Dictionary<Vector2, int>();
 
+    NoiseData noiseData;
 
-    public TerrainChunk(Vector2 coord, Transform parent, int width, int height, ComputeShader noiseShader, ComputeShader meshShader, Material material, Gradient gradient, float seed)
+    public TerrainChunk(Vector2 coord, Transform parent, int width, int height, ComputeShader noiseShader, ComputeShader meshShader, Material material, Gradient gradient, float seed, NoiseData noiseData)
     {
         this.coord = coord;
         this.width = width;
@@ -41,7 +40,7 @@ public class TerrainChunk
         this.gradient = gradient;
         this.seed = seed;
 
-        noiseGenerator = new NoiseGenerator(noiseShader);
+        noiseGenerator = new NoiseGenerator(noiseShader, noiseData);
         meshGenerator = new MeshGenerator(meshShader);
 
         lod = -1;
@@ -57,8 +56,11 @@ public class TerrainChunk
         Rigidbody rb = chunk.AddComponent<Rigidbody>();
         rb.useGravity = false;
         rb.isKinematic = true;
-    }
 
+        this.noiseData = noiseData;
+
+        GenerateWaterPlane();
+    }
 
     // public LodMesh GenerateMesh(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod)
     // {
@@ -69,6 +71,51 @@ public class TerrainChunk
 
     //     return lodMesh;
     // }
+
+    private void GenerateWaterPlane()
+    {
+        float waterLevel = noiseData.waterLevel;
+        GameObject waterPlane = new GameObject("Water");
+        waterPlane.transform.position = new Vector3(chunk.transform.position.x, waterLevel, chunk.transform.position.z);
+        waterPlane.transform.parent = chunk.transform;
+
+        MeshFilter meshFilter = waterPlane.AddComponent<MeshFilter>();
+        MeshRenderer meshRenderer = waterPlane.AddComponent<MeshRenderer>();
+
+        meshRenderer.material = Resources.Load<Material>("WaterMaterial");
+        waterPlane.layer = 4; // water layer
+        meshFilter.mesh = GeneratePlaneMesh(width);
+    }
+
+    private Mesh GeneratePlaneMesh(int width)
+    {
+        Mesh mesh = new Mesh();
+
+        Vector3[] vertices = new Vector3[4];
+        vertices[0] = new Vector3(0, 0, 0); // bottom-left
+        vertices[1] = new Vector3(width, 0, 0); // bottom-right
+        vertices[2] = new Vector3(0, 0, width); // top-left
+        vertices[3] = new Vector3(width, 0, width); // top-right
+
+        int[] triangles = new int[]
+        {
+            0, 2, 1, // first triangle
+            2, 3, 1  // second triangle
+        };
+
+        Vector2[] uvs = new Vector2[4];
+        uvs[0] = new Vector2(0, 0);
+        uvs[1] = new Vector2(1, 0);
+        uvs[2] = new Vector2(0, 1);
+        uvs[3] = new Vector2(1, 1);
+
+        mesh.vertices = vertices;
+        mesh.triangles = triangles;
+        mesh.uv = uvs;
+
+        mesh.RecalculateNormals();
+        return mesh;
+    }
 
     public LodMesh GenerateMeshAsync(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod)
     {

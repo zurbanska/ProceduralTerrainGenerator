@@ -253,6 +253,7 @@ void GenerateNoise (uint3 id : SV_DispatchThreadID)
     currentDensity += groundLevel;
 
     float newDensity = 1;
+    // newDensity = currentDensity;
 
 
     if (id.y <= currentDensity - 0.5)

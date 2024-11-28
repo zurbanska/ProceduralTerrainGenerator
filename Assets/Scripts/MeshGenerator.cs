@@ -103,25 +103,31 @@ public class MeshGenerator
              for (int j = 0; j < 3; j++) // Loop over a, b, c of the triangle
             {
                 Vector3 vertex = triangleVerts[j];
-                if (!vertexIndexMap.TryGetValue(vertex, out int existingIndex)) // try to reuse existing vertex
-                {
-                    existingIndex = realVertexCount;
-                    vertexIndexMap[vertex] = realVertexCount;
+                // if (!vertexIndexMap.TryGetValue(vertex, out int existingIndex)) // try to reuse existing vertex
+                // {
+                //     existingIndex = realVertexCount;
+                //     vertexIndexMap[vertex] = realVertexCount;
 
-                    meshVertices[realVertexCount] = vertex;
+                //     meshVertices[realVertexCount] = vertex;
 
-                    meshUVs[realVertexCount] = new Vector2(vertex.x / width, vertex.z / width);
-                    meshColors[realVertexCount] = gradient.Evaluate(Mathf.InverseLerp(0, height, vertex.y));
+                //     meshUVs[realVertexCount] = new Vector2(vertex.x / width, vertex.z / width);
+                //     meshColors[realVertexCount] = gradient.Evaluate(Mathf.InverseLerp(0, height, vertex.y));
+                //     realVertexCount++;
 
-                    realVertexCount++;
-                }
-                meshTriangles[startIndex + j] = existingIndex;
+                // }
+                // meshTriangles[startIndex + j] = existingIndex;
+
+                meshVertices[realVertexCount] = vertex;
+                meshUVs[realVertexCount] = new Vector2(vertex.x / width, vertex.z / width);
+                meshColors[realVertexCount] = gradient.Evaluate(Mathf.InverseLerp(0, height, vertex.y));
+                meshTriangles[startIndex + j] = realVertexCount;
+                realVertexCount++;
             }
         }
 
-        Array.Resize(ref meshVertices, realVertexCount);
-        Array.Resize(ref meshUVs, realVertexCount);
-        Array.Resize(ref meshColors, realVertexCount);
+        // Array.Resize(ref meshVertices, realVertexCount);
+        // Array.Resize(ref meshUVs, realVertexCount);
+        // Array.Resize(ref meshColors, realVertexCount);
 
         mesh.vertices = meshVertices;
         mesh.triangles = meshTriangles;

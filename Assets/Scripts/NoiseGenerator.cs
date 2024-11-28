@@ -5,10 +5,12 @@ public class NoiseGenerator
 
     private ComputeShader noiseShader;
     public ComputeBuffer valuesBuffer;
+    public NoiseData noiseData;
 
-    public NoiseGenerator(ComputeShader noiseShader)
+    public NoiseGenerator(ComputeShader noiseShader, NoiseData noiseData)
     {
         this.noiseShader = noiseShader;
+        this.noiseData = noiseData;
     }
 
 
@@ -22,8 +24,8 @@ public class NoiseGenerator
         noiseShader.SetBuffer(0, "_Values", valuesBuffer);
         noiseShader.SetInt("_ChunkWidth", width);
         noiseShader.SetInt("_ChunkHeight", height);
-        noiseShader.SetFloat("_OffsetX", offset.x);
-        noiseShader.SetFloat("_OffsetZ", offset.y);
+        noiseShader.SetFloat("_OffsetX", offset.x + noiseData.moreOffset.x);
+        noiseShader.SetFloat("_OffsetZ", offset.y + noiseData.moreOffset.y);
 
         noiseShader.SetInt("octaves", octaves);
         noiseShader.SetFloat("scale", scale);

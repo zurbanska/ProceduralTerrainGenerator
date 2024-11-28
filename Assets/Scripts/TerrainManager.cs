@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 public class TerrainManager : MonoBehaviour
@@ -6,6 +7,8 @@ public class TerrainManager : MonoBehaviour
     // shaders used for mesh generating
     public ComputeShader noiseShader;
     public ComputeShader marchingCubesShader;
+
+    public NoiseData noiseData;
 
     public Material material;
     public Gradient gradient;
@@ -27,6 +30,7 @@ public class TerrainManager : MonoBehaviour
 
     public float seed = 0;
     public bool randomSeed = false;
+    private bool needsUpdate;
 
 
     [SerializeField] private Transform viewer;
@@ -37,6 +41,47 @@ public class TerrainManager : MonoBehaviour
 
     public List<LodInfo> lods = new List<LodInfo>();
 
+    void OnValuesUpdated()
+    {
+        if (!Application.isPlaying)
+        {
+            needsUpdate = true;
+            EditorApplication.delayCall += DelayedUpdate;
+        }
+    }
+
+    private void DelayedUpdate()
+    {
+        if (!needsUpdate) return;
+
+        needsUpdate = false;
+        GenerateChunks();
+        EditorApplication.delayCall -= DelayedUpdate;
+    }
+
+    private void OnEnable()
+    {
+        if (noiseData != null && !Application.isPlaying)
+        {
+            noiseData.OnValuesUpdated += OnValuesUpdated;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (noiseData != null)
+        {
+            noiseData.OnValuesUpdated -= OnValuesUpdated;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (noiseData != null)
+        {
+            noiseData.OnValuesUpdated -= OnValuesUpdated;
+        }
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -60,6 +105,11 @@ public class TerrainManager : MonoBehaviour
             lastChunkCoord = currentChunkCoord;
             UpdateChunks(currentChunkCoord);
         }
+
+        // if (Input.anyKeyDown) {
+        //     noiseData.moreOffset.x += 10f;
+        //     GenerateChunks();
+        // }
 
     }
 
@@ -184,7 +234,7 @@ public class TerrainManager : MonoBehaviour
 
     public void CreateChunk(Vector2 coord, int chunkLod)
     {
-        TerrainChunk newChunk = new TerrainChunk(coord, transform, chunkWidth, chunkHeight, noiseShader, marchingCubesShader, material, gradient, seed);
+        TerrainChunk newChunk = new TerrainChunk(coord, transform, chunkWidth, chunkHeight, noiseShader, marchingCubesShader, material, gradient, seed, noiseData);
         newChunk.EnableChunkLOD(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod, GetNeighborLODS(coord));
         terrainChunkDictionary[coord] = newChunk;
     }
@@ -222,6 +272,15 @@ public class TerrainManager : MonoBehaviour
 
 
     private void OnValidate() {
+
+        if (noiseData != null && !Application.isPlaying) {
+			noiseData.OnValuesUpdated -= OnValuesUpdated;
+			noiseData.OnValuesUpdated += OnValuesUpdated;
+		}
+        else if (noiseData != null && Application.isPlaying)
+        {
+            noiseData.OnValuesUpdated -= OnValuesUpdated;
+        }
 
         // chunk width and height have to be multiples of 8 and greater or equal 8
         chunkWidth = Mathf.Max(8, chunkWidth);
