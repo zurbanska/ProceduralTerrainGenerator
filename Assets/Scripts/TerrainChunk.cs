@@ -27,10 +27,11 @@ public class TerrainChunk
     public float[] densityValues;
 
     public Dictionary<Vector2, int> neighborLods = new Dictionary<Vector2, int>();
+    public Vector4 neighbors;
 
     NoiseData noiseData;
 
-    public TerrainChunk(Vector2 coord, Transform parent, int width, int height, ComputeShader noiseShader, ComputeShader meshShader, Material material, Gradient gradient, float seed, NoiseData noiseData)
+    public TerrainChunk(Vector2 coord, Transform parent, int width, int height, ComputeShader noiseShader, ComputeShader meshShader, Material material, Gradient gradient, float seed, NoiseData noiseData, Vector4 neighbors)
     {
         this.coord = coord;
         this.width = width;
@@ -39,6 +40,8 @@ public class TerrainChunk
         this.material = material;
         this.gradient = gradient;
         this.seed = seed;
+
+        this.neighbors = neighbors;
 
         noiseGenerator = new NoiseGenerator(noiseShader, noiseData);
         meshGenerator = new MeshGenerator(meshShader);
@@ -59,7 +62,7 @@ public class TerrainChunk
 
         this.noiseData = noiseData;
 
-        GenerateWaterPlane();
+        GenerateWaterPlanes();
     }
 
     // public LodMesh GenerateMesh(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod)
@@ -72,35 +75,75 @@ public class TerrainChunk
     //     return lodMesh;
     // }
 
-    private void GenerateWaterPlane()
+    private void GenerateWaterPlanes()
     {
-        float waterLevel = noiseData.waterLevel;
+        float shrinkFactor = width * 0.005f;
+
+        GenerateWaterPlane(new Vector3(0, 0, 0), new Vector3(width, 0, 0), new Vector3(0, 0, width), new Vector3(width, 0, width));
+        if (neighbors[0] == 0) GenerateWaterPlane( // down edge water plane
+            new Vector3(width, -noiseData.waterLevel, 0),
+            new Vector3(0, -noiseData.waterLevel, 0),
+            new Vector3(width, 0, 0),
+            new Vector3(0, 0, 0)
+        );
+        if (neighbors[1] == 0) GenerateWaterPlane( // right edge water plane
+            new Vector3(width, -noiseData.waterLevel, 0),
+            new Vector3(width, -noiseData.waterLevel, width),
+            new Vector3(width, 0, 0),
+            new Vector3(width, 0, width)
+        );
+        if (neighbors[2] == 0) GenerateWaterPlane( // up edge water plane
+            new Vector3(width, -noiseData.waterLevel, width),
+            new Vector3(0, -noiseData.waterLevel, width),
+            new Vector3(width, 0, width),
+            new Vector3(0, 0, width)
+        );
+        if (neighbors[3] == 0) GenerateWaterPlane( // left edge water plane
+            new Vector3(0, -noiseData.waterLevel, 0),
+            new Vector3(0, -noiseData.waterLevel, width),
+            new Vector3(0, 0, 0),
+            new Vector3(0, 0, width)
+        );
+    }
+
+    private void GenerateWaterPlane(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4)
+    {
         GameObject waterPlane = new GameObject("Water");
-        waterPlane.transform.position = new Vector3(chunk.transform.position.x, waterLevel, chunk.transform.position.z);
+        waterPlane.transform.position = new Vector3(chunk.transform.position.x, noiseData.waterLevel, chunk.transform.position.z);
         waterPlane.transform.parent = chunk.transform;
 
+        waterPlane.AddComponent<CubemapRenderer>();
         MeshFilter meshFilter = waterPlane.AddComponent<MeshFilter>();
         MeshRenderer meshRenderer = waterPlane.AddComponent<MeshRenderer>();
 
         meshRenderer.material = Resources.Load<Material>("WaterMaterial");
         waterPlane.layer = 4; // water layer
-        meshFilter.mesh = GeneratePlaneMesh(width);
+        meshFilter.mesh = GeneratePlaneMesh(v1, v2, v3, v4);
+
+        material.SetFloat("_WaterLevel", noiseData.waterLevel); // terrain material
+        meshRenderer.sharedMaterial.SetFloat("_WaterLevel", noiseData.waterLevel); // water material
     }
 
-    private Mesh GeneratePlaneMesh(int width)
+    private Mesh GeneratePlaneMesh(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4)
     {
         Mesh mesh = new Mesh();
 
         Vector3[] vertices = new Vector3[4];
-        vertices[0] = new Vector3(0, 0, 0); // bottom-left
-        vertices[1] = new Vector3(width, 0, 0); // bottom-right
-        vertices[2] = new Vector3(0, 0, width); // top-left
-        vertices[3] = new Vector3(width, 0, width); // top-right
+        // vertices[0] = new Vector3(0, 0, 0); // bottom-left
+        // vertices[1] = new Vector3(width, 0, 0); // bottom-right
+        // vertices[2] = new Vector3(0, 0, depth); // top-left
+        // vertices[3] = new Vector3(width, 0, depth); // top-right
+        vertices[0] = v1;
+        vertices[1] = v2;
+        vertices[2] = v3;
+        vertices[3] = v4;
 
         int[] triangles = new int[]
         {
             0, 2, 1, // first triangle
-            2, 3, 1  // second triangle
+            1, 2, 0, // first triangle - reverse
+            2, 3, 1,  // second triangle
+            1, 3, 2  // second triangle - reverse
         };
 
         Vector2[] uvs = new Vector2[4];
@@ -121,7 +164,7 @@ public class TerrainChunk
     {
         if (densityValues == null)
         {
-            densityValues = noiseGenerator.GenerateNoise(width + 1, height + 1, new Vector2(coord.x * width, coord.y * width), octaves, persistence, lacunarity, scale, groundLevel, seed);
+            densityValues = noiseGenerator.GenerateNoise(width + 1, height + 1, new Vector2(coord.x * width, coord.y * width), octaves, persistence, lacunarity, scale, groundLevel, seed, neighbors);
             AsyncGPUReadback.WaitAllRequests();
         }
         meshGenerator.CreateBuffers(width + 1, height + 1);
@@ -152,7 +195,8 @@ public class TerrainChunk
                 lacunarity,
                 scale,
                 groundLevel,
-                seed);
+                seed,
+                neighbors);
 
             // Wait for GPU readback to complete
             AsyncGPUReadback.WaitAllRequests();
@@ -201,9 +245,10 @@ public class TerrainChunk
     }
 
 
-    public void EnableChunkLOD(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod, Dictionary<Vector2, int> neighborLods)
+    public void EnableChunkLOD(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod, Dictionary<Vector2, int> neighborLods, Vector4 neighbors)
     {
 
+        this.neighbors = neighbors;
         foreach (var LodMesh in LodMeshes)
         {
             if (LodMesh.lod == meshLod)

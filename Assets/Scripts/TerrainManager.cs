@@ -136,8 +136,9 @@ public class TerrainManager : MonoBehaviour
 
                     if (distance < renderDistance * renderDistance)
                     {
+                        Vector4 chunkNeighbors = CheckForChunkNeighbors(i, j);
                         int chunkLod = GetChunkLOD(distance);
-                        EnableChunk(chunkCoord, chunkLod);
+                        EnableChunk(chunkCoord, chunkLod, chunkNeighbors);
                         chunksVisibleLastUpdate.Add(chunkCoord);
                     } else {
                         DisableChunk(chunkCoord);
@@ -208,34 +209,19 @@ public class TerrainManager : MonoBehaviour
 
                     if (distance < renderDistance * renderDistance)
                     {
+                        Vector4 chunkNeighbors = CheckForChunkNeighbors(i, j);
                         int chunkLod = GetChunkLOD(distance);
-                        EnableChunk(chunkCoord, chunkLod);
+                        EnableChunk(chunkCoord, chunkLod, chunkNeighbors);
                     }
                 }
             }
-
-        // // doubled code for debugging
-        // for (int i = -renderDistance; i < renderDistance; i++)
-        //     {
-        //         for (int j = -renderDistance; j < renderDistance; j++)
-        //         {
-        //             Vector2 chunkCoord = new Vector2(i, j) + viewerPosition;
-        //             float distance = (i * i) + (j * j);
-
-        //             if (distance < renderDistance * renderDistance)
-        //             {
-        //                 int chunkLod = GetChunkLOD(distance);
-        //                 EnableChunk(chunkCoord, chunkLod);
-        //             }
-        //         }
-        //     }
     }
 
 
-    public void CreateChunk(Vector2 coord, int chunkLod)
+    public void CreateChunk(Vector2 coord, int chunkLod, Vector4 chunkNeighbors)
     {
-        TerrainChunk newChunk = new TerrainChunk(coord, transform, chunkWidth, chunkHeight, noiseShader, marchingCubesShader, material, gradient, seed, noiseData);
-        newChunk.EnableChunkLOD(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod, GetNeighborLODS(coord));
+        TerrainChunk newChunk = new TerrainChunk(coord, transform, chunkWidth, chunkHeight, noiseShader, marchingCubesShader, material, gradient, seed, noiseData, chunkNeighbors);
+        newChunk.EnableChunkLOD(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod, GetNeighborLODS(coord), chunkNeighbors);
         terrainChunkDictionary[coord] = newChunk;
     }
 
@@ -262,12 +248,23 @@ public class TerrainManager : MonoBehaviour
         }
     }
 
-    private void EnableChunk(Vector2 coord, int chunkLod)
+    private void EnableChunk(Vector2 coord, int chunkLod, Vector4 chunkNeighbors)
     {
         if (terrainChunkDictionary.ContainsKey(coord))
         {
-            terrainChunkDictionary[coord].EnableChunkLOD(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod, GetNeighborLODS(coord));
-        } else CreateChunk(coord, chunkLod);
+            terrainChunkDictionary[coord].EnableChunkLOD(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod, GetNeighborLODS(coord), chunkNeighbors);
+        } else CreateChunk(coord, chunkLod, chunkNeighbors);
+    }
+
+    private Vector4 CheckForChunkNeighbors(int x, int z)
+    {
+        Vector4 chunkNeighbors = new Vector4(
+            (x * x + (z - 1) * (z - 1) < renderDistance * renderDistance) ? 1 : 0,
+            ((x + 1) * (x + 1) + z * z < renderDistance * renderDistance) ? 1 : 0,
+            (x * x + (z + 1) * (z + 1) < renderDistance * renderDistance) ? 1 : 0,
+            ((x - 1) * (x - 1) + z * z < renderDistance * renderDistance) ? 1 : 0
+        );
+        return chunkNeighbors;
     }
 
 

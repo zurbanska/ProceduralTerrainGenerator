@@ -10,6 +10,10 @@ int _ChunkHeight;
 float _OffsetX;
 float _OffsetZ;
 
+float borderDown;
+float borderRight;
+float borderUp;
+float borderLeft;
 
 int octaves;
 float persistence;
@@ -252,8 +256,7 @@ void GenerateNoise (uint3 id : SV_DispatchThreadID)
     float currentDensity = _ChunkHeight * clamp(noiseValue, -0.9, 0.9) * 1.2; // noise multiplier
     currentDensity += groundLevel;
 
-    float newDensity = 1;
-    // newDensity = currentDensity;
+    float newDensity = currentDensity;
 
 
     if (id.y <= currentDensity - 0.5)
@@ -272,9 +275,16 @@ void GenerateNoise (uint3 id : SV_DispatchThreadID)
 
     if (id.y <= 1)
     {
-        newDensity = 0;
+        // newDensity = 1; // allow holes in bottom layer
+        newDensity = 0; // bottom layer always solid
     }
     if (id.y >= _ChunkHeight - 1)
+    {
+        newDensity = 1;
+    }
+
+
+    if (id.z == 0 && borderDown || id.z == _ChunkWidth - 1 && borderUp || id.x == 0 && borderLeft || id.x == _ChunkWidth - 1 && borderRight || id.y == 0)
     {
         newDensity = 1;
     }

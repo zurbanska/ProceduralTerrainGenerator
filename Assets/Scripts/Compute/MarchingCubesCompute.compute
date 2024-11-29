@@ -41,26 +41,6 @@ bool vertexOnEdge(float3 vertex) {
 };
 
 
-// float3 edgeWallDirection(float cubeValues[8], float h) {
-//     float topBottomDif = cubeValues[4] + cubeValues[5] + cubeValues[6] + cubeValues[7] - cubeValues[0] + cubeValues[1] + cubeValues[2] + cubeValues[3];
-
-//     float leftRightDif = cubeValues[0] + cubeValues[3] + cubeValues[4] + cubeValues[7] - cubeValues[1] + cubeValues[2] + cubeValues[5] + cubeValues[6];
-
-//     float frontBackDif = cubeValues[2] + cubeValues[3] + cubeValues[6] + cubeValues[7] - cubeValues[0] + cubeValues[1] + cubeValues[4] + cubeValues[5];
-
-//     if (abs(topBottomDif) >= abs(leftRightDif) && abs(topBottomDif) >= abs(frontBackDif)) {
-//         return topBottomDif > 0 ? float3(0, -h, 0) : float3(0, h, 0);
-//     }
-//     if (abs(leftRightDif) >= abs(topBottomDif) && abs(leftRightDif) >= abs(frontBackDif)) {
-//         return leftRightDif > 0 ? float3(h, 0, 0) : float3(-h, 0, 0);
-//     }
-//     if (abs(frontBackDif) >= abs(topBottomDif) && abs(frontBackDif) >= abs(leftRightDif)) {
-//         return frontBackDif > 0 ? float3(0, 0, -h) : float3(0, 0, h);
-//     }
-//     else return float3(0, -h, 0);
-// }
-
-
 [numthreads(8,8,8)]
 void March(uint3 id : SV_DispatchThreadID)
 {
@@ -128,56 +108,53 @@ void March(uint3 id : SV_DispatchThreadID)
 
         _Triangles.Append(tri);
 
-        // height of wall seam around chunk
-        float h = _CubeSize;
+        // // height of wall seam around chunk
+        // float h = _CubeSize;
 
-        if (vertexOnEdge(v1) && vertexOnEdge(v2))
-        {
-            Triangle tri2;
-            tri2.c = v1;
-            tri2.b = v2;
-            tri2.a = float3(v1.x, v1.y - h, v1.z);
-            // tri2.a = float3(v1.x, v1.y, v1.z) + edgeWallDirection(cubeValues, h);
-            _Triangles.Append(tri2);
+        // if (vertexOnEdge(v1) && vertexOnEdge(v2))
+        // {
+        //     Triangle tri2;
+        //     tri2.c = v1;
+        //     tri2.b = v2;
+        //     tri2.a = float3(v1.x, v1.y - h, v1.z);
+        //     _Triangles.Append(tri2);
 
-            Triangle tri3;
-            tri3.c = v2;
-            tri3.b = float3(v2.x, v2.y - h, v2.z);
-            tri3.a = float3(v1.x, v1.y - h, v1.z);
-            // tri3.b = float3(v2.x, v2.y, v2.z) + edgeWallDirection(cubeValues, h);
-            // tri3.a = float3(v1.x, v1.y, v1.z) + edgeWallDirection(cubeValues, h);
-            _Triangles.Append(tri3);
-        }
+        //     Triangle tri3;
+        //     tri3.c = v2;
+        //     tri3.b = float3(v2.x, v2.y - h, v2.z);
+        //     tri3.a = float3(v1.x, v1.y - h, v1.z);
+        //     _Triangles.Append(tri3);
+        // }
 
-        if (vertexOnEdge(v2) && vertexOnEdge(v3))
-        {
-            Triangle tri2;
-            tri2.c = v2;
-            tri2.b = v3;
-            tri2.a = float3(v2.x, v2.y - h, v2.z);
-            _Triangles.Append(tri2);
+        // if (vertexOnEdge(v2) && vertexOnEdge(v3))
+        // {
+        //     Triangle tri2;
+        //     tri2.c = v2;
+        //     tri2.b = v3;
+        //     tri2.a = float3(v2.x, v2.y - h, v2.z);
+        //     _Triangles.Append(tri2);
 
-            Triangle tri3;
-            tri3.c = float3(v3.x, v3.y - h, v3.z);
-            tri3.b = float3(v2.x, v2.y - h, v2.z);
-            tri3.a = v3;
-            _Triangles.Append(tri3);
-        }
+        //     Triangle tri3;
+        //     tri3.c = float3(v3.x, v3.y - h, v3.z);
+        //     tri3.b = float3(v2.x, v2.y - h, v2.z);
+        //     tri3.a = v3;
+        //     _Triangles.Append(tri3);
+        // }
 
-        if (vertexOnEdge(v3) && vertexOnEdge(v1))
-        {
-            Triangle tri2;
-            tri2.c = v3;
-            tri2.b = v1;
-            tri2.a = float3(v3.x, v3.y - h, v3.z);
-            _Triangles.Append(tri2);
+        // if (vertexOnEdge(v3) && vertexOnEdge(v1))
+        // {
+        //     Triangle tri2;
+        //     tri2.c = v3;
+        //     tri2.b = v1;
+        //     tri2.a = float3(v3.x, v3.y - h, v3.z);
+        //     _Triangles.Append(tri2);
 
-            Triangle tri3;
-            tri3.c = v1;
-            tri3.b = float3(v1.x, v1.y - h, v1.z);
-            tri3.a = float3(v3.x, v3.y - h, v3.z);
-            _Triangles.Append(tri3);
-        }
+        //     Triangle tri3;
+        //     tri3.c = v1;
+        //     tri3.b = float3(v1.x, v1.y - h, v1.z);
+        //     tri3.a = float3(v3.x, v3.y - h, v3.z);
+        //     _Triangles.Append(tri3);
+        // }
 
 
     }
