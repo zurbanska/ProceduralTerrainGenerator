@@ -9,6 +9,7 @@ int _ChunkWidth;
 int _ChunkHeight;
 float _OffsetX;
 float _OffsetZ;
+int lod;
 
 float borderDown;
 float borderRight;
@@ -273,7 +274,7 @@ void GenerateNoise (uint3 id : SV_DispatchThreadID)
         newDensity = currentDensity - id.y;
     }
 
-    if (id.y <= 1)
+    if (id.y <= lod)
     {
         // newDensity = 1; // allow holes in bottom layer
         newDensity = 0; // bottom layer always solid

@@ -134,7 +134,8 @@ public class TerrainManager : MonoBehaviour
                     Vector2 chunkCoord = new Vector2(i, j) + currentChunkCoord;
                     float distance = (i * i) + (j * j);
 
-                    if (distance < renderDistance * renderDistance)
+                    // if (distance < renderDistance * renderDistance) // circular world
+                    if (Mathf.Abs(i) < renderDistance && Mathf.Abs(j) < renderDistance) // square world
                     {
                         Vector4 chunkNeighbors = CheckForChunkNeighbors(i, j);
                         int chunkLod = GetChunkLOD(distance);
@@ -207,7 +208,8 @@ public class TerrainManager : MonoBehaviour
                     Vector2 chunkCoord = new Vector2(i, j) + viewerPosition;
                     float distance = (i * i) + (j * j);
 
-                    if (distance < renderDistance * renderDistance)
+                    // if (distance < renderDistance * renderDistance) // circular world
+                    if (Mathf.Abs(i) < renderDistance && Mathf.Abs(j) < renderDistance) // square world
                     {
                         Vector4 chunkNeighbors = CheckForChunkNeighbors(i, j);
                         int chunkLod = GetChunkLOD(distance);
@@ -258,12 +260,22 @@ public class TerrainManager : MonoBehaviour
 
     private Vector4 CheckForChunkNeighbors(int x, int z)
     {
+        // circular world
+        // Vector4 chunkNeighbors = new Vector4(
+        //     (x * x + (z - 1) * (z - 1) < renderDistance * renderDistance) ? 1 : 0,
+        //     ((x + 1) * (x + 1) + z * z < renderDistance * renderDistance) ? 1 : 0,
+        //     (x * x + (z + 1) * (z + 1) < renderDistance * renderDistance) ? 1 : 0,
+        //     ((x - 1) * (x - 1) + z * z < renderDistance * renderDistance) ? 1 : 0
+        // );
+
+        // square world
         Vector4 chunkNeighbors = new Vector4(
-            (x * x + (z - 1) * (z - 1) < renderDistance * renderDistance) ? 1 : 0,
-            ((x + 1) * (x + 1) + z * z < renderDistance * renderDistance) ? 1 : 0,
-            (x * x + (z + 1) * (z + 1) < renderDistance * renderDistance) ? 1 : 0,
-            ((x - 1) * (x - 1) + z * z < renderDistance * renderDistance) ? 1 : 0
+            (Mathf.Abs(z) + 1 > renderDistance - 1 && z <= 0) ? 0 : 1,
+            (Mathf.Abs(x) + 1 > renderDistance - 1 && x >= 0) ? 0 : 1,
+            (Mathf.Abs(z) + 1 > renderDistance - 1 && z >= 0) ? 0 : 1,
+            (Mathf.Abs(x) + 1 > renderDistance - 1 && x <= 0) ? 0 : 1
         );
+
         return chunkNeighbors;
     }
 

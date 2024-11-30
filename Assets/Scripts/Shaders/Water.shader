@@ -40,6 +40,7 @@ Shader "Custom/Water"
                 float4 screenPos : TEXCOORD1;
                 float3 worldPos : TEXCOORD2;
                 float3 worldNormal : TEXCOORD3;
+                float3 normal : TEXCOORD4;
             };
 
             float4 _BaseColor;
@@ -58,6 +59,7 @@ Shader "Custom/Water"
                 o.screenPos = ComputeScreenPos(o.pos); // For depth lookup
                 o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
                 o.worldNormal = UnityObjectToWorldNormal(v.normal);
+                o.normal = v.normal;
                 return o;
             }
 
@@ -82,18 +84,23 @@ Shader "Custom/Water"
                 normalTex = normalize(normalTex) + _NormalStrength;
 
                 half3 worldViewDir = normalize(UnityWorldSpaceViewDir(i.worldPos));
-                // half3 worldRefl = reflect(-_WorldSpaceLightPos0.xyz, normalTex);
-                half3 worldRefl = reflect(-worldViewDir.xyz, normalTex);
+                half3 worldRefl = reflect(-_WorldSpaceLightPos0.xyz, normalTex);
+                // half3 worldRefl = reflect(-worldViewDir.xyz, normalTex);
 
-                // same as in previous shader
-                half4 skyData = texCUBE(_Cubemap, worldRefl);
+                // default skybox cubemap
+                half4 skyData = UNITY_SAMPLE_TEXCUBE(unity_SpecCube0, worldRefl);
+                half3 skyColor = DecodeHDR (skyData, unity_SpecCube0_HDR);
+
+                // custom cubemap
+                // half4 skyData = texCUBE(_Cubemap, worldRefl);
+
                 fixed4 c = 0;
-                c.rgb = skyData.rgb;
-                return finalColor;
-                // return finalColor + saturate(c * 0.5);
-                // return float4(i.screenPos);
-                // return float4(normalTex,1);
+                c.rgb = skyColor.rgb * 0.7 + _BaseColor * 0.3;
+                c.rgb *= depthFactor2;
 
+                c.a = lerp(0.6, 1, depthFactor2);
+                return c;
+                // return float4(i.normal.xxx + 0.5, 1);
                 // return float4(depthFactor2.xxx * 0.5, 1);
                 // return float4(0,0,0,0);
 

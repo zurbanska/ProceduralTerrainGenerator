@@ -14,7 +14,7 @@ public class NoiseGenerator
     }
 
 
-    public float[] GenerateNoise(int width, int height, Vector2 offset, int octaves, float persistence, float lacunarity, float scale, float groundLevel, float seed, Vector4 neighbors)
+    public float[] GenerateNoise(int width, int height, Vector2 offset, int octaves, float persistence, float lacunarity, float scale, float groundLevel, float seed, Vector4 neighbors, int lod)
     {
 
         float[] noiseValues = new float[width * height * width]; // 1D array of noise values
@@ -26,6 +26,7 @@ public class NoiseGenerator
         noiseShader.SetInt("_ChunkHeight", height);
         noiseShader.SetFloat("_OffsetX", offset.x + noiseData.moreOffset.x);
         noiseShader.SetFloat("_OffsetZ", offset.y + noiseData.moreOffset.y);
+        noiseShader.SetFloat("lod", lod);
 
         noiseShader.SetBool("borderDown", neighbors[0] == 0);
         noiseShader.SetBool("borderRight", neighbors[1] == 0);
