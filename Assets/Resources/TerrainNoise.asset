@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: TerrainNoise
   m_EditorClassIdentifier: 
   autoUpdate: 1
-  moreOffset: {x: 306.07, y: 500}
-  waterLevel: 8.4
+  moreOffset: {x: 287.95, y: 431.3}
+  waterLevel: 16.3

@@ -4,7 +4,7 @@ Shader "Custom/Terrain"
     {
         _MainTex ("Texture", 2D) = "white" {}
         _FogColor ("Fog Color", Color) = (0.5, 0.5, 0.5, 1)
-        _LightColor ("Light Color", Color) = (0.5, 0.5, 0.5, 1)
+        _ShadowColor ("Shadow Color", Color) = (0.5, 0.5, 0.5, 1)
         _FogStart ("Fog Start Distance", Float) = 10
         _FogEnd ("Fog End Distance", Float) = 20
         _DepthLevel ("Depth Level", Range(1, 3)) = 2
@@ -58,7 +58,7 @@ Shader "Custom/Terrain"
             float _LightPosX;
             float _LightPosY;
             float _LightPosZ;
-            float _LightColor;
+            float4 _ShadowColor;
 
             v2f vert (appdata v)
             {
@@ -90,7 +90,6 @@ Shader "Custom/Terrain"
                 float3 lightColor = _LightColor0.rgb;
 
                 float3 terrainColor = i.color * lightFallOff * lightColor;
-                // float directDiffuseLight = lightColor * lightFalloff;
 
                 float distance = length(_WorldSpaceCameraPos - i.worldPos);
                 float fogFactor = saturate((distance - _FogStart) / (_FogEnd - _FogStart));
@@ -99,7 +98,7 @@ Shader "Custom/Terrain"
                 // compute shadow attenuation (1.0 = fully lit, 0.0 = fully shadowed)
                 fixed shadow = SHADOW_ATTENUATION(i);
                 // darken light's illumination with shadow, keep ambient intact
-                fixed3 lighting = i.diff * shadow + i.ambient;
+                fixed3 lighting = i.diff * shadow + i.ambient * _ShadowColor;
                 // col.rgb *= lighting;
                 terrainColor *= lighting;
 

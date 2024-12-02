@@ -84,8 +84,8 @@ Shader "Custom/Water"
                 normalTex = normalize(normalTex) + _NormalStrength;
 
                 half3 worldViewDir = normalize(UnityWorldSpaceViewDir(i.worldPos));
-                half3 worldRefl = reflect(-_WorldSpaceLightPos0.xyz, normalTex);
-                // half3 worldRefl = reflect(-worldViewDir.xyz, normalTex);
+                // half3 worldRefl = reflect(-_WorldSpaceLightPos0.xyz, normalTex);
+                half3 worldRefl = reflect(-worldViewDir.xyz, normalTex);
 
                 // default skybox cubemap
                 half4 skyData = UNITY_SAMPLE_TEXCUBE(unity_SpecCube0, worldRefl);
@@ -94,13 +94,16 @@ Shader "Custom/Water"
                 // custom cubemap
                 // half4 skyData = texCUBE(_Cubemap, worldRefl);
 
+                float3 normal = _WorldSpaceLightPos0.xyz * normalize(i.normal);
+                float3 baseColor = _BaseColor.rgb + normal.xxx + normal.zzz;
+
                 fixed4 c = 0;
-                c.rgb = skyColor.rgb * 0.7 + _BaseColor * 0.3;
+                c.rgb = skyColor.rgb * 0.8 + baseColor * 0.2;
                 c.rgb *= depthFactor2;
 
                 c.a = lerp(0.6, 1, depthFactor2);
                 return c;
-                // return float4(i.normal.xxx + 0.5, 1);
+                // return float4(i.normal * 0.5 + 0.5, 1);
                 // return float4(depthFactor2.xxx * 0.5, 1);
                 // return float4(0,0,0,0);
 

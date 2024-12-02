@@ -165,7 +165,7 @@ public class TerrainChunk
     public void EnableChunkLOD(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod, Dictionary<Vector2, int> neighborLods, Vector4 neighbors)
     {
         this.neighbors = neighbors;
-        if (lod != meshLod) waterGenerator.GenerateWater(chunk.transform, width, noiseData.waterLevel, meshLod, neighbors);
+        if (lod != meshLod && noiseData.waterLevel > 0) waterGenerator.GenerateWater(chunk.transform, width, noiseData.waterLevel, meshLod, neighbors);
 
         lod = meshLod;
 
