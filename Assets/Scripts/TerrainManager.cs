@@ -41,6 +41,7 @@ public class TerrainManager : MonoBehaviour
 
     public List<LodInfo> lods = new List<LodInfo>();
 
+    #if UNITY_EDITOR
     void OnValuesUpdated()
     {
         if (!Application.isPlaying)
@@ -82,6 +83,7 @@ public class TerrainManager : MonoBehaviour
             noiseData.OnValuesUpdated -= OnValuesUpdated;
         }
     }
+    #endif
 
     // Start is called before the first frame update
     void Start()
@@ -282,6 +284,7 @@ public class TerrainManager : MonoBehaviour
 
     private void OnValidate() {
 
+        #if UNITY_EDITOR
         if (noiseData != null && !Application.isPlaying) {
 			noiseData.OnValuesUpdated -= OnValuesUpdated;
 			noiseData.OnValuesUpdated += OnValuesUpdated;
@@ -290,6 +293,7 @@ public class TerrainManager : MonoBehaviour
         {
             noiseData.OnValuesUpdated -= OnValuesUpdated;
         }
+        #endif
 
         // chunk width and height have to be multiples of 8 and greater or equal 8
         chunkWidth = Mathf.Max(8, chunkWidth);

@@ -100,8 +100,8 @@ public class TerrainChunk
     private IEnumerator GenerateMeshDataAsync(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod, Action<LodMesh> callback)
     {
         // Ensure density values are initialized
-        if (densityValues == null)
-        {
+        // if (densityValues == null)
+        // {
             densityValues = noiseGenerator.GenerateNoise(
                 width + 1,
                 height + 1,
@@ -118,7 +118,7 @@ public class TerrainChunk
             // Wait for GPU readback to complete
             AsyncGPUReadback.WaitAllRequests();
 
-        }
+        // }
 
         // Prepare mesh generator buffers
         meshGenerator.CreateBuffers(width + 1, height + 1);
