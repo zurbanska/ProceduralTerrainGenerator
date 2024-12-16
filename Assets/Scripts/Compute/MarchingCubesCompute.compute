@@ -17,6 +17,11 @@ float3 _HitPosition;
 float _BrushSize;
 float _TerraformStrength;
 
+float borderDown;
+float borderRight;
+float borderUp;
+float borderLeft;
+
 
 struct Triangle {
     float3 a, b, c;
@@ -168,11 +173,15 @@ void March(uint3 id : SV_DispatchThreadID)
 [numthreads(8,8,8)]
 void UpdateDensity( uint3 id : SV_DispatchThreadID )
 {
-    if (id.x >= _ChunkWidth - 1 || id.y >= _ChunkHeight - 1 || id.z >= _ChunkWidth - 1)
-        return;
+    if (id.x < 0 || id.x > _ChunkWidth - 1 || id.y > _ChunkHeight - 1 || id.z < 0 || id.z > _ChunkWidth - 1) return;
 
-    if (distance(id, _HitPosition) <= _BrushSize)
+    if (distance(id, _HitPosition) <= _BrushSize / 2)
     {
-        _DensityValues[indexFromCoord(id.x, id.y, id.z)] += _TerraformStrength;
+        _DensityValues[indexFromCoord(id.x, id.y, id.z)] = _TerraformStrength;
+
+        if (id.z == 0 && borderDown || id.z == _ChunkWidth - 1 && borderUp || id.x == 0 && borderLeft || id.x == _ChunkWidth - 1 && borderRight || id.y == 0)
+        {
+            _DensityValues[indexFromCoord(id.x, id.y, id.z)] = 1;
+        }
     }
 }

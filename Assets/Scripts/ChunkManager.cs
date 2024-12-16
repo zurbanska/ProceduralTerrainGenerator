@@ -32,6 +32,8 @@ public class ChunkManager : MonoBehaviour
     private float scale;
     private float groundLevel;
 
+    public Bounds bounds;
+
 
     void Start()
     {
@@ -59,6 +61,8 @@ public class ChunkManager : MonoBehaviour
         gameObject.AddComponent<MeshFilter>();
         gameObject.AddComponent<MeshRenderer>();
         gameObject.AddComponent<MeshCollider>();
+
+        bounds = new Bounds(new Vector3(width / 2, height / 2, width / 2) + transform.position, new Vector3(width, height, width));
     }
 
     public void UpdateChunk(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod, Vector4 neighbors)
@@ -124,18 +128,20 @@ public class ChunkManager : MonoBehaviour
         UnityEngine.Object.DestroyImmediate(gameObject);
     }
 
-
-
-    public void OnRaycastHit(Vector3 hitPosition, float brushSize, bool add)
+    public void Terraform(Vector3 hitPosition, float brushSize, bool add)
     {
-        Vector3 chunkHitPosition = new Vector3(hitPosition.x - coord.x * width, hitPosition.y, hitPosition.z - coord.y * width);
-        Debug.Log(chunkHitPosition);
-
         meshGenerator.CreateBuffers(width + 1, height + 1);
-        densityValues = meshGenerator.UpdateDensity(width + 1, height + 1, densityValues, chunkHitPosition, brushSize, add);
+        densityValues = meshGenerator.UpdateDensity(width + 1, height + 1, densityValues, hitPosition, brushSize, add, neighbors);
         AsyncGPUReadback.WaitAllRequests();
 
         Mesh newMesh = GenerateMesh(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, lod);
         SetMesh(newMesh);
+    }
+
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireCube(bounds.center, bounds.size);
     }
 }

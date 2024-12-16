@@ -33,6 +33,9 @@ public class TerrainManager : MonoBehaviour
     private bool needsUpdate;
 
 
+    public bool allowTerraforming = true;
+
+
     [SerializeField] private Transform viewer;
     private Dictionary<Vector2, GameObject> terrainChunkDictionary = new Dictionary<Vector2, GameObject>(); // dictionary of all created chunks and their coords
     private List<Vector2> chunksVisibleLastUpdate = new List<Vector2>(); // list of chunk coords that were visible last update
@@ -93,7 +96,7 @@ public class TerrainManager : MonoBehaviour
         lastChunkCoord = currentChunkCoord;
         if (randomSeed) seed = Random.value * 10000000;
         UpdateChunks(currentChunkCoord);
-        // UpdateChunks(currentChunkCoord);
+        UpdateChunks(currentChunkCoord);
     }
 
     // Update is called once per frame
@@ -165,34 +168,6 @@ public class TerrainManager : MonoBehaviour
         return chunkLod;
     }
 
-    // private Dictionary<Vector2, int> GetNeighborLODS(Vector2 coord)
-    // {
-    //     Vector2[] directions = new Vector2[]
-    //     {
-    //         Vector2.left,
-    //         Vector2.right,
-    //         Vector2.up,
-    //         Vector2.down
-    //     };
-
-    //     Dictionary<Vector2, int> neighborLODs = new Dictionary<Vector2, int>();
-
-    //     foreach (var direction in directions)
-    //     {
-    //         Vector2 neighborCoord = coord + direction;
-    //         if (terrainChunkDictionary.TryGetValue(neighborCoord, out TerrainChunk neighborChunk))
-    //         {
-    //             neighborLODs[direction] = neighborChunk.lod;
-    //         } else {
-    //             float dist = (neighborCoord - coord).sqrMagnitude;
-    //             neighborLODs[direction] = lods[^1].lod;;
-    //         }
-    //     }
-
-    //     return neighborLODs;
-
-    // }
-
 
     // used in editor
     public void GenerateChunks()
@@ -224,8 +199,6 @@ public class TerrainManager : MonoBehaviour
 
     public void CreateChunk(Vector2 coord, int chunkLod, Vector4 chunkNeighbors)
     {
-        // TerrainChunk newChunk = new TerrainChunk(coord, transform, chunkWidth, chunkHeight, noiseShader, marchingCubesShader, material, gradient, seed, noiseData, chunkNeighbors);
-        // newChunk.EnableChunkLOD(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod, GetNeighborLODS(coord), chunkNeighbors);
         GameObject newChunk = new GameObject("Terrain Chunk " + coord);
         newChunk.transform.parent = transform;
         newChunk.transform.position = new Vector3(coord.x * chunkWidth, 0, coord.y * chunkWidth);
@@ -269,21 +242,11 @@ public class TerrainManager : MonoBehaviour
         if (terrainChunkDictionary.ContainsKey(coord))
         {
             terrainChunkDictionary[coord].GetComponent<ChunkManager>().UpdateChunk(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod, chunkNeighbors);
-            // terrainChunkDictionary[coord].EnableChunkLOD(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod, GetNeighborLODS(coord), chunkNeighbors);
         } else CreateChunk(coord, chunkLod, chunkNeighbors);
     }
 
     private Vector4 CheckForChunkNeighbors(int x, int z)
     {
-        // circular world
-        // Vector4 chunkNeighbors = new Vector4(
-        //     (x * x + (z - 1) * (z - 1) < renderDistance * renderDistance) ? 1 : 0,
-        //     ((x + 1) * (x + 1) + z * z < renderDistance * renderDistance) ? 1 : 0,
-        //     (x * x + (z + 1) * (z + 1) < renderDistance * renderDistance) ? 1 : 0,
-        //     ((x - 1) * (x - 1) + z * z < renderDistance * renderDistance) ? 1 : 0
-        // );
-
-        // square world
         Vector4 chunkNeighbors = new Vector4(
             (Mathf.Abs(z) + 1 > renderDistance - 1 && z <= 0) ? 0 : 1,
             (Mathf.Abs(x) + 1 > renderDistance - 1 && x >= 0) ? 0 : 1,
@@ -292,6 +255,25 @@ public class TerrainManager : MonoBehaviour
         );
 
         return chunkNeighbors;
+    }
+
+    public void ModifyTerrain(Vector3 hitPoint, float brushSize, bool add)
+    {
+        Bounds brushBounds = new Bounds(hitPoint, Vector3.one * brushSize);
+
+        foreach (var item in terrainChunkDictionary)
+        {
+            GameObject chunk = item.Value;
+            ChunkManager chunkManager = chunk.GetComponent<ChunkManager>();
+            if (chunkManager != null)
+            {
+                if (chunkManager.bounds.Intersects(brushBounds))
+                {
+                    Vector3 localHitPoint = hitPoint - chunk.transform.position;
+                    chunkManager.Terraform(localHitPoint, brushSize, add);
+                }
+            }
+        }
     }
 
 

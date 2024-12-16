@@ -1,9 +1,5 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public class MeshGenerator
 {
@@ -49,7 +45,6 @@ public class MeshGenerator
         // Set compute shader parameters
         marchingCubesShader.SetBuffer(kernel, "_Triangles", trianglesBuffer);
         marchingCubesShader.SetBuffer(kernel, "_DensityValues", densityBuffer);
-        // marchingCubesShader.SetBuffer(kernel, "_VertexCache", vertexCacheBuffer);
         marchingCubesShader.SetInt("_ChunkWidth", width);
         marchingCubesShader.SetInt("_ChunkHeight", height);
         marchingCubesShader.SetFloat("_IsoLevel", isoLevel);
@@ -137,7 +132,7 @@ public class MeshGenerator
     }
 
 
-    public float[] UpdateDensity(int width, int height, float[] densityMap, Vector3 hitPosition, float brushSize, bool add)
+    public float[] UpdateDensity(int width, int height, float[] densityMap, Vector3 hitPosition, float brushSize, bool add, Vector4 neighbors)
     {
         densityBuffer.SetData(densityMap);
         int kernel = marchingCubesShader.FindKernel("UpdateDensity");
@@ -149,6 +144,11 @@ public class MeshGenerator
         marchingCubesShader.SetVector("_HitPosition", hitPosition);
         marchingCubesShader.SetFloat("_BrushSize", brushSize);
         marchingCubesShader.SetFloat("_TerraformStrength", add ? 1f : -1f);
+
+        marchingCubesShader.SetBool("borderDown", neighbors[0] == 0);
+        marchingCubesShader.SetBool("borderRight", neighbors[1] == 0);
+        marchingCubesShader.SetBool("borderUp", neighbors[2] == 0);
+        marchingCubesShader.SetBool("borderLeft", neighbors[3] == 0);
 
         float numThreadsXZ = width;
         float numThreadsY = height;

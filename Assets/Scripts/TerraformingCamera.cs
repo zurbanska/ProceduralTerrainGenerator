@@ -5,17 +5,18 @@ public class TerraformingCamera : MonoBehaviour
     Vector3 hitPoint;
     Camera cam;
     public float brushSize = 2f;
+    public TerrainManager terrainManager;
 
     private void Awake() {
         cam = Camera.main;
     }
 
     private void LateUpdate() {
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButtonDown(0) && terrainManager.allowTerraforming)
         {
             Terraform(true);
         }
-        else if (Input.GetMouseButton(1))
+        else if (Input.GetMouseButtonDown(1) && terrainManager.allowTerraforming)
         {
             Terraform(false);
         }
@@ -31,15 +32,16 @@ public class TerraformingCamera : MonoBehaviour
             Transform objectHit = hit.transform;
             hitPoint = hit.point;
 
-            objectHit.GetComponent<ChunkManager>().OnRaycastHit(hitPoint, brushSize, add);
+            terrainManager.ModifyTerrain(hitPoint, brushSize, add);
+
         } else {
-            Debug.Log("miss");
+            // Debug.Log("miss");
         }
     }
 
     private void OnDrawGizmos() {
         Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(hitPoint, brushSize);
+        Gizmos.DrawWireCube(hitPoint, Vector3.one * brushSize);
     }
 
 }
