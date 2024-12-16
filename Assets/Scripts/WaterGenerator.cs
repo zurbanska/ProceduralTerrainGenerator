@@ -8,6 +8,7 @@ public class WaterGenerator
         GameObject water = new GameObject("Water");
         water.transform.parent = parent;
         water.transform.position = parent.position;
+        water.layer = LayerMask.NameToLayer("Water"); ;
 
         Material waterMaterial = Resources.Load<Material>("WaterMaterial");
         waterMaterial.SetFloat("_WaterLevel", waterLevel);
@@ -79,7 +80,7 @@ public class WaterGenerator
         MeshRenderer meshRenderer = waterPlane.AddComponent<MeshRenderer>();
 
         meshRenderer.material = material;
-        waterPlane.layer = 4; // water layer
+        waterPlane.layer = LayerMask.NameToLayer("Water"); // water layer
         meshFilter.mesh = mesh;
     }
 

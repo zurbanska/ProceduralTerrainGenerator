@@ -1,4 +1,5 @@
 #pragma kernel March
+#pragma kernel UpdateDensity
 
 // lookup tables for marching cubes algorithm
 #include "./MarchingTable.hlsl"
@@ -11,6 +12,10 @@ int _ChunkWidth;
 int _ChunkHeight;
 
 int _CubeSize;
+
+float3 _HitPosition;
+float _BrushSize;
+float _TerraformStrength;
 
 
 struct Triangle {
@@ -156,9 +161,18 @@ void March(uint3 id : SV_DispatchThreadID)
         //     _Triangles.Append(tri3);
         // }
 
-
     }
 
+}
 
+[numthreads(8,8,8)]
+void UpdateDensity( uint3 id : SV_DispatchThreadID )
+{
+    if (id.x >= _ChunkWidth - 1 || id.y >= _ChunkHeight - 1 || id.z >= _ChunkWidth - 1)
+        return;
 
+    if (distance(id, _HitPosition) <= _BrushSize)
+    {
+        _DensityValues[indexFromCoord(id.x, id.y, id.z)] += _TerraformStrength;
+    }
 }

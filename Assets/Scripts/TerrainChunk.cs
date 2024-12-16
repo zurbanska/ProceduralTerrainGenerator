@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public class TerrainChunk
+public class TerrainChunk : MonoBehaviour
 {
 
     private GameObject chunk;
@@ -54,10 +54,11 @@ public class TerrainChunk
         chunk = new GameObject("Terrain Chunk " + coord);
         chunk.transform.parent = parent;
         chunk.transform.position = new Vector3(coord.x * width, 0, coord.y * width);
+        chunk.layer = LayerMask.NameToLayer("Terrain");
 
         chunk.AddComponent<MeshFilter>();
         chunk.AddComponent<MeshRenderer>();
-        // chunk.AddComponent<MeshCollider>();
+        chunk.AddComponent<MeshCollider>();
         // Rigidbody rb = chunk.AddComponent<Rigidbody>();
         // rb.useGravity = false;
         // rb.isKinematic = true;
@@ -195,7 +196,7 @@ public class TerrainChunk
     private void SetMesh(LodMesh lodMesh)
     {
         chunk.GetComponent<MeshFilter>().mesh = lodMesh.mesh;
-        // chunk.GetComponent<MeshCollider>().sharedMesh = lodMesh.mesh;
+        chunk.GetComponent<MeshCollider>().sharedMesh = lodMesh.mesh;
 
         chunk.GetComponent<MeshRenderer>().material = material;
     }
@@ -210,7 +211,6 @@ public class TerrainChunk
     {
         UnityEngine.Object.DestroyImmediate(chunk);
     }
-
 
     public struct LodMesh
     {

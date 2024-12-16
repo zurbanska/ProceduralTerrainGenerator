@@ -31,7 +31,7 @@ public class MeshGenerator
         vertexCacheBuffer = new ComputeBuffer(maxTriangles, sizeof(float) * 3);
     }
 
-    void ReleaseBuffers()
+    public void ReleaseBuffers()
     {
         trianglesBuffer.Release();
         triangleCountBuffer.Release();
@@ -43,14 +43,13 @@ public class MeshGenerator
     {
         int cubeSize = lod;
 
-        // CreateBuffers(width, height);
-
         densityBuffer.SetData(densityMap);
+        int kernel = marchingCubesShader.FindKernel("March");
 
         // Set compute shader parameters
-        marchingCubesShader.SetBuffer(0, "_Triangles", trianglesBuffer);
-        marchingCubesShader.SetBuffer(0, "_DensityValues", densityBuffer);
-        marchingCubesShader.SetBuffer(0, "_VertexCache", vertexCacheBuffer);
+        marchingCubesShader.SetBuffer(kernel, "_Triangles", trianglesBuffer);
+        marchingCubesShader.SetBuffer(kernel, "_DensityValues", densityBuffer);
+        // marchingCubesShader.SetBuffer(kernel, "_VertexCache", vertexCacheBuffer);
         marchingCubesShader.SetInt("_ChunkWidth", width);
         marchingCubesShader.SetInt("_ChunkHeight", height);
         marchingCubesShader.SetFloat("_IsoLevel", isoLevel);
@@ -60,7 +59,7 @@ public class MeshGenerator
         float numThreadsY = height / cubeSize;
 
         // Dispatch shader
-        marchingCubesShader.Dispatch(0, Mathf.CeilToInt(numThreadsXZ / 8.0f), Mathf.CeilToInt(numThreadsY / 8.0f), Mathf.CeilToInt(numThreadsXZ / 8.0f));
+        marchingCubesShader.Dispatch(kernel, Mathf.CeilToInt(numThreadsXZ / 8.0f), Mathf.CeilToInt(numThreadsY / 8.0f), Mathf.CeilToInt(numThreadsXZ / 8.0f));
 
         // Retrieve triangle data
         ComputeBuffer.CopyCount(trianglesBuffer, triangleCountBuffer, 0);
@@ -135,6 +134,34 @@ public class MeshGenerator
         mesh.colors = meshColors;
         mesh.RecalculateNormals();
         return mesh;
+    }
+
+
+    public float[] UpdateDensity(int width, int height, float[] densityMap, Vector3 hitPosition, float brushSize, bool add)
+    {
+        densityBuffer.SetData(densityMap);
+        int kernel = marchingCubesShader.FindKernel("UpdateDensity");
+
+        marchingCubesShader.SetBuffer(kernel, "_DensityValues", densityBuffer);
+        marchingCubesShader.SetInt("_ChunkWidth", width);
+        marchingCubesShader.SetInt("_ChunkHeight", height);
+        marchingCubesShader.SetInt("_CubeSize", 1);
+        marchingCubesShader.SetVector("_HitPosition", hitPosition);
+        marchingCubesShader.SetFloat("_BrushSize", brushSize);
+        marchingCubesShader.SetFloat("_TerraformStrength", add ? 1f : -1f);
+
+        float numThreadsXZ = width;
+        float numThreadsY = height;
+
+        // Dispatch shader
+        marchingCubesShader.Dispatch(kernel, Mathf.CeilToInt(numThreadsXZ / 8.0f), Mathf.CeilToInt(numThreadsY / 8.0f), Mathf.CeilToInt(numThreadsXZ / 8.0f));
+
+        float[] newDensityMap = new float[densityMap.Length];
+
+        densityBuffer.GetData(newDensityMap);
+
+        ReleaseBuffers();
+        return newDensityMap;
     }
 
 
