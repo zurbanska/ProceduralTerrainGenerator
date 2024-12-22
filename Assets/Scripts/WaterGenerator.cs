@@ -1,7 +1,10 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class WaterGenerator
 {
+
+    private float shrinkFactor;
 
     public void GenerateWater(Transform parent, float width, float waterLevel, int lod, Vector4 neighbors)
     {
@@ -13,63 +16,88 @@ public class WaterGenerator
         Material waterMaterial = Resources.Load<Material>("WaterMaterial");
         waterMaterial.SetFloat("_WaterLevel", waterLevel);
 
-        float shrinkFactor = lod;
+        shrinkFactor = lod * 1.5f;
 
-        // top water plane
+        // top plane corner vertices
         Vector3 t1 = new Vector3((1 - neighbors[3]) * shrinkFactor, waterLevel, (1 - neighbors[0]) * shrinkFactor); // bottom left
         Vector3 t2 = new Vector3(width - (1 - neighbors[1]) * shrinkFactor, waterLevel, (1 - neighbors[0]) * shrinkFactor); // bottom right
         Vector3 t3 = new Vector3((1 - neighbors[3]) * shrinkFactor, waterLevel, width - (1 - neighbors[2]) * shrinkFactor); // top left
         Vector3 t4 = new Vector3(width - (1 - neighbors[1]) * shrinkFactor, waterLevel, width - (1 - neighbors[2]) * shrinkFactor); // top right
 
-        Mesh topMesh = GenerateFlatPlaneMesh(t1, t2, t3, t4);
-        GenerateWaterPlaneObject(topMesh, water.transform, waterMaterial);
 
-        // bottom water plane
+        // bottom plane corner vertices
         Vector3 b1 = new Vector3((1 - neighbors[3]) * shrinkFactor, 0, (1 - neighbors[0]) * shrinkFactor); // bottom left
         Vector3 b2 = new Vector3(width - (1 - neighbors[1]) * shrinkFactor, 0, (1 - neighbors[0]) * shrinkFactor); // bottom right
         Vector3 b3 = new Vector3((1 - neighbors[3]) * shrinkFactor, 0, width - (1 - neighbors[2]) * shrinkFactor); // top left
         Vector3 b4 = new Vector3(width - (1 - neighbors[1]) * shrinkFactor, 0, width - (1 - neighbors[2]) * shrinkFactor); // top right
 
-        Mesh bottomMesh = GenerateFlatPlaneMesh(b1, b2, b3, b4);
+
+        // resolution (subdivision) of planes
+        Vector2Int flatRes = new Vector2Int(8, 8);
+        Vector2Int sideRes = new Vector2Int(8, Mathf.CeilToInt(waterLevel/4));
+
+        // top plane
+        Mesh topMesh = GenerateFlatMesh(flatRes, Vector3.up, t1, t2, t3, t4);
+        GenerateWaterPlaneObject(topMesh, water.transform, waterMaterial);
+
+        // bottom plane
+        Mesh bottomMesh = GenerateFlatMesh(flatRes, Vector3.up, b1, b2, b3, b4);
         GenerateWaterPlaneObject(bottomMesh, water.transform, waterMaterial);
 
-        // neighbor chunks present: 0 - bottom, 1 - right, 2 - up, 3 - left
-        int neighborCount = GetNeighborCount(neighbors);
 
-        if (neighborCount == 4) {
-            // neighbor chunks on all sides
-            return;
+        // checking for absent neighboring chunks to generate a water edge (side plane)
+
+        if (neighbors[0] == 0)
+        {
+            Mesh sideMesh = GenerateSideMesh(sideRes, Vector3.back, new Vector2(0, -shrinkFactor * 0.5f), b1, b2, t1, t2);
+            GenerateWaterPlaneObject(sideMesh, water.transform, waterMaterial);
+
+            if (neighbors[1] == 0)
+            {
+                Mesh cornerMesh = GenerateCornerMesh(b2, t2, sideRes.y, Vector3.back + Vector3.right, new Vector2(shrinkFactor * 0.5f, -shrinkFactor * 0.5f));
+                GenerateWaterPlaneObject(cornerMesh, water.transform, waterMaterial);
+            }
         }
-        else if (neighborCount == 3) {
-            // one side exposed
-            if (neighbors[0] == 0) GenerateWaterPlaneObject(GenerateCurvedPlaneMesh(b1, b2, t1, t2, shrinkFactor * 0.5f, new Vector3(0, 0, -shrinkFactor * 0.5f), 0), water.transform, waterMaterial);
-            else if (neighbors[1] == 0) GenerateWaterPlaneObject(GenerateCurvedPlaneMesh(b2, b4, t2, t4, shrinkFactor * 0.5f, new Vector3(shrinkFactor * 0.5f, 0), 1), water.transform, waterMaterial);
-            else if (neighbors[2] == 0) GenerateWaterPlaneObject(GenerateCurvedPlaneMesh(b3, b4, t3, t4, shrinkFactor * 0.5f, new Vector3(0, 0, shrinkFactor * 0.5f), 2), water.transform, waterMaterial);
-            else if (neighbors[3] == 0) GenerateWaterPlaneObject(GenerateCurvedPlaneMesh(b3, b1, t3, t1, shrinkFactor * 0.5f, new Vector3(-shrinkFactor * 0.5f, 0, 0), 3), water.transform, waterMaterial);
+
+        if (neighbors[1] == 0)
+        {
+            Mesh sideMesh = GenerateSideMesh(sideRes, Vector3.right, new Vector2(shrinkFactor * 0.5f, 0), b2, b4, t2, t4);
+            GenerateWaterPlaneObject(sideMesh, water.transform, waterMaterial);
+
+            if (neighbors[2] == 0)
+            {
+                Mesh cornerMesh = GenerateCornerMesh(b4, t4, sideRes.y, Vector3.right + Vector3.forward, new Vector2(shrinkFactor * 0.5f, shrinkFactor * 0.5f));
+                GenerateWaterPlaneObject(cornerMesh, water.transform, waterMaterial);
+            }
         }
-        else if (neighborCount == 2) {
-            // 2 sides exposed
-            if (neighbors[0] == 0 && neighbors[3] == 0) GenerateWaterPlaneObject(GenerateCornerPlaneMesh(b1, b2, t1, t2, b3, b1, t3, t1, shrinkFactor * 0.5f, new Vector3(-shrinkFactor * 0.5f, 0, 0), new Vector3(0, 0, -shrinkFactor * 0.5f), 0), water.transform, waterMaterial);
-            else if (neighbors[0] == 0 && neighbors[1] == 0) GenerateWaterPlaneObject(GenerateCornerPlaneMesh(b1, b2, t1, t2, b2, b4, t2, t4, shrinkFactor * 0.5f, new Vector3(shrinkFactor * 0.5f, 0), new Vector3(0, 0, -shrinkFactor * 0.5f), 1), water.transform, waterMaterial);
-            else if (neighbors[2] == 0 && neighbors[1] == 0) GenerateWaterPlaneObject(GenerateCornerPlaneMesh(b3, b4, t3, t4, b2, b4, t2, t4, shrinkFactor * 0.5f, new Vector3(shrinkFactor * 0.5f, 0), new Vector3(0, 0, shrinkFactor * 0.5f), 2), water.transform, waterMaterial);
-            else if (neighbors[2] == 0 && neighbors[3] == 0) GenerateWaterPlaneObject(GenerateCornerPlaneMesh(b3, b4, t3, t4, b3, b1, t3, t1, shrinkFactor * 0.5f, new Vector3(-shrinkFactor * 0.5f, 0, 0), new Vector3(0, 0, shrinkFactor * 0.5f), 3), water.transform, waterMaterial);
+
+        if (neighbors[2] == 0)
+        {
+            Mesh sideMesh = GenerateSideMesh(sideRes, Vector3.forward, new Vector2(0, shrinkFactor * 0.5f), b3, b4, t3, t4);
+            GenerateWaterPlaneObject(sideMesh, water.transform, waterMaterial);
+
+            if (neighbors[3] == 0)
+            {
+                Mesh cornerMesh = GenerateCornerMesh(b3, t3, sideRes.y, Vector3.forward + Vector3.left, new Vector2(-shrinkFactor * 0.5f, shrinkFactor * 0.5f));
+                GenerateWaterPlaneObject(cornerMesh, water.transform, waterMaterial);
+            }
         }
-        else if (neighborCount == 0) {
-            // all sides exposed
-            GenerateWaterPlaneObject(GenerateCornerPlaneMesh(b1, b2, t1, t2, b3, b1, t3, t1, shrinkFactor * 0.5f, new Vector3(-shrinkFactor * 0.5f, 0, 0), new Vector3(0, 0, -shrinkFactor * 0.5f), 0), water.transform, waterMaterial);
-            GenerateWaterPlaneObject(GenerateCornerPlaneMesh(b3, b4, t3, t4, b2, b4, t2, t4, shrinkFactor * 0.5f, new Vector3(shrinkFactor * 0.5f, 0), new Vector3(0, 0, shrinkFactor * 0.5f), 2), water.transform, waterMaterial);
-            GenerateWaterPlaneObject(GenerateCornerFillingMesh(b3, t3, shrinkFactor * 0.5f, new Vector3(-shrinkFactor * 0.5f, 0, 0), new Vector3(0, 0, shrinkFactor * 0.5f)), water.transform, waterMaterial);
-            GenerateWaterPlaneObject(GenerateCornerFillingMesh(b2, t2, shrinkFactor * 0.5f, new Vector3(shrinkFactor * 0.5f, 0, 0), new Vector3(0, 0, - shrinkFactor * 0.5f)), water.transform, waterMaterial);
+
+        if (neighbors[3] == 0)
+        {
+            Mesh sideMesh = GenerateSideMesh(sideRes, Vector3.left, new Vector2(-shrinkFactor * 0.5f, 0), b3, b1, t3, t1);
+            GenerateWaterPlaneObject(sideMesh, water.transform, waterMaterial);
+
+            if (neighbors[0] == 0)
+            {
+                Mesh cornerMesh = GenerateCornerMesh(b1, t1, sideRes.y, Vector3.left + Vector3.back, new Vector2(-shrinkFactor * 0.5f, -shrinkFactor * 0.5f));
+                GenerateWaterPlaneObject(cornerMesh, water.transform, waterMaterial);
+            }
         }
 
     }
 
-    private int GetNeighborCount(Vector4 neighbors)
-    {
-        int neighborCount = Mathf.RoundToInt(neighbors.x + neighbors.y + neighbors.z + neighbors.w);
-        return neighborCount;
-    }
-
+    // generating object from mesh
     private void GenerateWaterPlaneObject(Mesh mesh, Transform parent, Material material)
     {
         GameObject waterPlane = new GameObject();
@@ -80,435 +108,290 @@ public class WaterGenerator
         MeshRenderer meshRenderer = waterPlane.AddComponent<MeshRenderer>();
 
         meshRenderer.material = material;
-        waterPlane.layer = LayerMask.NameToLayer("Water"); // water layer
+        waterPlane.layer = LayerMask.NameToLayer("Water");
         meshFilter.mesh = mesh;
     }
 
-    private Mesh GenerateFlatPlaneMesh(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4)
+
+    // top and bottom meshes
+    private Mesh GenerateFlatMesh(Vector2Int resolution, Vector3 baseNormal, Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4)
     {
-        Mesh mesh = new Mesh();
+        List<Vector3> vertices = FlatVertices(v1, v2, v3, v4, resolution);
+        List<int> triangles = TrianglesFromVertices(vertices, resolution, baseNormal, out List<Vector3> normals);
 
-        Vector3[] vertices = new Vector3[4];
-        vertices[0] = v1; // bottom left
-        vertices[1] = v2; // bottom right
-        vertices[2] = v3; // top left
-        vertices[3] = v4; // top right
-
-        int[] triangles = new int[]
+        Mesh mesh = new()
         {
-            0, 2, 1, // first triangle
-            1, 2, 0, // first triangle - reverse
-            2, 3, 1,  // second triangle
-            1, 3, 2  // second triangle - reverse
+            vertices = vertices.ToArray(),
+            triangles = triangles.ToArray(),
+            normals = normals.ToArray()
         };
-
-        Vector2[] uvs = new Vector2[4];
-        uvs[0] = new Vector2(0, 0);
-        uvs[1] = new Vector2(1, 0);
-        uvs[2] = new Vector2(0, 1);
-        uvs[3] = new Vector2(1, 1);
-
-        Vector3 normalVector = (v1.y == 0) ? Vector3.down : Vector3.up;
-
-        Vector3[] normals = new Vector3[]
-        {
-            normalVector,
-            normalVector,
-            normalVector,
-            normalVector
-        };
-
-        mesh.vertices = vertices;
-        mesh.triangles = triangles;
-        mesh.uv = uvs;
-        mesh.normals = normals;
-
-        return mesh;
-
-    }
-
-    private Mesh GenerateCurvedPlaneMesh(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4, float shrinkFactor, Vector3 displacement, int edgeIndex)
-    {
-        Mesh mesh = new Mesh();
-
-        Vector3[] vertices = new Vector3[12];
-        vertices[0] = v1; // bottom left back
-        vertices[1] = v1 + displacement + new Vector3(0, shrinkFactor, 0); // bottom left front
-        vertices[2] = v2; // bottom right back
-        vertices[3] = v2 + displacement + new Vector3(0, shrinkFactor, 0); // bottom right front
-        vertices[4] = v3; // top left back
-        vertices[5] = v3 + displacement - new Vector3(0, shrinkFactor, 0); // top left front
-        vertices[6] = v4; // top right back
-        vertices[7] = v4 + displacement - new Vector3(0, shrinkFactor, 0); // top right front
-
-        // duplicate vertices for flatshading
-        vertices[8] = vertices[1]; // bottom left front duplicate
-        vertices[9] = vertices[3]; // bottom right front duplicate
-        vertices[10] = vertices[5]; // top left front duplicate
-        vertices[11] = vertices[7]; // top right front duplicate
-
-        int[] triangles = new int[]
-        {
-            // bottom curve
-            0, 1, 2,
-            2, 1, 0,
-            1, 3, 2,
-            2, 3, 1,
-
-            // main side plane
-            8, 10, 9,
-            9, 10, 8,
-            10, 11, 9,
-            9, 11, 10,
-
-            // top curve
-            5, 4, 7,
-            7, 4, 5,
-            4, 6, 7,
-            7, 6, 4
-        };
-
-        Vector2[] uvs = new Vector2[12];
-        uvs[0] = new Vector2(0, 0);
-        uvs[1] = new Vector2(0, 0);
-        uvs[2] = new Vector2(1, 0);
-        uvs[3] = new Vector2(1, 0);
-        uvs[4] = new Vector2(0, 1);
-        uvs[5] = new Vector2(0, 1);
-        uvs[6] = new Vector2(1, 1);
-        uvs[7] = new Vector2(1, 1);
-
-        uvs[8] = uvs[1];
-        uvs[9] = uvs[3];
-        uvs[10] = uvs[5];
-        uvs[11] = uvs[7];
-
-
-        Vector3[] normals = new Vector3[]
-        {
-            Vector3.down + displacement,
-            Vector3.down + displacement,
-            Vector3.down + displacement,
-            Vector3.down + displacement,
-
-            Vector3.up + displacement,
-            Vector3.up + displacement,
-            Vector3.up + displacement,
-            Vector3.up + displacement,
-
-            displacement,
-            displacement,
-            displacement,
-            displacement
-        };
-
-        mesh.vertices = vertices;
-        mesh.triangles = triangles;
-        mesh.uv = uvs;
-        mesh.normals = normals;
 
         return mesh;
     }
 
-    private Mesh GenerateCornerFillingMesh(Vector3 v1, Vector3 v2, float shrinkFactor, Vector3 displacementX, Vector3 displacementZ)
+    // side (curved) meshes
+    private Mesh GenerateSideMesh(Vector2Int resolution, Vector3 baseNormal, Vector2 displacementVector, Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4)
     {
-        Mesh mesh = new Mesh();
+        List<Vector3> vertices = SideVertices(v1, v2, v3, v4, resolution, displacementVector);
+        List<int> triangles = TrianglesFromVertices(vertices, new Vector2Int(resolution.x, resolution.y + 2), baseNormal, out List<Vector3> normals);
 
-        Vector3[] vertices = new Vector3[10];
-        vertices[0] = v1;
-        vertices[1] = v1 + displacementZ + new Vector3(0, shrinkFactor, 0);
-        vertices[2] = v1 + displacementX + new Vector3(0, shrinkFactor, 0);
-        vertices[3] = v2;
-        vertices[4] = v2 + displacementZ - new Vector3(0, shrinkFactor, 0);
-        vertices[5] = v2 + displacementX - new Vector3(0, shrinkFactor, 0);
-
-        vertices[6] = vertices[1];
-        vertices[7] = vertices[2];
-        vertices[8] = vertices[4];
-        vertices[9] = vertices[5];
-
-        int[] triangles = new int[]
+        Mesh mesh = new()
         {
-            // bottom triangle
-            0, 1, 2,
-            2, 1, 0,
-
-            // corner side
-            6, 8, 7,
-            7, 8, 6,
-            8, 9, 7,
-            7, 9, 8,
-
-            // top triangle
-            3, 4, 5,
-            5, 4, 3
+            vertices = vertices.ToArray(),
+            triangles = triangles.ToArray(),
+            normals = normals.ToArray()
         };
-
-        Vector2[] uvs = new Vector2[10];
-        uvs[0] = new Vector2(0, 0);
-        uvs[1] = new Vector2(1, 0);
-        uvs[2] = new Vector2(1, 0);
-        uvs[3] = new Vector2(1, 1);
-        uvs[4] = new Vector2(0, 1);
-        uvs[5] = new Vector2(1, 0);
-        uvs[6] = new Vector2(0, 0);
-        uvs[7] = new Vector2(1, 0);
-        uvs[8] = new Vector2(0, 1);
-        uvs[9] = new Vector2(1, 1);
-
-
-        Vector3[] normals = new Vector3[]
-        {
-            Vector3.down + displacementX + displacementZ,
-            Vector3.down + displacementX + displacementZ,
-            Vector3.down + displacementX + displacementZ,
-            Vector3.up + displacementX + displacementZ,
-            Vector3.up + displacementX + displacementZ,
-            Vector3.up + displacementX + displacementZ,
-            displacementX + displacementZ,
-            displacementX + displacementZ,
-            displacementX + displacementZ,
-            displacementX + displacementZ
-        };
-
-        mesh.vertices = vertices;
-        mesh.triangles = triangles;
-        mesh.uv = uvs;
-        mesh.normals = normals;
-
-        return mesh;
-
-    }
-
-    private Mesh GenerateCornerPlaneMesh(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4, Vector3 v5, Vector3 v6, Vector3 v7, Vector3 v8, float shrinkFactor, Vector3 displacementX, Vector3 displacementZ, int cornerIndex)
-    {
-        Mesh mesh = new Mesh();
-
-        Vector3[] vertices = new Vector3[34];
-
-        // chunk edge facing Z
-        vertices[0] = v1; // bottom left back
-        vertices[1] = v1 + displacementZ + new Vector3(0, shrinkFactor, 0); // bottom left front
-        vertices[2] = v2; // bottom right back
-        vertices[3] = v2 + displacementZ + new Vector3(0, shrinkFactor, 0); // bottom right front
-        vertices[4] = v3; // top left back
-        vertices[5] = v3 + displacementZ - new Vector3(0, shrinkFactor, 0); // top left front
-        vertices[6] = v4; // top right back
-        vertices[7] = v4 + displacementZ - new Vector3(0, shrinkFactor, 0); // top right front
-
-        // chunk edge facing X
-        vertices[8] = v5; // bottom left back
-        vertices[9] = v5 + displacementX + new Vector3(0, shrinkFactor, 0); // bottom left front
-        vertices[10] = v6; // bottom right back
-        vertices[11] = v6 + displacementX + new Vector3(0, shrinkFactor, 0); // bottom right front
-        vertices[12] = v7; // top left back
-        vertices[13] = v7 + displacementX - new Vector3(0, shrinkFactor, 0); // top left front
-        vertices[14] = v8; // top right back
-        vertices[15] = v8 + displacementX - new Vector3(0, shrinkFactor, 0); // top right front
-
-        // duplicate vertices for flatshading
-        vertices[16] = vertices[1];
-        vertices[17] = vertices[3];
-        vertices[18] = vertices[5];
-        vertices[19] = vertices[7];
-
-        vertices[20] = vertices[9];
-        vertices[21] = vertices[11];
-        vertices[22] = vertices[13];
-        vertices[23] = vertices[15];
-
-
-        // vertices at chunk corner to fill
-        if (cornerIndex == 0)
-        {
-            vertices[24] = vertices[15];
-            vertices[25] = vertices[4];
-            vertices[26] = vertices[5];
-
-            vertices[27] = vertices[1];
-            vertices[28] = vertices[10];
-            vertices[29] = vertices[11];
-        }
-        else if (cornerIndex == 1)
-        {
-            vertices[24] = vertices[7];
-            vertices[25] = vertices[6];
-            vertices[26] = vertices[13];
-
-            vertices[27] = vertices[9];
-            vertices[28] = vertices[8];
-            vertices[29] = vertices[3];
-        }
-        else if (cornerIndex == 2)
-        {
-            vertices[24] = vertices[15];
-            vertices[25] = vertices[14];
-            vertices[26] = vertices[7];
-
-            vertices[27] = vertices[3];
-            vertices[28] = vertices[2];
-            vertices[29] = vertices[11];
-        }
-        else
-        {
-            vertices[24] = vertices[5];
-            vertices[25] = vertices[4];
-            vertices[26] = vertices[13];
-
-            vertices[27] = vertices[9];
-            vertices[28] = vertices[0];
-            vertices[29] = vertices[1];
-        }
-
-        vertices[30] = vertices[29];
-        vertices[31] = vertices[24];
-        vertices[32] = vertices[27];
-        vertices[33] = vertices[26];
-
-        int[] triangles = new int[]
-        {
-            // edge facing Z
-            // bottom curve
-            0, 1, 2,
-            2, 1, 0,
-            1, 3, 2,
-            2, 3, 1,
-
-            // main side mesh
-            16, 18, 17,
-            17, 18, 16,
-            18, 19, 17,
-            17, 19, 18,
-
-            // top curve
-            5, 4, 7,
-            7, 4, 5,
-            4, 6, 7,
-            7, 6, 4,
-
-            // edge facing X
-            // bottom curve
-            8, 9, 10,
-            10, 9, 8,
-            9, 11, 10,
-            10, 11, 9,
-
-            // main side mesh
-            20, 22, 21,
-            21, 22, 20,
-            22, 23, 21,
-            21, 23, 22,
-
-            // top curve
-            13, 12, 15,
-            15, 12, 13,
-            12, 14, 15,
-            15, 14, 12,
-
-            // corner fillings
-            24, 25, 26,
-            26, 25, 24,
-            27, 28, 29,
-            29, 28, 27,
-
-            30, 31, 32,
-            32, 31, 30,
-            31, 33, 32,
-            32, 33, 31
-
-        };
-
-        Vector2[] uvs = new Vector2[34];
-        uvs[0] = new Vector2(0, 0);
-        uvs[1] = new Vector2(0, 0);
-        uvs[2] = new Vector2(1, 0);
-        uvs[3] = new Vector2(1, 0);
-        uvs[4] = new Vector2(0, 1);
-        uvs[5] = new Vector2(0, 1);
-        uvs[6] = new Vector2(1, 1);
-        uvs[7] = new Vector2(1, 1);
-        uvs[8] = new Vector2(0, 0);
-        uvs[9] = new Vector2(0, 0);
-        uvs[10] = new Vector2(1, 0);
-        uvs[11] = new Vector2(1, 0);
-        uvs[12] = new Vector2(0, 1);
-        uvs[13] = new Vector2(0, 1);
-        uvs[14] = new Vector2(1, 1);
-        uvs[15] = new Vector2(1, 1);
-
-        uvs[16] = uvs[1];
-        uvs[17] = uvs[3];
-        uvs[18] = uvs[5];
-        uvs[19] = uvs[7];
-        uvs[20] = uvs[9];
-        uvs[21] = uvs[11];
-        uvs[22] = uvs[13];
-        uvs[23] = uvs[15];
-
-        uvs[24] = uvs[0];
-        uvs[25] = uvs[0];
-        uvs[26] = uvs[0];
-        uvs[27] = uvs[0];
-        uvs[28] = uvs[0];
-        uvs[29] = uvs[0];
-        uvs[30] = uvs[0];
-        uvs[31] = uvs[0];
-        uvs[32] = uvs[0];
-        uvs[33] = uvs[0];
-
-        Vector3[] normals = new Vector3[]
-        {
-            Vector3.down + displacementZ,
-            Vector3.down + displacementZ,
-            Vector3.down + displacementZ,
-            Vector3.down + displacementZ,
-
-            Vector3.up + displacementZ,
-            Vector3.up + displacementZ,
-            Vector3.up + displacementZ,
-            Vector3.up + displacementZ,
-
-            Vector3.down + displacementX,
-            Vector3.down + displacementX,
-            Vector3.down + displacementX,
-            Vector3.down + displacementX,
-
-            Vector3.up + displacementX,
-            Vector3.up + displacementX,
-            Vector3.up + displacementX,
-            Vector3.up + displacementX,
-
-            displacementZ,
-            displacementZ,
-            displacementZ,
-            displacementZ,
-
-            displacementX,
-            displacementX,
-            displacementX,
-            displacementX,
-
-            Vector3.up + displacementX + displacementZ,
-            Vector3.up + displacementX + displacementZ,
-            Vector3.up + displacementX + displacementZ,
-
-            Vector3.down + displacementX + displacementZ,
-            Vector3.down + displacementX + displacementZ,
-            Vector3.down + displacementX + displacementZ,
-
-            displacementZ + displacementX,
-            displacementZ + displacementX,
-            displacementZ + displacementX,
-            displacementZ + displacementX,
-
-        };
-
-        mesh.vertices = vertices;
-        mesh.triangles = triangles;
-        mesh.uv = uvs;
-        mesh.normals = normals;
 
         return mesh;
     }
+
+    // corner filling meshes (fill gaps between side meshes)
+    private Mesh GenerateCornerMesh(Vector3 v1, Vector3 v2, int resolution, Vector3 baseNormal, Vector2 displacementVector)
+    {
+        List<Vector3> vertices = CornerVeritices(v1, v2, resolution, displacementVector);
+        List<int> triangles = CornerTrianglesFromVertices(vertices, resolution, baseNormal, out List<Vector3> normals);
+
+        Mesh mesh = new()
+        {
+            vertices = vertices.ToArray(),
+            triangles = triangles.ToArray(),
+            normals = normals.ToArray()
+        };
+
+        return mesh;
+    }
+
+
+    // vertices for flat planes
+    private List<Vector3> FlatVertices(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4, Vector2Int resolution)
+    {
+        List<Vector3> vertices = new();
+
+        float stepX = (v2.x - v1.x) / resolution.x;
+        float stepZ = (v3.z - v1.z) / resolution.y;
+        float yLevel = v1.y;
+
+        for (int x = 0; x <= resolution.x; x++)
+        {
+            for (int z = 0; z <= resolution.y; z++)
+            {
+                vertices.Add(new Vector3(v1.x + x * stepX, yLevel, v1.z + z * stepZ));
+            }
+        }
+
+        return vertices;
+    }
+
+
+    // vertices for side planes
+    private List<Vector3> SideVertices(Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4, Vector2Int resolution, Vector2 expandFactor)
+    {
+        List<Vector3> vertices = new();
+
+        float topLimit = v3.y - shrinkFactor * 0.5f;
+        float bottomLimit = v1.y + shrinkFactor * 0.5f;
+
+        float stepY = (topLimit - bottomLimit) / resolution.y;
+
+        if (v1.x == v2.x) // side facing Z axis
+        {
+            float stepZ = (v2.z - v1.z) / resolution.x;
+            float xLevel = v1.x;
+
+            for (int z = 0; z <= resolution.x; z++)
+            {
+                for (int y = 0; y <= resolution.y; y++)
+                {
+                    if (y == 0)
+                    {
+                        vertices.Add(new Vector3(xLevel, v1.y, v1.z + z * stepZ));
+                    }
+                    vertices.Add(new Vector3(xLevel + expandFactor.x, bottomLimit + y * stepY, v1.z + z * stepZ + expandFactor.y));
+                    if (y == resolution.y)
+                    {
+                        vertices.Add(new Vector3(xLevel, v3.y, v3.z + z * stepZ));
+                    }
+                }
+            }
+        }
+        else // side facing X axis
+        {
+            float stepX = (v2.x - v1.x) / resolution.x;
+            float zLevel = v1.z;
+
+            for (int x = 0; x <= resolution.x; x++)
+            {
+                for (int y = 0; y <= resolution.y; y++)
+                {
+                    if (y == 0)
+                    {
+                        vertices.Add(new Vector3(v1.x + x * stepX, v1.y, zLevel));
+                    }
+
+                    vertices.Add(new Vector3(v1.x + x * stepX + expandFactor.x, bottomLimit + y * stepY, zLevel + expandFactor.y));
+
+                    if (y == resolution.y)
+                    {
+                        vertices.Add(new Vector3(v3.x + x * stepX, v3.y, zLevel));
+                    }
+                }
+            }
+        }
+
+        return vertices;
+    }
+
+
+    // vertices for corner fillings
+    private List<Vector3> CornerVeritices(Vector3 v1, Vector3 v2, int resolution, Vector2 expandFactor)
+    {
+        List<Vector3> vertices = new();
+        float topLimit = v2.y - shrinkFactor * 0.5f;
+        float bottomLimit = v1.y + shrinkFactor * 0.5f;
+
+        float stepY = (topLimit - bottomLimit) / resolution;
+
+        for (int y = 0; y <= resolution; y++)
+        {
+            if (y == 0)
+            {
+                vertices.Add(v1);
+            }
+
+            vertices.Add(new Vector3(v1.x + expandFactor.x, bottomLimit + y * stepY, v1.z));
+            vertices.Add(new Vector3(v1.x, bottomLimit + y * stepY, v1.z + expandFactor.y));
+
+            if (y == resolution)
+            {
+                vertices.Add(v2);
+            }
+        }
+
+        return vertices;
+    }
+
+
+    // get triangles and normals from vertices for flat planes and side planes
+    private List<int> TrianglesFromVertices(List<Vector3> vertices, Vector2Int resolution, Vector3 baseNormal, out List<Vector3> normals)
+    {
+        List<int> triangles = new();
+        normals = new List<Vector3>(new Vector3[vertices.Count]);
+
+        for (int row = 0; row < resolution.x; row++)
+        {
+            for (int column = 0; column < resolution.y; column++)
+            {
+                int i = (row * resolution.y) + row + column;
+
+                triangles.Add(i);
+                triangles.Add(i + resolution.y + 1);
+                triangles.Add(i + resolution.y + 2);
+
+                triangles.Add(i);
+                triangles.Add(i + resolution.y + 2);
+                triangles.Add(i + 1);
+
+                Vector3 normal = baseNormal;
+                // if (column == resolution.y -1) normal += Vector3.up;
+                normals[i] += normal;
+                normals[i + 1] += normal;
+                normals[i + resolution.y + 1] += normal;
+                normals[i + resolution.y + 2] += normal;
+
+
+                triangles.Add(i + resolution.y + 2);
+                triangles.Add(i + resolution.y + 1);
+                triangles.Add(i);
+
+                triangles.Add(i + 1);
+                triangles.Add(i + resolution.y + 2);
+                triangles.Add(i);
+            }
+        }
+
+        for (int i = 0; i < normals.Count; i++)
+        {
+            normals[i] = normals[i].normalized;
+        }
+
+        return triangles;
+    }
+
+
+    // get triangles and normals for corner fillings
+    private List<int> CornerTrianglesFromVertices(List<Vector3> vertices, int resolution, Vector3 baseNormal, out List<Vector3> normals)
+    {
+        List<int> triangles = new();
+        normals = new List<Vector3>(new Vector3[vertices.Count]);
+
+        for (int row = 0; row < resolution; row++)
+        {
+            int i = 2 * row + 1;
+
+            if (row == 0)
+            {
+                int j = 0;
+                triangles.Add(j);
+                triangles.Add(j + 1);
+                triangles.Add(j + 2);
+
+                normals[j] = baseNormal;
+                normals[j + 1] = baseNormal;
+                normals[j + 2] = baseNormal;
+
+                triangles.Add(j + 2);
+                triangles.Add(j + 1);
+                triangles.Add(j);
+            }
+
+            triangles.Add(i);
+            triangles.Add(i + 2);
+            triangles.Add(i + 1);
+
+            triangles.Add(i + 1);
+            triangles.Add(i + 2);
+            triangles.Add(i + 3);
+
+            Vector3 normal = baseNormal;
+            normals[i] = normal;
+            normals[i + 1] = normal;
+            normals[i + 2] = normal;
+            normals[i + 3] = normal;
+
+            triangles.Add(i + 1);
+            triangles.Add(i + 2);
+            triangles.Add(i);
+
+            triangles.Add(i + 3);
+            triangles.Add(i + 2);
+            triangles.Add(i + 1);
+
+            if (row == resolution - 1)
+            {
+                int j = i + 2;
+
+                triangles.Add(j);
+                triangles.Add(j + 1);
+                triangles.Add(j + 2);
+
+                normals[j] = baseNormal;
+                normals[j + 1] = baseNormal;
+                normals[j + 2] = baseNormal;
+
+                triangles.Add(j + 2);
+                triangles.Add(j + 1);
+                triangles.Add(j);
+            }
+        }
+
+        for (int i = 0; i < normals.Count; i++)
+        {
+            normals[i] = normals[i].normalized;
+        }
+
+        return triangles;
+    }
+
 
 }
+

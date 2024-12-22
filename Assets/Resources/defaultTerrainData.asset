@@ -9,9 +9,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b0d9dbe017aa5e0429b220df816b1a57, type: 3}
-  m_Name: TerrainNoise
+  m_Script: {fileID: 11500000, guid: c143d52648df71d4897608ca530e39a3, type: 3}
+  m_Name: defaultTerrainData
   m_EditorClassIdentifier: 
-  autoUpdate: 1
-  moreOffset: {x: 0, y: 0}
-  waterLevel: 16.5
+  seed: 1
+  waterLevel: 16
+  groundLevel: 0
+  octaves: 4
+  persistence: 0.18
+  lacunarity: 2
+  scale: 2
+  offsetX: 0
+  offsetZ: 0

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CameraMove : MonoBehaviour
 {
@@ -11,6 +12,8 @@ public class CameraMove : MonoBehaviour
     public float rotStrength = 0.5f;
 
     private Vector3 previousPosition;
+
+    public bool allowMove = true;
 
     private void Awake() {
         cam = Camera.main;
@@ -23,16 +26,16 @@ public class CameraMove : MonoBehaviour
 
     private void Update()
     {
-        if (Input.mouseScrollDelta.y != 0)
+        if (Input.mouseScrollDelta.y != 0 && allowMove)
         {
             cam.transform.position += Input.mouseScrollDelta.y * cam.transform.forward * zoomStrength;
         }
 
-        if (Input.GetMouseButtonDown(1))
+        if (Input.GetMouseButtonDown(1) && allowMove)
         {
             previousPosition = cam.ScreenToViewportPoint(Input.mousePosition);
         }
-        else if (Input.GetMouseButton(1))
+        else if (Input.GetMouseButton(1) && allowMove)
         {
             Vector3 newPosition = cam.ScreenToViewportPoint(Input.mousePosition);
             Vector3 direction = previousPosition - newPosition;
@@ -47,11 +50,11 @@ public class CameraMove : MonoBehaviour
             previousPosition = newPosition;
         }
 
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) && allowMove)
         {
             previousPosition = cam.ScreenToViewportPoint(Input.mousePosition);
         }
-        else if (Input.GetMouseButton(0))
+        else if (Input.GetMouseButton(0) && allowMove)
         {
             Vector3 newPosition = cam.ScreenToViewportPoint(Input.mousePosition);
             Vector3 posDiff = previousPosition - newPosition;
@@ -60,6 +63,11 @@ public class CameraMove : MonoBehaviour
             previousPosition = newPosition;
 
         }
+    }
+
+    public void SetAllowMove(Toggle toggle)
+    {
+        allowMove = toggle.isOn;
     }
 
 }

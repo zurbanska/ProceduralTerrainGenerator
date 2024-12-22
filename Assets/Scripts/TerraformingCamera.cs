@@ -12,11 +12,11 @@ public class TerraformingCamera : MonoBehaviour
     }
 
     private void LateUpdate() {
-        if (Input.GetMouseButtonDown(0) && terrainManager.allowTerraforming)
+        if (Input.GetMouseButton(0) && terrainManager.allowTerraforming)
         {
             Terraform(true);
         }
-        else if (Input.GetMouseButtonDown(1) && terrainManager.allowTerraforming)
+        else if (Input.GetMouseButton(1) && terrainManager.allowTerraforming)
         {
             Terraform(false);
         }

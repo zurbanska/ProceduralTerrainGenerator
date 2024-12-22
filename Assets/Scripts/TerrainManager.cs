@@ -35,6 +35,8 @@ public class TerrainManager : MonoBehaviour
 
     public bool allowTerraforming = true;
 
+    public TerrainData terrainData;
+
 
     [SerializeField] private Transform viewer;
     private Dictionary<Vector2, GameObject> terrainChunkDictionary = new Dictionary<Vector2, GameObject>(); // dictionary of all created chunks and their coords
@@ -92,11 +94,12 @@ public class TerrainManager : MonoBehaviour
     void Start()
     {
         DeleteChunks();
-        Vector2 currentChunkCoord = new Vector2(Mathf.FloorToInt(viewer.transform.position.x / chunkWidth), Mathf.FloorToInt(viewer.transform.position.z / chunkWidth));
-        lastChunkCoord = currentChunkCoord;
+        // Vector2 currentChunkCoord = new Vector2(Mathf.FloorToInt(viewer.transform.position.x / chunkWidth), Mathf.FloorToInt(viewer.transform.position.z / chunkWidth));
+        // lastChunkCoord = currentChunkCoord;
         if (randomSeed) seed = Random.value * 10000000;
-        UpdateChunks(currentChunkCoord);
-        UpdateChunks(currentChunkCoord);
+        // UpdateChunks(currentChunkCoord);
+        UpdateChunks();
+        // UpdateChunks(currentChunkCoord);
     }
 
     // Update is called once per frame
@@ -108,7 +111,8 @@ public class TerrainManager : MonoBehaviour
         if (currentChunkCoord != lastChunkCoord) // only update chunks if viewer moved chunks
         {
             lastChunkCoord = currentChunkCoord;
-            UpdateChunks(currentChunkCoord);
+            UpdateChunks();
+            // UpdateChunks(currentChunkCoord);
         }
 
         // if (Input.anyKeyDown) {
@@ -118,41 +122,25 @@ public class TerrainManager : MonoBehaviour
 
     }
 
-    void UpdateChunks(Vector2 currentChunkCoord)
+    public void UpdateChunks()
     {
-        // disable chunks that were visible last update but are beyond render distance now
-        foreach (var chunkCoord in chunksVisibleLastUpdate)
-        {
-            if ((currentChunkCoord - chunkCoord).sqrMagnitude >= renderDistance * renderDistance)
-            {
-                DisableChunk(chunkCoord);
-            }
-        }
 
-        chunksVisibleLastUpdate.Clear();
-
-        // enable/disable chunks based on render distance
         for (int i = -renderDistance; i < renderDistance; i++)
             {
                 for (int j = -renderDistance; j < renderDistance; j++)
                 {
-                    Vector2 chunkCoord = new Vector2(i, j) + currentChunkCoord;
-                    float distance = (i * i) + (j * j);
+                    Vector2 chunkCoord = new Vector2(i, j);
 
-                    // if (distance < renderDistance * renderDistance) // circular world
-                    if (Mathf.Abs(i) < renderDistance && Mathf.Abs(j) < renderDistance) // square world
+                    if (Mathf.Abs(i) < renderDistance && Mathf.Abs(j) < renderDistance)
                     {
                         Vector4 chunkNeighbors = CheckForChunkNeighbors(i, j);
-                        int chunkLod = GetChunkLOD(distance);
-                        EnableChunk(chunkCoord, chunkLod, chunkNeighbors);
-                        chunksVisibleLastUpdate.Add(chunkCoord);
-                    } else {
-                        DisableChunk(chunkCoord);
+                        EnableChunk(chunkCoord, lod, chunkNeighbors);
                     }
                 }
             }
 
     }
+
 
     private int GetChunkLOD(float distance)
     {
@@ -174,26 +162,7 @@ public class TerrainManager : MonoBehaviour
     {
         DeleteChunks();
         if (randomSeed) seed = Random.value * 10000000;
-
-        Vector2 viewerPosition = new Vector2(Mathf.FloorToInt(viewer.transform.position.x / chunkWidth), Mathf.FloorToInt(viewer.transform.position.z / chunkWidth));
-
-        // generate chunks that are in render distance
-        for (int i = -renderDistance; i < renderDistance; i++)
-            {
-                for (int j = -renderDistance; j < renderDistance; j++)
-                {
-                    Vector2 chunkCoord = new Vector2(i, j) + viewerPosition;
-                    float distance = (i * i) + (j * j);
-
-                    // if (distance < renderDistance * renderDistance) // circular world
-                    if (Mathf.Abs(i) < renderDistance && Mathf.Abs(j) < renderDistance) // square world
-                    {
-                        Vector4 chunkNeighbors = CheckForChunkNeighbors(i, j);
-                        int chunkLod = GetChunkLOD(distance);
-                        EnableChunk(chunkCoord, chunkLod, chunkNeighbors);
-                    }
-                }
-            }
+        UpdateChunks();
     }
 
 
@@ -209,7 +178,7 @@ public class TerrainManager : MonoBehaviour
         chunkManager.height = chunkHeight;
         chunkManager.coord = coord;
         chunkManager.InitChunk(noiseShader, marchingCubesShader, material, gradient, noiseData, seed);
-        chunkManager.UpdateChunk(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod, chunkNeighbors);
+        chunkManager.UpdateChunk(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod, chunkNeighbors, terrainData);
 
         terrainChunkDictionary[coord] = newChunk;
     }
@@ -241,7 +210,7 @@ public class TerrainManager : MonoBehaviour
     {
         if (terrainChunkDictionary.ContainsKey(coord))
         {
-            terrainChunkDictionary[coord].GetComponent<ChunkManager>().UpdateChunk(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod, chunkNeighbors);
+            terrainChunkDictionary[coord].GetComponent<ChunkManager>().UpdateChunk(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod, chunkNeighbors, terrainData);
         } else CreateChunk(coord, chunkLod, chunkNeighbors);
     }
 

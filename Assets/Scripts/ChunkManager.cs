@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -65,7 +66,7 @@ public class ChunkManager : MonoBehaviour
         bounds = new Bounds(new Vector3(width / 2, height / 2, width / 2) + transform.position, new Vector3(width, height, width));
     }
 
-    public void UpdateChunk(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod, Vector4 neighbors)
+    public async void UpdateChunk(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod, Vector4 neighbors, TerrainData terrainData)
     {
         this.neighbors = neighbors;
         this.isoLevel = isoLevel;
@@ -78,41 +79,43 @@ public class ChunkManager : MonoBehaviour
         if (lod != meshLod && noiseData.waterLevel > 0) waterGenerator.GenerateWater(gameObject.transform, width, noiseData.waterLevel, meshLod, neighbors);
         lod = meshLod;
 
-        Mesh newMesh = GenerateMesh(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, meshLod);
+        Mesh newMesh = await GenerateMesh(isoLevel, octaves, terrainData.persistence, lacunarity, scale, groundLevel, meshLod, true);
         SetMesh(newMesh);
 
         material.SetFloat("_WaterLevel", noiseData.waterLevel);
     }
 
-    private void SetMesh(Mesh mesh)
+    private void SetMesh(Mesh newMesh)
     {
         MeshFilter meshFilter = GetComponent<MeshFilter>();
         MeshCollider meshCollider = GetComponent<MeshCollider>();
 
         if (meshFilter != null)
-            meshFilter.mesh = mesh;
+            meshFilter.mesh = newMesh;
 
         if (meshCollider != null)
-            meshCollider.sharedMesh = mesh;
+            // meshCollider.convex = true;
+            meshCollider.sharedMesh = newMesh;
 
         GetComponent<MeshRenderer>().sharedMaterial = material;
 
-        this.mesh = mesh;
+        mesh = newMesh;
     }
 
 
 
-    private Mesh GenerateMesh(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod)
+    private Task<Mesh> GenerateMesh(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod, bool needsNewNoise)
     {
-        if (densityValues == null)
+        if (densityValues == null || needsNewNoise)
         {
+        // check if chunk needs noise update
             densityValues = noiseGenerator.GenerateNoise(width + 1, height + 1, new Vector2(coord.x * width, coord.y * width), octaves, persistence, lacunarity, scale, groundLevel, seed, neighbors, lod);
             AsyncGPUReadback.WaitAllRequests();
         }
 
         meshGenerator.CreateBuffers(width + 1, height + 1);
 
-        Mesh mesh = meshGenerator.GenerateMesh(width + 1, height + 1, isoLevel, densityValues, meshLod, gradient);
+        Task<Mesh> mesh = meshGenerator.GenerateMesh(width + 1, height + 1, isoLevel, densityValues, meshLod, gradient);
         AsyncGPUReadback.WaitAllRequests();
 
         return mesh;
@@ -128,13 +131,13 @@ public class ChunkManager : MonoBehaviour
         UnityEngine.Object.DestroyImmediate(gameObject);
     }
 
-    public void Terraform(Vector3 hitPosition, float brushSize, bool add)
+    public async void Terraform(Vector3 hitPosition, float brushSize, bool add)
     {
         meshGenerator.CreateBuffers(width + 1, height + 1);
         densityValues = meshGenerator.UpdateDensity(width + 1, height + 1, densityValues, hitPosition, brushSize, add, neighbors);
         AsyncGPUReadback.WaitAllRequests();
 
-        Mesh newMesh = GenerateMesh(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, lod);
+        Mesh newMesh = await GenerateMesh(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, lod, false);
         SetMesh(newMesh);
     }
 
@@ -144,4 +147,7 @@ public class ChunkManager : MonoBehaviour
         Gizmos.color = Color.green;
         Gizmos.DrawWireCube(bounds.center, bounds.size);
     }
+
+
+
 }

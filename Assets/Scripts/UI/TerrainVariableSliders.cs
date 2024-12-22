@@ -13,8 +13,7 @@ public class TerrainVariableSliders : MonoBehaviour
 
     public void SetPersistence(Slider slider)
     {
-        terrainManager.persistence = slider.value;
-        // terrainManager.UpdateChunks(new Vector2(-7, 0));
+        terrainManager.terrainData.persistence = slider.value;
     }
 
     public void SetTerraforming(Toggle toggle)

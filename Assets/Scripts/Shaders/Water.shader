@@ -7,7 +7,7 @@ Shader "Custom/Water"
         _DepthStart ("Depth Start", Float) = 5.0
         _DepthEnd ("Depth End", Float) = 20.0
         _WaterLevel ("Water Level", float) = 10
-        _Cubemap ("Reflection Cubemap", Cube) = "" {}
+        // _Cubemap ("Reflection Cubemap", Cube) = "" {}
         _NormalMap ("Normal Map", 2D) = "bump" {}
         _NormalStrength ("Normal Strength", Range(0, 1)) = 0.5
 
@@ -54,7 +54,7 @@ Shader "Custom/Water"
             float _DepthStart;
             float _DepthEnd;
             float _WaterLevel;
-            samplerCUBE _Cubemap;
+            // samplerCUBE _Cubemap;
             sampler2D _NormalMap;
             float _NormalStrength;
 
@@ -82,6 +82,8 @@ Shader "Custom/Water"
                 float dz = -sin(o.worldPos.z * _WaveFrequency + _Time.y * _WaveSpeed) * _WaveFrequency;
                 float3 vnormal = normalize(v.normal);
                 float3 normal = float3(vnormal.x - vnormal.y * dx * _WaveStrength, vnormal.y, vnormal.z - vnormal.y * dz * _WaveStrength);
+
+                // float3 normal = normalize(v.normal);
                 o.worldNormal = UnityObjectToWorldNormal(normal);
                 o.normal = normal;
                 return o;
@@ -111,12 +113,9 @@ Shader "Custom/Water"
                 // half3 worldRefl = reflect(-_WorldSpaceLightPos0.xyz, normalTex);
                 half3 worldRefl = reflect(-worldViewDir.xyz, normalTex);
 
-                // // default skybox cubemap
+                // default skybox cubemap
                 half4 skyData = UNITY_SAMPLE_TEXCUBE(unity_SpecCube0, worldRefl);
                 half3 skyColor = DecodeHDR (skyData, unity_SpecCube0_HDR);
-
-                // // custom cubemap
-                // // half4 skyData = texCUBE(_Cubemap, worldRefl);
 
                 float3 normal = _WorldSpaceLightPos0.xyz * i.normal;
                 // float3 normal = i.normal;
@@ -128,7 +127,9 @@ Shader "Custom/Water"
 
                 c.a = lerp(0.6, 1, depthFactor2);
                 return c;
-                return float4(normal, 1);
+
+
+                // return float4((i.normal * 0.5 + 0.5), 1);
 
 
                 // // Sample depth at the current screen position
