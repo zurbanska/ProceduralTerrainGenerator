@@ -46,49 +46,49 @@ public class TerrainManager : MonoBehaviour
 
     public List<LodInfo> lods = new List<LodInfo>();
 
-    #if UNITY_EDITOR
-    void OnValuesUpdated()
-    {
-        if (!Application.isPlaying)
-        {
-            needsUpdate = true;
-            EditorApplication.delayCall += DelayedUpdate;
-        }
-    }
+    // #if UNITY_EDITOR
+    // void OnValuesUpdated()
+    // {
+    //     if (!Application.isPlaying)
+    //     {
+    //         needsUpdate = true;
+    //         EditorApplication.delayCall += DelayedUpdate;
+    //     }
+    // }
 
-    private void DelayedUpdate()
-    {
-        if (!needsUpdate) return;
+    // private void DelayedUpdate()
+    // {
+    //     if (!needsUpdate) return;
 
-        needsUpdate = false;
-        GenerateChunks();
-        EditorApplication.delayCall -= DelayedUpdate;
-    }
+    //     needsUpdate = false;
+    //     GenerateChunks();
+    //     EditorApplication.delayCall -= DelayedUpdate;
+    // }
 
-    private void OnEnable()
-    {
-        if (noiseData != null && !Application.isPlaying)
-        {
-            noiseData.OnValuesUpdated += OnValuesUpdated;
-        }
-    }
+    // private void OnEnable()
+    // {
+    //     if (noiseData != null && !Application.isPlaying)
+    //     {
+    //         noiseData.OnValuesUpdated += OnValuesUpdated;
+    //     }
+    // }
 
-    private void OnDisable()
-    {
-        if (noiseData != null)
-        {
-            noiseData.OnValuesUpdated -= OnValuesUpdated;
-        }
-    }
+    // private void OnDisable()
+    // {
+    //     if (noiseData != null)
+    //     {
+    //         noiseData.OnValuesUpdated -= OnValuesUpdated;
+    //     }
+    // }
 
-    private void OnDestroy()
-    {
-        if (noiseData != null)
-        {
-            noiseData.OnValuesUpdated -= OnValuesUpdated;
-        }
-    }
-    #endif
+    // private void OnDestroy()
+    // {
+    //     if (noiseData != null)
+    //     {
+    //         noiseData.OnValuesUpdated -= OnValuesUpdated;
+    //     }
+    // }
+    // #endif
 
     // Start is called before the first frame update
     void Start()
@@ -248,16 +248,16 @@ public class TerrainManager : MonoBehaviour
 
     private void OnValidate() {
 
-        #if UNITY_EDITOR
-        if (noiseData != null && !Application.isPlaying) {
-			noiseData.OnValuesUpdated -= OnValuesUpdated;
-			noiseData.OnValuesUpdated += OnValuesUpdated;
-		}
-        else if (noiseData != null && Application.isPlaying)
-        {
-            noiseData.OnValuesUpdated -= OnValuesUpdated;
-        }
-        #endif
+        // #if UNITY_EDITOR
+        // if (noiseData != null && !Application.isPlaying) {
+		// 	noiseData.OnValuesUpdated -= OnValuesUpdated;
+		// 	noiseData.OnValuesUpdated += OnValuesUpdated;
+		// }
+        // else if (noiseData != null && Application.isPlaying)
+        // {
+        //     noiseData.OnValuesUpdated -= OnValuesUpdated;
+        // }
+        // #endif
 
         // chunk width and height have to be multiples of 8 and greater or equal 8
         chunkWidth = Mathf.Max(8, chunkWidth);

@@ -16,7 +16,7 @@ MonoBehaviour:
   waterLevel: 16
   groundLevel: 0
   octaves: 4
-  persistence: 0.18
+  persistence: 1.39
   lacunarity: 2
   scale: 2
   offsetX: 0

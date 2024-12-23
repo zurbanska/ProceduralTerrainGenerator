@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   autoUpdate: 1
   moreOffset: {x: 0, y: 0}
-  waterLevel: 16.5
+  waterLevel: 23.2

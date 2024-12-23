@@ -33,20 +33,19 @@ public class WaterGenerator
 
 
         // resolution (subdivision) of planes
-        Vector2Int flatRes = new Vector2Int(8, 8);
-        Vector2Int sideRes = new Vector2Int(8, Mathf.CeilToInt(waterLevel/4));
+        Vector2Int flatRes = new Vector2Int(Mathf.CeilToInt(8 / lod), Mathf.CeilToInt(8 / lod));
+        Vector2Int sideRes = new Vector2Int(Mathf.CeilToInt(8 / lod), Mathf.CeilToInt(waterLevel / (4 * lod)));
 
         // top plane
         Mesh topMesh = GenerateFlatMesh(flatRes, Vector3.up, t1, t2, t3, t4);
         GenerateWaterPlaneObject(topMesh, water.transform, waterMaterial);
 
         // bottom plane
-        Mesh bottomMesh = GenerateFlatMesh(flatRes, Vector3.up, b1, b2, b3, b4);
-        GenerateWaterPlaneObject(bottomMesh, water.transform, waterMaterial);
+        Mesh bottomMesh = GenerateFlatMesh(flatRes, Vector3.down, b1, b2, b3, b4);
+        // GenerateWaterPlaneObject(bottomMesh, water.transform, waterMaterial);
 
 
         // checking for absent neighboring chunks to generate a water edge (side plane)
-
         if (neighbors[0] == 0)
         {
             Mesh sideMesh = GenerateSideMesh(sideRes, Vector3.back, new Vector2(0, -shrinkFactor * 0.5f), b1, b2, t1, t2);
@@ -133,7 +132,7 @@ public class WaterGenerator
     private Mesh GenerateSideMesh(Vector2Int resolution, Vector3 baseNormal, Vector2 displacementVector, Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4)
     {
         List<Vector3> vertices = SideVertices(v1, v2, v3, v4, resolution, displacementVector);
-        List<int> triangles = TrianglesFromVertices(vertices, new Vector2Int(resolution.x, resolution.y + 2), baseNormal, out List<Vector3> normals);
+        List<int> triangles = TrianglesFromVertices(vertices, resolution, baseNormal, out List<Vector3> normals);
 
         Mesh mesh = new()
         {
@@ -193,48 +192,61 @@ public class WaterGenerator
 
         float stepY = (topLimit - bottomLimit) / resolution.y;
 
-        if (v1.x == v2.x) // side facing Z axis
+        if (v1.x == v2.x) // side facing X axis
         {
             float stepZ = (v2.z - v1.z) / resolution.x;
             float xLevel = v1.x;
 
+            // add vertices like in a flat plane
             for (int z = 0; z <= resolution.x; z++)
             {
                 for (int y = 0; y <= resolution.y; y++)
                 {
-                    if (y == 0)
-                    {
-                        vertices.Add(new Vector3(xLevel, v1.y, v1.z + z * stepZ));
-                    }
                     vertices.Add(new Vector3(xLevel + expandFactor.x, bottomLimit + y * stepY, v1.z + z * stepZ + expandFactor.y));
-                    if (y == resolution.y)
-                    {
-                        vertices.Add(new Vector3(xLevel, v3.y, v3.z + z * stepZ));
-                    }
                 }
             }
+
+            // add additional vertices for bottom curve (angled edge surface)
+            for (int z = 0; z <= resolution.x; z++)
+            {
+                vertices.Add(new Vector3(xLevel, v1.y, v1.z + z * stepZ));
+                vertices.Add(new Vector3(xLevel + expandFactor.x, bottomLimit, v1.z + z * stepZ + expandFactor.y));
+            }
+
+            // add additional vertices for top curve (angled edge surface)
+            for (int z = 0; z <= resolution.x; z++)
+            {
+                vertices.Add(new Vector3(xLevel, v3.y, v3.z + z * stepZ));
+                vertices.Add(new Vector3(xLevel + expandFactor.x, topLimit, v3.z + z * stepZ + expandFactor.y));
+            }
+
         }
-        else // side facing X axis
+        else // side facing Z axis
         {
             float stepX = (v2.x - v1.x) / resolution.x;
             float zLevel = v1.z;
 
+            // add vertices like in a flat plane
             for (int x = 0; x <= resolution.x; x++)
             {
                 for (int y = 0; y <= resolution.y; y++)
                 {
-                    if (y == 0)
-                    {
-                        vertices.Add(new Vector3(v1.x + x * stepX, v1.y, zLevel));
-                    }
-
                     vertices.Add(new Vector3(v1.x + x * stepX + expandFactor.x, bottomLimit + y * stepY, zLevel + expandFactor.y));
-
-                    if (y == resolution.y)
-                    {
-                        vertices.Add(new Vector3(v3.x + x * stepX, v3.y, zLevel));
-                    }
                 }
+            }
+
+            // add additional vertices for bottom curve (angled edge surface)
+            for (int x = 0; x <= resolution.x; x++)
+            {
+                vertices.Add(new Vector3(v1.x + x * stepX, v1.y, zLevel));
+                vertices.Add(new Vector3(v1.x + x * stepX + expandFactor.x, bottomLimit, zLevel + expandFactor.y));
+            }
+
+            // add additional vertices for top curve (angled edge surface)
+            for (int x = 0; x <= resolution.x; x++)
+            {
+                vertices.Add(new Vector3(v3.x + x * stepX, v3.y, zLevel));
+                vertices.Add(new Vector3(v3.x + x * stepX + expandFactor.x, topLimit, zLevel + expandFactor.y));
             }
         }
 
@@ -255,14 +267,21 @@ public class WaterGenerator
         {
             if (y == 0)
             {
+                // vertices for bottom single triangle
                 vertices.Add(v1);
+                vertices.Add(new Vector3(v1.x + expandFactor.x, bottomLimit + y * stepY, v1.z));
+                vertices.Add(new Vector3(v1.x, bottomLimit + y * stepY, v1.z + expandFactor.y));
             }
 
+            // vertices for the corner side plane
             vertices.Add(new Vector3(v1.x + expandFactor.x, bottomLimit + y * stepY, v1.z));
             vertices.Add(new Vector3(v1.x, bottomLimit + y * stepY, v1.z + expandFactor.y));
 
             if (y == resolution)
             {
+                // vertices for top single triangle
+                vertices.Add(new Vector3(v1.x + expandFactor.x, bottomLimit + y * stepY, v1.z));
+                vertices.Add(new Vector3(v1.x, bottomLimit + y * stepY, v1.z + expandFactor.y));
                 vertices.Add(v2);
             }
         }
@@ -277,11 +296,11 @@ public class WaterGenerator
         List<int> triangles = new();
         normals = new List<Vector3>(new Vector3[vertices.Count]);
 
-        for (int row = 0; row < resolution.x; row++)
+        for (int column = 0; column < resolution.x; column++)
         {
-            for (int column = 0; column < resolution.y; column++)
+            for (int row = 0; row < resolution.y; row++)
             {
-                int i = (row * resolution.y) + row + column;
+                int i = (column * resolution.y) + column + row;
 
                 triangles.Add(i);
                 triangles.Add(i + resolution.y + 1);
@@ -292,7 +311,6 @@ public class WaterGenerator
                 triangles.Add(i + 1);
 
                 Vector3 normal = baseNormal;
-                // if (column == resolution.y -1) normal += Vector3.up;
                 normals[i] += normal;
                 normals[i + 1] += normal;
                 normals[i + resolution.y + 1] += normal;
@@ -306,6 +324,66 @@ public class WaterGenerator
                 triangles.Add(i + 1);
                 triangles.Add(i + resolution.y + 2);
                 triangles.Add(i);
+            }
+        }
+
+        // add triangles for curved top and bottom planes of side
+        if (baseNormal.y == 0)
+        {
+            // bottom curve
+            for (int column = 0; column < resolution.x; column ++)
+            {
+                int i = (resolution.x + 1) * (resolution.y + 1) + column * 2;
+
+                triangles.Add(i);
+                triangles.Add(i + 1);
+                triangles.Add(i + 2);
+
+                triangles.Add(i + 3);
+                triangles.Add(i + 2);
+                triangles.Add(i + 1);
+
+                Vector3 normal = baseNormal + Vector3.down;
+                normals[i] = normal;
+                normals[i + 1] = normal;
+                normals[i + 2] = normal;
+                normals[i + 3] = normal;
+
+                triangles.Add(i + 2);
+                triangles.Add(i + 1);
+                triangles.Add(i);
+
+                triangles.Add(i + 1);
+                triangles.Add(i + 2);
+                triangles.Add(i + 3);
+            }
+
+            // top curve
+            for (int column = 0; column < resolution.x; column ++)
+            {
+                int i = (resolution.x + 1) * (resolution.y + 1) + (column + resolution.x) * 2 + 2;
+
+                triangles.Add(i);
+                triangles.Add(i + 1);
+                triangles.Add(i + 2);
+
+                triangles.Add(i + 3);
+                triangles.Add(i + 2);
+                triangles.Add(i + 1);
+
+                Vector3 normal = baseNormal + Vector3.up;
+                normals[i] = normal;
+                normals[i + 1] = normal;
+                normals[i + 2] = normal;
+                normals[i + 3] = normal;
+
+                triangles.Add(i + 2);
+                triangles.Add(i + 1);
+                triangles.Add(i);
+
+                triangles.Add(i + 1);
+                triangles.Add(i + 2);
+                triangles.Add(i + 3);
             }
         }
 
@@ -324,10 +402,11 @@ public class WaterGenerator
         List<int> triangles = new();
         normals = new List<Vector3>(new Vector3[vertices.Count]);
 
-        for (int row = 0; row < resolution; row++)
+        for (int row = 0; row <= resolution; row++)
         {
-            int i = 2 * row + 1;
+            int i = 2 * row + 3;
 
+            // bottom single triangle
             if (row == 0)
             {
                 int j = 0;
@@ -335,15 +414,17 @@ public class WaterGenerator
                 triangles.Add(j + 1);
                 triangles.Add(j + 2);
 
-                normals[j] = baseNormal;
-                normals[j + 1] = baseNormal;
-                normals[j + 2] = baseNormal;
+                Vector3 newNormal = baseNormal + Vector3.down;
+                normals[j] = newNormal;
+                normals[j + 1] = newNormal;
+                normals[j + 2] = newNormal;
 
                 triangles.Add(j + 2);
                 triangles.Add(j + 1);
                 triangles.Add(j);
             }
 
+            // side seam plane triangles
             triangles.Add(i);
             triangles.Add(i + 2);
             triangles.Add(i + 1);
@@ -366,7 +447,8 @@ public class WaterGenerator
             triangles.Add(i + 2);
             triangles.Add(i + 1);
 
-            if (row == resolution - 1)
+            // top single triangle
+            if (row == resolution)
             {
                 int j = i + 2;
 
@@ -374,9 +456,10 @@ public class WaterGenerator
                 triangles.Add(j + 1);
                 triangles.Add(j + 2);
 
-                normals[j] = baseNormal;
-                normals[j + 1] = baseNormal;
-                normals[j + 2] = baseNormal;
+                Vector3 newNormal = baseNormal + Vector3.up;
+                normals[j] = newNormal;
+                normals[j + 1] = newNormal;
+                normals[j + 2] = newNormal;
 
                 triangles.Add(j + 2);
                 triangles.Add(j + 1);
