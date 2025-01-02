@@ -5,6 +5,7 @@ public class NoiseGenerator
 
     private ComputeShader noiseShader;
     public ComputeBuffer valuesBuffer;
+    public ComputeBuffer biomeValuesBuffer;
     public NoiseData noiseData;
 
     public NoiseGenerator(ComputeShader noiseShader, NoiseData noiseData)
@@ -14,14 +15,17 @@ public class NoiseGenerator
     }
 
 
-    public float[] GenerateNoise(int width, int height, Vector2 offset, int octaves, float persistence, float lacunarity, float scale, float groundLevel, float seed, Vector4 neighbors, int lod)
+    public float[] GenerateNoise(int width, int height, Vector2 offset, int octaves, float persistence, float lacunarity, float scale, float groundLevel, float seed, Vector4 neighbors, int lod, float[] biomeValues)
     {
 
         float[] noiseValues = new float[width * height * width]; // 1D array of noise values
 
         valuesBuffer = new ComputeBuffer(width * height * width, sizeof(float));
+        biomeValuesBuffer = new ComputeBuffer(width * width, sizeof(float));
+        biomeValuesBuffer.SetData(biomeValues);
 
         noiseShader.SetBuffer(0, "_Values", valuesBuffer);
+        noiseShader.SetBuffer(0, "_BiomeValues", biomeValuesBuffer);
         noiseShader.SetInt("_ChunkWidth", width);
         noiseShader.SetInt("_ChunkHeight", height);
         noiseShader.SetFloat("_OffsetX", offset.x + noiseData.moreOffset.x);
@@ -48,6 +52,7 @@ public class NoiseGenerator
         valuesBuffer.GetData(noiseValues);
 
         valuesBuffer.Release();
+        biomeValuesBuffer.Release();
 
         return noiseValues;
     }

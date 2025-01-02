@@ -24,6 +24,8 @@ float groundLevel;
 
 float seed;
 
+StructuredBuffer<float> _BiomeValues;
+
 
 // returns index for _Values array from current coords
 int indexFromCoord(int x, int y, int z)
@@ -249,30 +251,38 @@ void GenerateNoise (uint3 id : SV_DispatchThreadID)
 
     // global coords accounting for chunk offset and noise scale
     float globalX = (id.x + _OffsetX + seed) * (1 / scale);
-    float globalY = (id.y + seed) * (1 / scale);
+    float globalY = (id.y) * (1 / scale);
     float globalZ = (id.z + _OffsetZ + seed) * (1 / scale);
 
+    float biomeValue = (_BiomeValues[id.z * _ChunkWidth + id.x] - 0.5) * 10;
 
     float noiseValue = fractalNoise3D(float3(globalX, globalY, globalZ), octaves, persistence, lacunarity);
-    float currentDensity = _ChunkHeight * clamp(noiseValue, -0.9, 0.9) * 1.2; // noise multiplier
-    currentDensity += groundLevel;
+    // float currentDensity = noiseValue * _ChunkHeight;
+    float currentDensity = _ChunkHeight * clamp(noiseValue, -0.9, 0.9) * clamp(biomeValue, -0.05, 3); // noise multiplier
+    currentDensity += groundLevel * clamp(biomeValue, 0.5, 3);
+    // currentDensity += groundLevel * groundLevel * _BiomeValues[id.z * _ChunkWidth + id.x];
+    // currentDensity = _BiomeValues[id.z * _ChunkWidth + id.x] * 50;
+
+    // currentDensity = perlinNoise3D(float3(globalX, globalY, globalZ), 1.6) * _ChunkHeight + groundLevel;
 
     float newDensity = currentDensity;
 
+    float i = 0;
 
-    if (id.y <= currentDensity - 0.5)
+    if (id.y <= currentDensity - i)
     {
         newDensity = 0;
-    } else if (id.y > currentDensity + 0.5)
+    } else if (id.y > currentDensity + i)
     {
         newDensity = 1;
-    } else if (id.y > currentDensity)
-    {
-        newDensity = id.y - currentDensity;
-    } else if (id.y < currentDensity)
-    {
-        newDensity = currentDensity - id.y;
     }
+    // else if (id.y > currentDensity)
+    // {
+    //     newDensity = id.y - currentDensity;
+    // } else if (id.y < currentDensity)
+    // {
+    //     newDensity = currentDensity - id.y;
+    // }
 
     if (id.y <= lod)
     {

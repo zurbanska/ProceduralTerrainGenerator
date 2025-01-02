@@ -37,14 +37,14 @@ public class MeshGenerator
         vertexCacheBuffer.Release();
     }
 
-    public async Task<Mesh> GenerateMesh(int width, int height, float isoLevel, float[] densityMap, int lod, Gradient gradient)
+    public async Task<Mesh> GenerateMesh(int width, int height, float isoLevel, float[] densityMap, int lod, Gradient gradient, float[] biomeValues)
     {
         int cubeSize = lod;
 
         densityBuffer.SetData(densityMap);
         int kernel = marchingCubesShader.FindKernel("March");
 
-        // Set compute shader parameters
+        // set compute shader parameters
         marchingCubesShader.SetBuffer(kernel, "_Triangles", trianglesBuffer);
         marchingCubesShader.SetBuffer(kernel, "_DensityValues", densityBuffer);
         marchingCubesShader.SetInt("_ChunkWidth", width);
@@ -55,10 +55,10 @@ public class MeshGenerator
         float numThreadsXZ = width / cubeSize;
         float numThreadsY = height / cubeSize;
 
-        // Dispatch shader
+        // dispatch shader
         marchingCubesShader.Dispatch(kernel, Mathf.CeilToInt(numThreadsXZ / 8.0f), Mathf.CeilToInt(numThreadsY / 8.0f), Mathf.CeilToInt(numThreadsXZ / 8.0f));
 
-        // Retrieve triangle data
+        // retrieve triangle data
         ComputeBuffer.CopyCount(trianglesBuffer, triangleCountBuffer, 0);
         int[] triangleCountArray = { 0 };
         triangleCountBuffer.GetData(triangleCountArray);
@@ -67,7 +67,7 @@ public class MeshGenerator
         Triangle[] triangles = new Triangle[numTriangles];
         trianglesBuffer.GetData(triangles, 0, 0, numTriangles);
 
-        Mesh mesh = await CreateMesh(triangles, width, height, gradient);
+        Mesh mesh = await CreateMesh(triangles, width, height, gradient, biomeValues);
 
         ReleaseBuffers();
         return mesh;
@@ -93,8 +93,8 @@ public class MeshGenerator
         inverseHeightScale = 1f / (max - min);
     }
 
-    // generates a mesh from an array of triangles
-    private async Task<Mesh> CreateMesh(Triangle[] triangles, int width, int height, Gradient gradient)
+    // generate a mesh from an array of triangles
+    private async Task<Mesh> CreateMesh(Triangle[] triangles, int width, int height, Gradient gradient, float[] biomeValues)
     {
 
         var meshData = await Task.Run(() =>
@@ -123,6 +123,8 @@ public class MeshGenerator
                     int gradientIndex = Mathf.Clamp((int)(normalizedY * (gradientResolution - 1)), 0, gradientResolution - 1);
                     meshColors[realVertexCount] = precomputedGradient[gradientIndex];
 
+                    // meshColors[realVertexCount] = Color.black * biomeValues[(int)vertex.z * width + (int)vertex.x] + Color.white * (1 - biomeValues[(int)vertex.z * width + (int)vertex.x]);
+
                     meshVertices[realVertexCount] = vertex;
                     meshUVs[realVertexCount] = new Vector2(vertex.x / width, vertex.z / width);
                     meshTriangles[startIndex + j] = realVertexCount;
@@ -132,63 +134,6 @@ public class MeshGenerator
 
             return (meshVertices, meshTriangles, meshUVs, meshColors);
         });
-        // PrecomputeGradient(gradient);
-        // PrecomputeInverseLerpScale(0, height);
-
-        // Vector3[] meshVertices = new Vector3[triangles.Length * 3];
-        // int[] meshTriangles = new int[triangles.Length * 3];
-        // Vector2[] meshUVs = new Vector2[meshVertices.Length];
-        // Color[] meshColors = new Color[meshVertices.Length];
-
-        // // Dictionary for mapping vertices to indices
-        // Dictionary<Vector3, int> vertexIndexMap = new Dictionary<Vector3, int>();
-
-        // int realVertexCount = 0;
-
-        // for (int i = 0; i < triangles.Length; i++)
-        // {
-        //     int startIndex = i * 3;
-
-        //     // Extract triangle vertices
-        //     Vector3[] triangleVerts = { triangles[i].c, triangles[i].b, triangles[i].a };
-
-        //      for (int j = 0; j < 3; j++) // Loop over a, b, c of the triangle
-        //     {
-        //         Vector3 vertex = triangleVerts[j];
-        //         // if (!vertexIndexMap.TryGetValue(vertex, out int existingIndex)) // try to reuse existing vertex
-        //         // {
-        //         //     existingIndex = realVertexCount;
-        //         //     vertexIndexMap[vertex] = realVertexCount;
-
-        //         //     meshVertices[realVertexCount] = vertex;
-
-        //         //     meshUVs[realVertexCount] = new Vector2(vertex.x / width, vertex.z / width);
-        //         //     meshColors[realVertexCount] = gradient.Evaluate(Mathf.InverseLerp(0, height, vertex.y));
-        //         //     realVertexCount++;
-
-        //         // }
-        //         // meshTriangles[startIndex + j] = existingIndex;
-
-        //         float normalizedY = (vertex.y - 0) * inverseHeightScale;
-        //         int gradientIndex = Mathf.Clamp((int)(normalizedY * (gradientResolution - 1)), 0, gradientResolution - 1);
-        //         meshColors[realVertexCount] = precomputedGradient[gradientIndex];
-
-        //         meshVertices[realVertexCount] = vertex;
-        //         meshUVs[realVertexCount] = new Vector2(vertex.x / width, vertex.z / width);
-        //         // meshColors[realVertexCount] = gradient.Evaluate(Mathf.InverseLerp(0, height, vertex.y));
-        //         meshTriangles[startIndex + j] = realVertexCount;
-        //         realVertexCount++;
-        //     }
-        // };
-
-        // Array.Resize(ref meshVertices, realVertexCount);
-        // Array.Resize(ref meshUVs, realVertexCount);
-        // Array.Resize(ref meshColors, realVertexCount);
-
-        // mesh.vertices = meshVertices;
-        // mesh.triangles = meshTriangles;
-        // mesh.uv = meshUVs;
-        // mesh.colors = meshColors;
 
         Mesh mesh = new Mesh
         {

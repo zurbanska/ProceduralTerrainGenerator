@@ -33,8 +33,8 @@ public class WaterGenerator
 
 
         // resolution (subdivision) of planes
-        Vector2Int flatRes = new Vector2Int(Mathf.CeilToInt(8 / lod), Mathf.CeilToInt(8 / lod));
-        Vector2Int sideRes = new Vector2Int(Mathf.CeilToInt(8 / lod), Mathf.CeilToInt(waterLevel / (4 * lod)));
+        Vector2Int flatRes = new Vector2Int(Mathf.CeilToInt(9 / lod), Mathf.CeilToInt(9 / lod));
+        Vector2Int sideRes = new Vector2Int(Mathf.CeilToInt(9 / lod), Mathf.CeilToInt(waterLevel / (4 * lod)));
 
         // top plane
         Mesh topMesh = GenerateFlatMesh(flatRes, Vector3.up, t1, t2, t3, t4);
@@ -42,7 +42,7 @@ public class WaterGenerator
 
         // bottom plane
         Mesh bottomMesh = GenerateFlatMesh(flatRes, Vector3.down, b1, b2, b3, b4);
-        // GenerateWaterPlaneObject(bottomMesh, water.transform, waterMaterial);
+        GenerateWaterPlaneObject(bottomMesh, water.transform, waterMaterial);
 
 
         // checking for absent neighboring chunks to generate a water edge (side plane)

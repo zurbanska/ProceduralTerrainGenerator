@@ -11,6 +11,7 @@ public class ChunkManager : MonoBehaviour
 
     private MeshGenerator meshGenerator;
     private NoiseGenerator noiseGenerator;
+    private BiomeGenerator biomeGenerator;
     private WaterGenerator waterGenerator;
 
     private Material material;
@@ -20,6 +21,7 @@ public class ChunkManager : MonoBehaviour
     public int lod;
     private Mesh mesh;
     public float[] densityValues;
+    public float[] biomeValues;
 
     NoiseData noiseData;
 
@@ -36,16 +38,6 @@ public class ChunkManager : MonoBehaviour
     public Bounds bounds;
 
 
-    void Start()
-    {
-
-    }
-
-    void Update()
-    {
-
-    }
-
     public void InitChunk(ComputeShader noiseShader, ComputeShader meshShader, Material material, Gradient gradient, NoiseData noiseData, float seed)
     {
         this.material = material;
@@ -56,6 +48,7 @@ public class ChunkManager : MonoBehaviour
         noiseGenerator = new NoiseGenerator(noiseShader, noiseData);
         meshGenerator = new MeshGenerator(meshShader);
         waterGenerator = new WaterGenerator();
+        biomeGenerator = new BiomeGenerator();
 
         lod = -1;
 
@@ -94,7 +87,6 @@ public class ChunkManager : MonoBehaviour
             meshFilter.mesh = newMesh;
 
         if (meshCollider != null)
-            // meshCollider.convex = true;
             meshCollider.sharedMesh = newMesh;
 
         GetComponent<MeshRenderer>().sharedMaterial = material;
@@ -109,13 +101,16 @@ public class ChunkManager : MonoBehaviour
         if (densityValues == null || needsNewNoise)
         {
         // check if chunk needs noise update
-            densityValues = noiseGenerator.GenerateNoise(width + 1, height + 1, new Vector2(coord.x * width, coord.y * width), octaves, persistence, lacunarity, scale, groundLevel, seed, neighbors, lod);
+            biomeValues = biomeGenerator.GenerateBiomes(width + 1, new Vector2(coord.x * width, coord.y * width), seed);
+
+            densityValues = noiseGenerator.GenerateNoise(width + 1, height + 1, new Vector2(coord.x * width, coord.y * width), octaves, persistence, lacunarity, scale, groundLevel, seed, neighbors, lod, biomeValues);
             AsyncGPUReadback.WaitAllRequests();
+
         }
 
         meshGenerator.CreateBuffers(width + 1, height + 1);
 
-        Task<Mesh> mesh = meshGenerator.GenerateMesh(width + 1, height + 1, isoLevel, densityValues, meshLod, gradient);
+        Task<Mesh> mesh = meshGenerator.GenerateMesh(width + 1, height + 1, isoLevel, densityValues, meshLod, gradient, biomeValues);
         AsyncGPUReadback.WaitAllRequests();
 
         return mesh;
