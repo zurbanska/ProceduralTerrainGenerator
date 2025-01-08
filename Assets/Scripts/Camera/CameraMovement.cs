@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class CameraMove : MonoBehaviour
@@ -26,7 +27,9 @@ public class CameraMove : MonoBehaviour
 
     private void Update()
     {
-        if (Input.mouseScrollDelta.y != 0 && allowMove)
+        bool canMove = allowMove && !EventSystem.current.IsPointerOverGameObject();
+
+        if (Input.mouseScrollDelta.y != 0 && canMove)
         {
             cam.transform.position += Input.mouseScrollDelta.y * cam.transform.forward * zoomStrength;
         }
@@ -35,7 +38,7 @@ public class CameraMove : MonoBehaviour
         {
             previousPosition = cam.ScreenToViewportPoint(Input.mousePosition);
         }
-        else if (Input.GetMouseButton(1) && allowMove)
+        else if (Input.GetMouseButton(1) && canMove)
         {
             Vector3 newPosition = cam.ScreenToViewportPoint(Input.mousePosition);
             Vector3 direction = previousPosition - newPosition;
@@ -54,7 +57,7 @@ public class CameraMove : MonoBehaviour
         {
             previousPosition = cam.ScreenToViewportPoint(Input.mousePosition);
         }
-        else if (Input.GetMouseButton(0) && allowMove)
+        else if (Input.GetMouseButton(0) && canMove)
         {
             Vector3 newPosition = cam.ScreenToViewportPoint(Input.mousePosition);
             Vector3 posDiff = previousPosition - newPosition;

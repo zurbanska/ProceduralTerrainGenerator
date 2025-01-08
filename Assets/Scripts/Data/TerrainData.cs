@@ -1,13 +1,16 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "NoiseData2")]
+[CreateAssetMenu(fileName = "TerrainData")]
 public class TerrainData : ScriptableObject
 {
-    public float seed;
+    public int seed;
 
     public float waterLevel;
     public float groundLevel;
 
+    public float isoLevel;
+
+    public int lod;
 
     public int octaves;
     public float persistence;
@@ -17,5 +20,6 @@ public class TerrainData : ScriptableObject
 
     public float offsetX;
     public float offsetZ;
+
 
 }

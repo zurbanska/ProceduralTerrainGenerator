@@ -8,10 +8,16 @@ public class WaterGenerator
 
     public void GenerateWater(Transform parent, float width, float waterLevel, int lod, Vector4 neighbors)
     {
+        GameObject existingWater = parent.Find("Water")?.gameObject;
+        if (existingWater != null)
+        {
+            Transform.Destroy(existingWater);
+        }
+
         GameObject water = new GameObject("Water");
         water.transform.parent = parent;
         water.transform.position = parent.position;
-        water.layer = LayerMask.NameToLayer("Water"); ;
+        water.layer = LayerMask.NameToLayer("Water");
 
         Material waterMaterial = Resources.Load<Material>("WaterMaterial");
         waterMaterial.SetFloat("_WaterLevel", waterLevel);

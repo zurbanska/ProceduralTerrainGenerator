@@ -8,7 +8,8 @@ public class TerrainManager : MonoBehaviour
     public ComputeShader noiseShader;
     public ComputeShader marchingCubesShader;
 
-    public NoiseData noiseData;
+    public TerrainData terrainData;
+    private TerrainData lastTerrainData;
 
     public Material material;
     public Gradient gradient;
@@ -16,110 +17,34 @@ public class TerrainManager : MonoBehaviour
 
     public int chunkWidth = 8; // points per x & z axis
     public int chunkHeight = 8; // points per y axis
-    public float isoLevel = 0.6f;
-    public float groundLevel = 0;
 
     public int renderDistance;
 
-    public int lod = 1;
-
-    public int octaves = 3;
-    public float persistence = 0.5f;
-    public float lacunarity = 0.4f;
-    public float scale = 1;
-
-    public float seed = 0;
     public bool randomSeed = false;
-    private bool needsUpdate;
-
 
     public bool allowTerraforming = true;
 
-    public TerrainData terrainData;
-
 
     private Dictionary<Vector2, GameObject> terrainChunkDictionary = new Dictionary<Vector2, GameObject>(); // dictionary of all created chunks and their coords
-    private List<Vector2> chunksVisibleLastUpdate = new List<Vector2>(); // list of chunk coords that were visible last update
-    private Vector2 lastChunkCoord;
 
-
-    // #if UNITY_EDITOR
-    // void OnValuesUpdated()
-    // {
-    //     if (!Application.isPlaying)
-    //     {
-    //         needsUpdate = true;
-    //         EditorApplication.delayCall += DelayedUpdate;
-    //     }
-    // }
-
-    // private void DelayedUpdate()
-    // {
-    //     if (!needsUpdate) return;
-
-    //     needsUpdate = false;
-    //     GenerateChunks();
-    //     EditorApplication.delayCall -= DelayedUpdate;
-    // }
-
-    // private void OnEnable()
-    // {
-    //     if (noiseData != null && !Application.isPlaying)
-    //     {
-    //         noiseData.OnValuesUpdated += OnValuesUpdated;
-    //     }
-    // }
-
-    // private void OnDisable()
-    // {
-    //     if (noiseData != null)
-    //     {
-    //         noiseData.OnValuesUpdated -= OnValuesUpdated;
-    //     }
-    // }
-
-    // private void OnDestroy()
-    // {
-    //     if (noiseData != null)
-    //     {
-    //         noiseData.OnValuesUpdated -= OnValuesUpdated;
-    //     }
-    // }
-    // #endif
 
     // Start is called before the first frame update
     void Start()
     {
+        lastTerrainData = terrainData;
         DeleteChunks();
-        // Vector2 currentChunkCoord = new Vector2(Mathf.FloorToInt(viewer.transform.position.x / chunkWidth), Mathf.FloorToInt(viewer.transform.position.z / chunkWidth));
-        // lastChunkCoord = currentChunkCoord;
-        if (randomSeed) seed = Mathf.FloorToInt(Random.value * 1000000);
-        // UpdateChunks(currentChunkCoord);
+        if (randomSeed) terrainData.seed = Mathf.FloorToInt(Random.value * 1000000);
         UpdateChunks();
-        // UpdateChunks(currentChunkCoord);
     }
 
     // Update is called once per frame
     void Update()
     {
-        // get viewer's chunk coord
-        Vector2 currentChunkCoord = new Vector2(Mathf.FloorToInt(transform.position.x / chunkWidth), Mathf.FloorToInt(transform.position.z / chunkWidth));
-
-        if (currentChunkCoord != lastChunkCoord) // only update chunks if viewer moved chunks
-        {
-            lastChunkCoord = currentChunkCoord;
-            UpdateChunks();
-            // UpdateChunks(currentChunkCoord);
-        }
-
-        // if (Input.anyKeyDown) {
-        //     noiseData.moreOffset.x += 10f;
-        //     GenerateChunks();
-        // }
 
     }
 
-    public void UpdateChunks()
+
+    public void UpdateChunks(bool needsNewNoise = true)
     {
 
         for (int i = -renderDistance; i < renderDistance; i++)
@@ -131,7 +56,7 @@ public class TerrainManager : MonoBehaviour
                     if (Mathf.Abs(i) < renderDistance && Mathf.Abs(j) < renderDistance)
                     {
                         Vector4 chunkNeighbors = CheckForChunkNeighbors(i, j);
-                        EnableChunk(chunkCoord, lod, chunkNeighbors);
+                        EnableChunk(chunkCoord, terrainData.lod, chunkNeighbors, needsNewNoise);
                     }
                 }
             }
@@ -143,7 +68,7 @@ public class TerrainManager : MonoBehaviour
     public void GenerateChunks()
     {
         DeleteChunks();
-        if (randomSeed) seed = Mathf.FloorToInt(Random.value * 1000000);
+        if (randomSeed) terrainData.seed = Mathf.FloorToInt(Random.value * 1000000);
         UpdateChunks();
     }
 
@@ -159,8 +84,8 @@ public class TerrainManager : MonoBehaviour
         chunkManager.width = chunkWidth;
         chunkManager.height = chunkHeight;
         chunkManager.coord = coord;
-        chunkManager.InitChunk(noiseShader, marchingCubesShader, material, gradient, noiseData, seed);
-        chunkManager.UpdateChunk(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod, chunkNeighbors, terrainData);
+        chunkManager.InitChunk(noiseShader, marchingCubesShader, material, gradient, terrainData, chunkNeighbors);
+        // chunkManager.UpdateChunk(chunkNeighbors, terrainData);
 
         terrainChunkDictionary[coord] = newChunk;
     }
@@ -172,7 +97,6 @@ public class TerrainManager : MonoBehaviour
             chunk.GetComponent<ChunkManager>().DestroyChunk();
         }
         terrainChunkDictionary.Clear();
-        chunksVisibleLastUpdate.Clear();
 
         while (transform.childCount > 0) {
             DestroyImmediate(transform.GetChild(0).gameObject);
@@ -188,11 +112,11 @@ public class TerrainManager : MonoBehaviour
         }
     }
 
-    private void EnableChunk(Vector2 coord, int chunkLod, Vector4 chunkNeighbors)
+    private void EnableChunk(Vector2 coord, int chunkLod, Vector4 chunkNeighbors, bool needsNewNoise)
     {
         if (terrainChunkDictionary.ContainsKey(coord))
         {
-            terrainChunkDictionary[coord].GetComponent<ChunkManager>().UpdateChunk(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, chunkLod, chunkNeighbors, terrainData);
+            terrainChunkDictionary[coord].GetComponent<ChunkManager>().UpdateChunk(chunkNeighbors, terrainData, needsNewNoise);
         } else CreateChunk(coord, chunkLod, chunkNeighbors);
     }
 
@@ -230,17 +154,6 @@ public class TerrainManager : MonoBehaviour
 
     private void OnValidate() {
 
-        // #if UNITY_EDITOR
-        // if (noiseData != null && !Application.isPlaying) {
-		// 	noiseData.OnValuesUpdated -= OnValuesUpdated;
-		// 	noiseData.OnValuesUpdated += OnValuesUpdated;
-		// }
-        // else if (noiseData != null && Application.isPlaying)
-        // {
-        //     noiseData.OnValuesUpdated -= OnValuesUpdated;
-        // }
-        // #endif
-
         // chunk width and height have to be multiples of 8 and greater or equal 8
         chunkWidth = Mathf.Max(8, chunkWidth);
         if (chunkWidth % 8 != 0)
@@ -254,15 +167,6 @@ public class TerrainManager : MonoBehaviour
             chunkHeight = Mathf.RoundToInt(chunkHeight / 8.0f) * 8;
         }
 
-        // level of detail reduction has to be less than half of chunk width
-        if (lod > chunkWidth / 2)
-        {
-            lod = chunkWidth / 2;
-        }
-        if (lod < 1)
-        {
-            lod = 1;
-        }
     }
 
 

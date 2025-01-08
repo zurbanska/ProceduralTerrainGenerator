@@ -6,16 +6,14 @@ public class NoiseGenerator
     private ComputeShader noiseShader;
     public ComputeBuffer valuesBuffer;
     public ComputeBuffer biomeValuesBuffer;
-    public NoiseData noiseData;
 
-    public NoiseGenerator(ComputeShader noiseShader, NoiseData noiseData)
+    public NoiseGenerator(ComputeShader noiseShader)
     {
         this.noiseShader = noiseShader;
-        this.noiseData = noiseData;
     }
 
 
-    public float[] GenerateNoise(int width, int height, Vector2 offset, int octaves, float persistence, float lacunarity, float scale, float groundLevel, float seed, Vector4 neighbors, int lod, float[] biomeValues)
+    public float[] GenerateNoise(int width, int height, Vector2 offset, TerrainData terrainData , Vector4 neighbors, float[] biomeValues)
     {
 
         float[] noiseValues = new float[width * height * width]; // 1D array of noise values
@@ -28,21 +26,21 @@ public class NoiseGenerator
         noiseShader.SetBuffer(0, "_BiomeValues", biomeValuesBuffer);
         noiseShader.SetInt("_ChunkWidth", width);
         noiseShader.SetInt("_ChunkHeight", height);
-        noiseShader.SetFloat("_OffsetX", offset.x + noiseData.moreOffset.x);
-        noiseShader.SetFloat("_OffsetZ", offset.y + noiseData.moreOffset.y);
-        noiseShader.SetFloat("lod", lod);
+        noiseShader.SetFloat("_OffsetX", offset.x + terrainData.offsetX);
+        noiseShader.SetFloat("_OffsetZ", offset.y + terrainData.offsetZ);
+        noiseShader.SetFloat("lod", terrainData.lod);
 
         noiseShader.SetBool("borderDown", neighbors[0] == 0);
         noiseShader.SetBool("borderRight", neighbors[1] == 0);
         noiseShader.SetBool("borderUp", neighbors[2] == 0);
         noiseShader.SetBool("borderLeft", neighbors[3] == 0);
 
-        noiseShader.SetInt("octaves", octaves);
-        noiseShader.SetFloat("scale", scale);
-        noiseShader.SetFloat("persistence", persistence);
-        noiseShader.SetFloat("lacunarity", lacunarity);
-        noiseShader.SetFloat("groundLevel", groundLevel);
-        noiseShader.SetFloat("seed", seed);
+        noiseShader.SetInt("octaves", terrainData.octaves);
+        noiseShader.SetFloat("scale", terrainData.scale);
+        noiseShader.SetFloat("persistence", terrainData.persistence);
+        noiseShader.SetFloat("lacunarity", terrainData.lacunarity);
+        noiseShader.SetFloat("groundLevel", terrainData.groundLevel);
+        noiseShader.SetFloat("seed", terrainData.seed);
 
         int numThreadsXZ = Mathf.CeilToInt(width / 8);
         int numThreadsY = Mathf.CeilToInt(height / 8);

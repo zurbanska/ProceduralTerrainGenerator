@@ -16,66 +16,51 @@ public class ChunkManager : MonoBehaviour
 
     private Material material;
     private Gradient gradient;
-    private float seed;
 
-    public int lod;
     private Mesh mesh;
     public float[] densityValues;
     public float[] biomeValues;
 
-    NoiseData noiseData;
+    TerrainData terrainData;
 
     Vector4 neighbors;
-
-
-    private float isoLevel;
-    private int octaves;
-    private float persistence;
-    private float lacunarity;
-    private float scale;
-    private float groundLevel;
 
     public Bounds bounds;
 
 
-    public void InitChunk(ComputeShader noiseShader, ComputeShader meshShader, Material material, Gradient gradient, NoiseData noiseData, float seed)
+    public void InitChunk(ComputeShader noiseShader, ComputeShader meshShader, Material material, Gradient gradient, TerrainData terrainData, Vector4 neighbors)
     {
         this.material = material;
         this.gradient = gradient;
-        this.noiseData = noiseData;
-        this.seed = seed;
+        this.terrainData = ScriptableObject.CreateInstance<TerrainData>();
 
-        noiseGenerator = new NoiseGenerator(noiseShader, noiseData);
+        noiseGenerator = new NoiseGenerator(noiseShader);
         meshGenerator = new MeshGenerator(meshShader);
         waterGenerator = new WaterGenerator();
         biomeGenerator = new BiomeGenerator();
-
-        lod = -1;
 
         gameObject.AddComponent<MeshFilter>();
         gameObject.AddComponent<MeshRenderer>();
         gameObject.AddComponent<MeshCollider>();
 
         bounds = new Bounds(new Vector3(width / 2, height / 2, width / 2) + transform.position, new Vector3(width, height, width));
+
+        UpdateChunk(neighbors, terrainData, true);
     }
 
-    public async void UpdateChunk(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod, Vector4 neighbors, TerrainData terrainData)
+    public async void UpdateChunk(Vector4 neighbors, TerrainData newTerrainData, bool needsNewNoise)
     {
         this.neighbors = neighbors;
-        this.isoLevel = isoLevel;
-        this.octaves = octaves;
-        this.persistence = persistence;
-        this.lacunarity = lacunarity;
-        this.scale = scale;
-        this.groundLevel = groundLevel;
 
-        if (lod != meshLod && noiseData.waterLevel > 0) waterGenerator.GenerateWater(gameObject.transform, width, noiseData.waterLevel, meshLod, neighbors);
-        lod = meshLod;
+        // if (terrainData.lod != newTerrainData.lod && newTerrainData.waterLevel > 0)
+        waterGenerator.GenerateWater(gameObject.transform, width, newTerrainData.waterLevel, newTerrainData.lod, neighbors);
 
-        Mesh newMesh = await GenerateMesh(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, meshLod, true);
+        terrainData = newTerrainData;
+        Mesh newMesh = await GenerateMesh(needsNewNoise);
         SetMesh(newMesh);
 
-        material.SetFloat("_WaterLevel", noiseData.waterLevel);
+        material.SetFloat("_WaterLevel", terrainData.waterLevel);
+
     }
 
     private void SetMesh(Mesh newMesh)
@@ -96,21 +81,21 @@ public class ChunkManager : MonoBehaviour
 
 
 
-    private Task<Mesh> GenerateMesh(float isoLevel, int octaves, float persistence, float lacunarity, float scale, float groundLevel, int meshLod, bool needsNewNoise)
+    private Task<Mesh> GenerateMesh(bool needsNewNoise)
     {
         if (densityValues == null || needsNewNoise)
         {
-        // check if chunk needs noise update
-            biomeValues = biomeGenerator.GenerateBiomes(width + 1, new Vector2(coord.x * width, coord.y * width), seed);
+            // check if chunk needs noise update
+            biomeValues = biomeGenerator.GenerateBiomes(width + 1, new Vector2(coord.x * width, coord.y * width), terrainData.seed);
 
-            densityValues = noiseGenerator.GenerateNoise(width + 1, height + 1, new Vector2(coord.x * width, coord.y * width), octaves, persistence, lacunarity, scale, groundLevel, seed, neighbors, lod, biomeValues);
+            densityValues = noiseGenerator.GenerateNoise(width + 1, height + 1, new Vector2(coord.x * width, coord.y * width), terrainData, neighbors, biomeValues);
             AsyncGPUReadback.WaitAllRequests();
 
         }
 
         meshGenerator.CreateBuffers(width + 1, height + 1);
 
-        Task<Mesh> mesh = meshGenerator.GenerateMesh(width + 1, height + 1, isoLevel, densityValues, meshLod, gradient, biomeValues);
+        Task<Mesh> mesh = meshGenerator.GenerateMesh(width + 1, height + 1, terrainData.isoLevel, densityValues, terrainData.lod, gradient, biomeValues);
         AsyncGPUReadback.WaitAllRequests();
 
         return mesh;
@@ -132,7 +117,7 @@ public class ChunkManager : MonoBehaviour
         densityValues = meshGenerator.UpdateDensity(width + 1, height + 1, densityValues, hitPosition, brushSize, add, neighbors);
         AsyncGPUReadback.WaitAllRequests();
 
-        Mesh newMesh = await GenerateMesh(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, lod, false);
+        Mesh newMesh = await GenerateMesh(false);
         SetMesh(newMesh);
     }
 
