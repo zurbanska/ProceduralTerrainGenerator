@@ -36,7 +36,7 @@ int indexFromCoord(int x, int y, int z)
 
 float3 interp(float3 edgeVertex1, float valueAtVertex1, float3 edgeVertex2, float valueAtVertex2)
 {
-    float t = (_IsoLevel - valueAtVertex1) / (valueAtVertex2 - valueAtVertex1);
+    float t = (_IsoLevel - valueAtVertex1) / (valueAtVertex2 - valueAtVertex1 + 0.000001);
     float3 val = lerp(edgeVertex1, edgeVertex2, t);
     return val;
 }
@@ -108,7 +108,7 @@ void UpdateDensity( uint3 id : SV_DispatchThreadID )
 
     if (distance(id, _HitPosition) <= _BrushSize / 2)
     {
-        _DensityValues[indexFromCoord(id.x, id.y, id.z)] += _TerraformStrength * 0.03;
+        _DensityValues[indexFromCoord(id.x, id.y, id.z)] = _TerraformStrength;
 
         if (id.z == 0 && borderDown || id.z == _ChunkWidth - 1 && borderUp || id.x == 0 && borderLeft || id.x == _ChunkWidth - 1 && borderRight || id.y == 0)
         {

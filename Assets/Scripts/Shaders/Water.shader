@@ -117,7 +117,7 @@ Shader "Custom/Water"
                 half4 skyData = UNITY_SAMPLE_TEXCUBE(unity_SpecCube0, worldRefl);
                 half3 skyColor = DecodeHDR (skyData, unity_SpecCube0_HDR);
 
-                float3 normal = _WorldSpaceLightPos0.xyz * i.normal;
+                float3 normal = _WorldSpaceLightPos0.xyz * i.normal * 0.5;
                 // float3 normal = i.normal;
                 float3 baseColor = _BaseColor.rgb + normal.xxx + normal.zzz + normal.yyy;
 

@@ -72,7 +72,7 @@ public class ChunkManager : MonoBehaviour
         if (lod != meshLod && noiseData.waterLevel > 0) waterGenerator.GenerateWater(gameObject.transform, width, noiseData.waterLevel, meshLod, neighbors);
         lod = meshLod;
 
-        Mesh newMesh = await GenerateMesh(isoLevel, octaves, terrainData.persistence, lacunarity, scale, groundLevel, meshLod, true);
+        Mesh newMesh = await GenerateMesh(isoLevel, octaves, persistence, lacunarity, scale, groundLevel, meshLod, true);
         SetMesh(newMesh);
 
         material.SetFloat("_WaterLevel", noiseData.waterLevel);

@@ -13,7 +13,7 @@ public class CameraMove : MonoBehaviour
 
     private Vector3 previousPosition;
 
-    public bool allowMove = true;
+    public bool allowMove = false;
 
     private void Awake() {
         cam = Camera.main;

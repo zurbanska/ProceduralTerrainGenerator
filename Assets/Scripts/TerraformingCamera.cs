@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class TerraformingCamera : MonoBehaviour
 {
@@ -12,11 +13,11 @@ public class TerraformingCamera : MonoBehaviour
     }
 
     private void LateUpdate() {
-        if (Input.GetMouseButton(0) && terrainManager.allowTerraforming)
+        if (Input.GetMouseButtonDown(0) && terrainManager.allowTerraforming)
         {
             Terraform(true);
         }
-        else if (Input.GetMouseButton(1) && terrainManager.allowTerraforming)
+        else if (Input.GetMouseButtonDown(1) && terrainManager.allowTerraforming)
         {
             Terraform(false);
         }
@@ -28,14 +29,10 @@ public class TerraformingCamera : MonoBehaviour
 
         int layerMask = LayerMask.GetMask("Terrain");
 
-        if (Physics.Raycast(ray, out hit, 1000, layerMask)) {
-            Transform objectHit = hit.transform;
+        // only terraform if raycast hit "terrain" layer and pointer is NOT over UI element
+        if (Physics.Raycast(ray, out hit, 1000, layerMask) && !EventSystem.current.IsPointerOverGameObject()) {
             hitPoint = hit.point;
-
             terrainManager.ModifyTerrain(hitPoint, brushSize, add);
-
-        } else {
-            // Debug.Log("miss");
         }
     }
 

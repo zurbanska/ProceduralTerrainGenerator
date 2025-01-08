@@ -38,13 +38,10 @@ public class TerrainManager : MonoBehaviour
     public TerrainData terrainData;
 
 
-    [SerializeField] private Transform viewer;
     private Dictionary<Vector2, GameObject> terrainChunkDictionary = new Dictionary<Vector2, GameObject>(); // dictionary of all created chunks and their coords
     private List<Vector2> chunksVisibleLastUpdate = new List<Vector2>(); // list of chunk coords that were visible last update
     private Vector2 lastChunkCoord;
 
-
-    public List<LodInfo> lods = new List<LodInfo>();
 
     // #if UNITY_EDITOR
     // void OnValuesUpdated()
@@ -96,7 +93,7 @@ public class TerrainManager : MonoBehaviour
         DeleteChunks();
         // Vector2 currentChunkCoord = new Vector2(Mathf.FloorToInt(viewer.transform.position.x / chunkWidth), Mathf.FloorToInt(viewer.transform.position.z / chunkWidth));
         // lastChunkCoord = currentChunkCoord;
-        if (randomSeed) seed = Random.value * 10000000;
+        if (randomSeed) seed = Mathf.FloorToInt(Random.value * 1000000);
         // UpdateChunks(currentChunkCoord);
         UpdateChunks();
         // UpdateChunks(currentChunkCoord);
@@ -106,7 +103,7 @@ public class TerrainManager : MonoBehaviour
     void Update()
     {
         // get viewer's chunk coord
-        Vector2 currentChunkCoord = new Vector2(Mathf.FloorToInt(viewer.transform.position.x / chunkWidth), Mathf.FloorToInt(viewer.transform.position.z / chunkWidth));
+        Vector2 currentChunkCoord = new Vector2(Mathf.FloorToInt(transform.position.x / chunkWidth), Mathf.FloorToInt(transform.position.z / chunkWidth));
 
         if (currentChunkCoord != lastChunkCoord) // only update chunks if viewer moved chunks
         {
@@ -142,26 +139,11 @@ public class TerrainManager : MonoBehaviour
     }
 
 
-    private int GetChunkLOD(float distance)
-    {
-        int chunkLod = lods[^1].lod;
-        foreach (var lodInfo in lods)
-        {
-            if (distance < lodInfo.distanceThreshold)
-            {
-                chunkLod = lodInfo.lod;
-                break;
-            }
-        }
-        return chunkLod;
-    }
-
-
     // used in editor
     public void GenerateChunks()
     {
         DeleteChunks();
-        if (randomSeed) seed = Random.value * 10000000;
+        if (randomSeed) seed = Mathf.FloorToInt(Random.value * 1000000);
         UpdateChunks();
     }
 
@@ -283,12 +265,5 @@ public class TerrainManager : MonoBehaviour
         }
     }
 
-
-    [System.Serializable]
-    public struct LodInfo
-    {
-        public float distanceThreshold;
-        public int lod;
-    }
 
 }

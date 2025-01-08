@@ -36,12 +36,14 @@ int indexFromCoord(int x, int y, int z)
 // returns a pseudo-random float between 0 and 1
 float rand(float2 position)
 {
-    return frac(sin(dot(position, float2(12.9898,78.233))) * 43758.5453);
+    // return frac(sin(dot(position, float2(12.9898,78.233))) * 43758.5453);
+    return frac(sin(dot(position, float2(127.1, 311.7))) * 43758.5453);
 }
 
 float rand3D(float3 position)
 {
-    return frac(sin(dot(position, float3(12.9898,78.233,45.543))) * 43758.5453);
+    // return frac(sin(dot(position, float3(12.9898,78.233,45.543))) * 43758.5453);
+    return frac(sin(dot(position, float3(12.1, 31.7, 74.7))) * 43758.5453);
 }
 
 
@@ -65,7 +67,7 @@ float randomElevation(float3 position)
 // returns a pseudo-random unit length vector
 float2 randomVector(float2 position)
 {
-    // position = position + 0.02;
+    position = position + 0.02;
     float angle = randomAngle(position);
     float2 vec = float2(cos(angle), sin(angle));
     return vec;
@@ -178,7 +180,8 @@ float perlinNoise3D(float3 position, int frequency)
     float dotTRF = dot(gradTRF, offsetTRF);
 
     // smooth out gridUVs
-    gridUV = smoothstep(0.01, 1, gridUV);
+    gridUV = clamp(gridUV, 0.0, 1.0);
+    gridUV = smoothstep(0.01, 0.99, gridUV);
 
     // interpolate between dot products
     // x axis
@@ -255,15 +258,15 @@ void GenerateNoise (uint3 id : SV_DispatchThreadID)
     float globalZ = (id.z + _OffsetZ + seed) * (1 / scale);
 
     float biomeValue = (_BiomeValues[id.z * _ChunkWidth + id.x] - 0.5) * 10;
+    biomeValue = 1;
 
-    float noiseValue = fractalNoise3D(float3(globalX, globalY, globalZ), octaves, persistence, lacunarity);
-    // float currentDensity = noiseValue * _ChunkHeight;
+    // float noiseValue = fractalNoise3D(float3(globalX, globalY, globalZ), octaves, persistence, lacunarity);
+    float noiseValue = fractalNoise2D(float2(globalX, globalZ), octaves, persistence, lacunarity);
+    // noiseValue += noiseValue2 * 0.5;
+
     float currentDensity = _ChunkHeight * clamp(noiseValue, -0.9, 0.9) * clamp(biomeValue, -0.05, 3); // noise multiplier
-    currentDensity += groundLevel * clamp(biomeValue, 0.5, 3);
-    // currentDensity += groundLevel * groundLevel * _BiomeValues[id.z * _ChunkWidth + id.x];
-    // currentDensity = _BiomeValues[id.z * _ChunkWidth + id.x] * 50;
+    currentDensity += groundLevel * _BiomeValues[id.z * _ChunkWidth + id.x] * 5;
 
-    // currentDensity = perlinNoise3D(float3(globalX, globalY, globalZ), 1.6) * _ChunkHeight + groundLevel;
 
     float newDensity = currentDensity;
 
