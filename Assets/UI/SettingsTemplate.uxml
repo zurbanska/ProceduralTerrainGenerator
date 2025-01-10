@@ -1,7 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/style.uss?fileID=7433441132597879392&amp;guid=e712a1d83a1bcfd45b5422f17e22f323&amp;type=3#style" />
+    <Style src="project://database/Assets/UI/style.uss?fileID=7433441132597879392&amp;guid=e712a1d83a1bcfd45b5422f17e22f323&amp;type=3#style" />
     <ui:VisualElement name="background" picking-mode="Ignore" style="flex-grow: 1;">
-        <ui:VisualElement name="settings-box" class="settings-box" style="left: 10px; top: 10px; flex-wrap: nowrap; text-overflow: clip; height: 650px; flex-basis: 0; flex-direction: column; display: flex; overflow: visible; visibility: hidden;">
+        <ui:VisualElement name="settings-box" class="settings-box" style="left: 10px; top: 10px; flex-wrap: nowrap; text-overflow: clip; height: 660px; flex-basis: 0; flex-direction: column; display: flex; overflow: visible; visibility: hidden; max-height: 90%;">
             <ui:VisualElement name="settings-panel" style="flex-grow: 1; position: absolute; top: 30px; background-color: rgba(255, 255, 255, 0); width: 100%; height: auto; max-height: 100%; padding-top: 5px; padding-right: 10px; padding-bottom: 5px; padding-left: 10px; justify-content: flex-end; align-items: stretch; align-self: auto; flex-direction: column; flex-basis: auto; flex-wrap: wrap;">
                 <ui:Toggle label="Allow Camera Movement" name="movement-toggle" value="true" class="toggle" style="justify-content: flex-end;" />
                 <ui:Toggle label="Auto Update" name="auto-update-toggle" value="false" class="toggle" style="justify-content: flex-end;" />
@@ -18,6 +18,7 @@
                 <ui:SliderInt picking-mode="Ignore" label="Level of Detail" value="1" high-value="5" show-input-field="true" low-value="1" name="lod-slider" class="num-field" />
                 <ui:FloatField label="Ground Level" value="12" name="ground-level-input" class="num-field" />
                 <ui:FloatField label="Water Level" value="16.5" name="water-level-input" class="num-field" />
+                <ui:SliderInt picking-mode="Ignore" label="Tree Density" value="1" high-value="100" show-input-field="true" low-value="0" name="object-density-slider" class="num-field" />
                 <ui:Label tabindex="-1" text="Terraforming Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" name="terraforming-settings" class="sub-label" />
                 <ui:Toggle label="Allow Terraforming" name="terraforming-toggle" value="true" class="toggle" />
                 <ui:FloatField label="Brush Size" value="10" name="brush-size-input" class="num-field" />

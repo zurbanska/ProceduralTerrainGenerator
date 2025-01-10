@@ -145,7 +145,7 @@ public class TerrainManager : MonoBehaviour
                 if (chunkManager.bounds.Intersects(brushBounds))
                 {
                     Vector3 localHitPoint = hitPoint - chunk.transform.position;
-                    chunkManager.Terraform(localHitPoint, brushSize, add);
+                    chunkManager.Terraform(localHitPoint, brushSize, add, brushBounds);
                 }
             }
         }

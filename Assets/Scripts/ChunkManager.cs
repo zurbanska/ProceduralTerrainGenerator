@@ -14,6 +14,8 @@ public class ChunkManager : MonoBehaviour
     private BiomeGenerator biomeGenerator;
     private WaterGenerator waterGenerator;
 
+    private ObjectPlacer objectPlacer;
+
     private Material material;
     private Gradient gradient;
 
@@ -43,9 +45,12 @@ public class ChunkManager : MonoBehaviour
         gameObject.AddComponent<MeshRenderer>();
         gameObject.AddComponent<MeshCollider>();
 
+        objectPlacer = gameObject.AddComponent<ObjectPlacer>();
+
         bounds = new Bounds(new Vector3(width / 2, height / 2, width / 2) + transform.position, new Vector3(width, height, width));
 
         UpdateChunk(neighbors, terrainData, true);
+
     }
 
     public async void UpdateChunk(Vector4 neighbors, TerrainData newTerrainData, bool needsNewNoise)
@@ -61,6 +66,7 @@ public class ChunkManager : MonoBehaviour
 
         material.SetFloat("_WaterLevel", terrainData.waterLevel);
 
+        objectPlacer.PlaceObjects(terrainData);
     }
 
     private void SetMesh(Mesh newMesh)
@@ -111,7 +117,7 @@ public class ChunkManager : MonoBehaviour
         UnityEngine.Object.DestroyImmediate(gameObject);
     }
 
-    public async void Terraform(Vector3 hitPosition, float brushSize, bool add)
+    public async void Terraform(Vector3 hitPosition, float brushSize, bool add, Bounds brushBounds)
     {
         meshGenerator.CreateBuffers(width + 1, height + 1);
         densityValues = meshGenerator.UpdateDensity(width + 1, height + 1, densityValues, hitPosition, brushSize, add, neighbors);
@@ -119,6 +125,7 @@ public class ChunkManager : MonoBehaviour
 
         Mesh newMesh = await GenerateMesh(false);
         SetMesh(newMesh);
+        objectPlacer.DestroyObjectsInArea(brushBounds);
     }
 
 

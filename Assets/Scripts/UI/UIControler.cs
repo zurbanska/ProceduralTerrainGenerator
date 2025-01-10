@@ -24,6 +24,7 @@ public class UIControler : MonoBehaviour
     public SliderInt lodSlider;
     public FloatField groundLevelField;
     public FloatField waterLevelField;
+    public SliderInt objectDensitySlider;
 
     public Toggle terraformToggle;
     public FloatField brushSizeField;
@@ -90,6 +91,10 @@ public class UIControler : MonoBehaviour
         waterLevelField = root.Q<FloatField>("water-level-input");
         waterLevelField.RegisterValueChangedCallback(e => WaterLevelChanged(e.newValue));
         waterLevelField.value = terrainManager.terrainData.waterLevel;
+
+        objectDensitySlider = root.Q<SliderInt>("object-density-slider");
+        objectDensitySlider.RegisterValueChangedCallback(e => ObjectDensityChanged(e.newValue));
+        objectDensitySlider.value = terrainManager.terrainData.objectDensity;
 
 
         terraformToggle = root.Q<Toggle>("terraforming-toggle");
@@ -181,6 +186,12 @@ public class UIControler : MonoBehaviour
     {
         terrainManager.terrainData.waterLevel = newValue;
         if (autoUpdate) terrainManager.UpdateChunks(false);
+    }
+
+    void ObjectDensityChanged(int newValue)
+    {
+        terrainManager.terrainData.objectDensity = newValue;
+        if (autoUpdate) terrainManager.UpdateChunks();
     }
 
 
