@@ -191,7 +191,7 @@ public class UIControler : MonoBehaviour
     void ObjectDensityChanged(int newValue)
     {
         terrainManager.terrainData.objectDensity = newValue;
-        if (autoUpdate) terrainManager.UpdateChunks();
+        if (autoUpdate) terrainManager.UpdateChunks(false);
     }
 
 
@@ -216,10 +216,10 @@ public class UIControler : MonoBehaviour
 
     void SettingsButtonPressed()
     {
-        if (settingsBox.style.visibility == Visibility.Visible)
+        if (settingsBox.style.display == DisplayStyle.Flex)
         {
-            settingsBox.style.visibility = Visibility.Hidden;
-        } else settingsBox.style.visibility = Visibility.Visible;
+            settingsBox.style.display = DisplayStyle.None;
+        } else settingsBox.style.display = DisplayStyle.Flex;
     }
 
 }

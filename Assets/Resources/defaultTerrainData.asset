@@ -14,13 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   waterLevel: 12.5
   groundLevel: 9.44
-  lod: 4
-  isoLevel: 0.814
-  seed: 419953
-  octaves: 4
+  lod: 1
+  isoLevel: 0.65
+  seed: 412854
+  octaves: 3
   persistence: 0.82
   lacunarity: 2
   scale: 9
   offsetX: 0
   offsetZ: 0
-  objectDensity: 10
+  objectDensity: 4

@@ -1,30 +1,32 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/style.uss?fileID=7433441132597879392&amp;guid=e712a1d83a1bcfd45b5422f17e22f323&amp;type=3#style" />
-    <ui:VisualElement name="background" picking-mode="Ignore" style="flex-grow: 1;">
-        <ui:VisualElement name="settings-box" class="settings-box" style="left: 10px; top: 10px; flex-wrap: nowrap; text-overflow: clip; height: 660px; flex-basis: 0; flex-direction: column; display: flex; overflow: visible; visibility: hidden; max-height: 90%;">
-            <ui:VisualElement name="settings-panel" style="flex-grow: 1; position: absolute; top: 30px; background-color: rgba(255, 255, 255, 0); width: 100%; height: auto; max-height: 100%; padding-top: 5px; padding-right: 10px; padding-bottom: 5px; padding-left: 10px; justify-content: flex-end; align-items: stretch; align-self: auto; flex-direction: column; flex-basis: auto; flex-wrap: wrap;">
-                <ui:Toggle label="Allow Camera Movement" name="movement-toggle" value="true" class="toggle" style="justify-content: flex-end;" />
-                <ui:Toggle label="Auto Update" name="auto-update-toggle" value="false" class="toggle" style="justify-content: flex-end;" />
-                <ui:Label tabindex="-1" text="Noise Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" name="noise-settings-label" class="sub-label" style="border-left-color: rgb(113, 113, 113); border-right-color: rgb(113, 113, 113); border-top-color: rgb(113, 113, 113); border-bottom-color: rgb(113, 113, 113); border-bottom-width: 1px; -unity-font-style: bold; -unity-background-scale-mode: stretch-to-fill;" />
-                <ui:Toggle label="Random Seed" name="random-seed-toggle" class="toggle" />
-                <ui:IntegerField label="Chosen Seed" value="42" name="seed-input" class="num-field" />
-                <ui:Slider picking-mode="Ignore" label="ISO level" value="0.8" high-value="1" name="iso-level-slider" show-input-field="true" class="num-field" />
-                <ui:SliderInt picking-mode="Ignore" label="Octaves" value="3" high-value="5" show-input-field="true" low-value="1" name="octaves-slider" class="num-field" />
-                <ui:FloatField label="Persistence" value="0.7" name="persistence-input" class="num-field" />
-                <ui:FloatField label="Lacunarity" value="2" name="lacunarity-input" class="num-field" />
-                <ui:FloatField label="Scale" value="10" name="scale-input" class="num-field" />
-                <ui:Label tabindex="-1" text="Terrain Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" name="terrain-settings-label" class="sub-label" />
-                <ui:IntegerField label="Render Distance" value="2" name="render-distance-input" class="num-field" />
-                <ui:SliderInt picking-mode="Ignore" label="Level of Detail" value="1" high-value="5" show-input-field="true" low-value="1" name="lod-slider" class="num-field" />
-                <ui:FloatField label="Ground Level" value="12" name="ground-level-input" class="num-field" />
-                <ui:FloatField label="Water Level" value="16.5" name="water-level-input" class="num-field" />
-                <ui:SliderInt picking-mode="Ignore" label="Tree Density" value="1" high-value="100" show-input-field="true" low-value="0" name="object-density-slider" class="num-field" />
-                <ui:Label tabindex="-1" text="Terraforming Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" name="terraforming-settings" class="sub-label" />
-                <ui:Toggle label="Allow Terraforming" name="terraforming-toggle" value="true" class="toggle" />
-                <ui:FloatField label="Brush Size" value="10" name="brush-size-input" class="num-field" />
-                <ui:Button text="Generate Terrain" parse-escape-sequences="true" display-tooltip-when-elided="true" name="generate-terrain-button" class="button" />
-            </ui:VisualElement>
-            <ui:Label tabindex="-1" text="Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" enable-rich-text="false" name="settings-label" style="position: absolute; top: 0; flex-grow: 1; width: 100%; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-top: 5px; padding-right: 10px; padding-bottom: 5px; padding-left: 10px; background-color: rgb(62, 63, 60); -unity-font-style: bold; -unity-font: initial; border-bottom-right-radius: 0; border-top-left-radius: 5px; border-top-right-radius: 5px; color: rgb(210, 212, 209); border-bottom-width: 1px; border-left-color: rgb(113, 113, 113); border-right-color: rgb(113, 113, 113); border-top-color: rgb(113, 113, 113); border-bottom-color: rgb(113, 113, 113); height: 30px; justify-content: flex-start; align-items: auto; -unity-text-align: middle-left;" />
+    <ui:VisualElement name="background" picking-mode="Ignore" style="flex-grow: 1; visibility: visible; display: flex;">
+        <ui:VisualElement name="settings-box" class="settings-box" style="left: 10px; top: 10px; flex-wrap: nowrap; text-overflow: clip; height: 70%; flex-basis: 0; flex-direction: column; display: none; overflow: visible; visibility: visible; max-height: none; background-color: rgba(41, 41, 41, 0);">
+            <ui:Label tabindex="-1" text="Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" enable-rich-text="false" name="settings-label" style="position: absolute; top: 0; flex-grow: 1; width: 100%; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-top: 5px; padding-right: 10px; padding-bottom: 5px; padding-left: 10px; background-color: rgb(42, 42, 42); -unity-font-style: bold; -unity-font: initial; border-bottom-right-radius: 0; border-top-left-radius: 5px; border-top-right-radius: 5px; color: rgb(210, 212, 209); border-bottom-width: 1px; border-left-color: rgb(64, 64, 64); border-right-color: rgb(64, 64, 64); border-top-color: rgb(64, 64, 64); border-bottom-color: rgb(64, 64, 64); height: 30px; justify-content: flex-start; align-items: auto; -unity-text-align: middle-left;" />
+            <ui:ScrollView mouse-wheel-scroll-size="100" vertical-page-size="2" elasticity="0.1" name="settings-panel" style="height: 95%; top: 30px; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; flex-direction: column; justify-content: flex-start; align-self: auto; background-color: rgb(56, 56, 56); border-top-left-radius: 0; border-top-right-radius: 0; border-bottom-right-radius: 5px; border-bottom-left-radius: 5px; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0;">
+                <ui:VisualElement name="settings-container" style="flex-grow: 1; padding-right: 5px; padding-left: 5px; padding-top: 5px; padding-bottom: 5px;">
+                    <ui:Toggle label="Allow Camera Movement" name="movement-toggle" class="toggle" />
+                    <ui:Toggle label="Auto Update" name="auto-update-toggle" class="toggle" />
+                    <ui:Label tabindex="-1" text="Noise Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" name="noise-settings-label" class="sub-label" style="-unity-font-style: bold; -unity-background-scale-mode: stretch-to-fill;" />
+                    <ui:Toggle label="Random Seed" name="random-seed-toggle" class="toggle" />
+                    <ui:IntegerField label="Chosen Seed" value="42" name="seed-input" class="num-field" />
+                    <ui:Slider picking-mode="Ignore" label="ISO level" value="0.8" high-value="1" name="iso-level-slider" show-input-field="true" class="num-field" />
+                    <ui:SliderInt picking-mode="Ignore" label="Octaves" value="3" high-value="5" show-input-field="true" low-value="1" name="octaves-slider" class="num-field" />
+                    <ui:FloatField label="Persistence" value="0.7" name="persistence-input" class="num-field" />
+                    <ui:FloatField label="Lacunarity" value="2" name="lacunarity-input" class="num-field" />
+                    <ui:FloatField label="Scale" value="10" name="scale-input" class="num-field" />
+                    <ui:Label tabindex="-1" text="Terrain Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" name="terrain-settings-label" class="sub-label" />
+                    <ui:IntegerField label="Render Distance" value="2" name="render-distance-input" class="num-field" />
+                    <ui:SliderInt picking-mode="Ignore" label="Level of Detail" value="1" high-value="5" show-input-field="true" low-value="1" name="lod-slider" class="num-field" />
+                    <ui:FloatField label="Ground Level" value="12" name="ground-level-input" class="num-field" />
+                    <ui:FloatField label="Water Level" value="16.5" name="water-level-input" class="num-field" />
+                    <ui:SliderInt picking-mode="Ignore" label="Tree Density" value="1" high-value="100" show-input-field="true" low-value="0" name="object-density-slider" class="num-field" />
+                    <ui:Label tabindex="-1" text="Terraforming Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" name="terraforming-settings" class="sub-label" />
+                    <ui:Toggle label="Allow Terraforming" name="terraforming-toggle" value="true" class="toggle" />
+                    <ui:FloatField label="Brush Size" value="10" name="brush-size-input" class="num-field" />
+                    <ui:Button text="Generate Terrain" parse-escape-sequences="true" display-tooltip-when-elided="true" name="generate-terrain-button" class="button" />
+                </ui:VisualElement>
+            </ui:ScrollView>
         </ui:VisualElement>
         <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="settings-button" class="settings-button" style="-unity-text-align: middle-center;">
             <ui:VisualElement style="flex-grow: 1; background-image: resource(&apos;Icons/settings&apos;); -unity-background-image-tint-color: rgb(210, 212, 209); -unity-background-scale-mode: scale-to-fit; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; width: 70%; height: 70%;" />

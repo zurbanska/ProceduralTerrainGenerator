@@ -9,15 +9,17 @@ public class ObjectPlacer : MonoBehaviour
     MeshFilter meshFilter;
     List<Vector3> validPositions;
 
+
     void Awake()
     {
         LoadResources();
-
     }
 
     public void PlaceObjects(TerrainData terrainData)
     {
         DestroyObjects();
+
+        System.Random newRandom = new System.Random(1);
 
         meshFilter = GetComponent<MeshFilter>();
         Mesh mesh = meshFilter.sharedMesh;
@@ -40,15 +42,27 @@ public class ObjectPlacer : MonoBehaviour
             Vector3 normal = normals[triangles[i]];
 
             Vector3 centerPoint = (v0 + v1 + v2) / 3f;
+            centerPoint.y -= 0.2f;
 
-            if (Vector3.Angle(normal, Vector3.up) < 40f && centerPoint.y > terrainData.waterLevel + 1f) validPositions.Add(centerPoint);
+            if (Vector3.Angle(normal, Vector3.up) < 45f && centerPoint.y > terrainData.waterLevel + 1f ) validPositions.Add(centerPoint);
         }
+
+        validPositions.Sort((a, b) =>
+        {
+            int compareX = a.x.CompareTo(b.x);
+            if (compareX != 0) return compareX;
+
+            int compareY = a.y.CompareTo(b.y);
+            if (compareY != 0) return compareY;
+
+            return a.z.CompareTo(b.z);
+        });
 
         // ShowValidPositions();
 
         foreach (Vector3 pos in validPositions)
         {
-            if (Random.Range(1, 100) < terrainData.objectDensity)
+            if (newRandom.Next(0,100) < terrainData.objectDensity / 3)
             {
                 GameObject treeToInstantiate = Random.value < 0.5f ? tree1 : tree2;
 
@@ -58,7 +72,6 @@ public class ObjectPlacer : MonoBehaviour
                 newTree.layer = LayerMask.NameToLayer("Objects");
                 newTree.transform.parent = transform;
                 newTree.transform.localScale = Vector3.one * terrainData.scale * 0.2f * terrainData.lod;
-
             }
         }
     }
