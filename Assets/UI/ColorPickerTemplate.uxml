@@ -1,0 +1,15 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/style.uss?fileID=7433441132597879392&amp;guid=e712a1d83a1bcfd45b5422f17e22f323&amp;type=3#style" />
+    <ui:VisualElement style="flex-grow: 1; background-color: rgba(32, 32, 32, 0); height: 200px;">
+        <ui:Label tabindex="-1" text="Adjust color" parse-escape-sequences="true" display-tooltip-when-elided="true" name="adjust-color-label" class="settings-label" style="width: 300px;" />
+        <ui:VisualElement name="color-picker-box" class="settings-panel" style="flex-grow: 1; width: 300px; height: 160px; position: absolute;">
+            <ui:VisualElement name="color-preview-box" style="flex-grow: 1; flex-direction: row; margin-top: 5px; margin-right: 5px; margin-bottom: 5px; margin-left: 5px; height: 40px; max-height: 40px;">
+                <ui:VisualElement name="old-color-preview" style="flex-grow: 1; background-color: rgb(0, 0, 0); margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; height: 40px;" />
+                <ui:VisualElement name="new-color-preview" style="flex-grow: 1; background-color: rgb(0, 0, 0); margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; height: 40px;" />
+            </ui:VisualElement>
+            <ui:Slider picking-mode="Ignore" label="Red" value="42" high-value="1" name="red-slider" show-input-field="true" class="slim-label" />
+            <ui:Slider picking-mode="Ignore" label="Green" value="42" high-value="1" name="green-slider" show-input-field="true" class="slim-label" />
+            <ui:Slider picking-mode="Ignore" label="Blue" value="42" high-value="1" name="blue-slider" show-input-field="true" class="slim-label" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

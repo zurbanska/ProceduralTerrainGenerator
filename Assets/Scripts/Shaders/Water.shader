@@ -10,6 +10,7 @@ Shader "Custom/Water"
         // _Cubemap ("Reflection Cubemap", Cube) = "" {}
         _NormalMap ("Normal Map", 2D) = "bump" {}
         _NormalStrength ("Normal Strength", Range(0, 1)) = 0.5
+        _SkyColor ("Sky Color", Color) = (1.0, 1.0, 1.0, 1.0)
 
         _DepthFadeDist ("Depth Fade Distance", Float) = 0.5
         _WaveFrequency ("Wave Frequency", Float) = 0.5
@@ -57,6 +58,7 @@ Shader "Custom/Water"
             // samplerCUBE _Cubemap;
             sampler2D _NormalMap;
             float _NormalStrength;
+            float4 _SkyColor;
 
             float _DepthFadeDist;
 
@@ -114,8 +116,9 @@ Shader "Custom/Water"
                 half3 worldRefl = reflect(-worldViewDir.xyz, normalTex);
 
                 // default skybox cubemap
-                half4 skyData = UNITY_SAMPLE_TEXCUBE(unity_SpecCube0, worldRefl);
-                half3 skyColor = DecodeHDR (skyData, unity_SpecCube0_HDR);
+                // half4 skyData = UNITY_SAMPLE_TEXCUBE(unity_SpecCube0, worldRefl);
+                // half3 skyColor = DecodeHDR (skyData, unity_SpecCube0_HDR);
+                float4 skyColor = _SkyColor;
 
                 float3 normal = _WorldSpaceLightPos0.xyz * i.normal * 0.5;
                 // float3 normal = i.normal;

@@ -46,20 +46,26 @@ public class TerrainManager : MonoBehaviour
 
     public void UpdateChunks(bool needsNewNoise = true)
     {
-
-        for (int i = -renderDistance; i < renderDistance; i++)
+        // enable chunks within render distance
+        for (int i = -renderDistance + 1; i < renderDistance; i++)
             {
-                for (int j = -renderDistance; j < renderDistance; j++)
+                for (int j = -renderDistance + 1; j < renderDistance; j++)
                 {
                     Vector2 chunkCoord = new Vector2(i, j);
-
-                    if (Mathf.Abs(i) < renderDistance && Mathf.Abs(j) < renderDistance)
-                    {
-                        Vector4 chunkNeighbors = CheckForChunkNeighbors(i, j);
-                        EnableChunk(chunkCoord, terrainData.lod, chunkNeighbors, needsNewNoise);
-                    }
+                    Vector4 chunkNeighbors = CheckForChunkNeighbors(i, j);
+                    EnableChunk(chunkCoord, terrainData.lod, chunkNeighbors, needsNewNoise);
                 }
             }
+
+        // disable existing chunks outside of render distance
+        foreach (var chunk in terrainChunkDictionary)
+        {
+            Vector2 coord = chunk.Key;
+            if (Mathf.Abs(coord.x) >= renderDistance || Mathf.Abs(coord.y) >= renderDistance)
+            {
+                DisableChunk(coord);
+            }
+        }
 
     }
 

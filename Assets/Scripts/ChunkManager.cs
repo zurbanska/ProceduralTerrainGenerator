@@ -55,6 +55,8 @@ public class ChunkManager : MonoBehaviour
 
     public async void UpdateChunk(Vector4 neighbors, TerrainData newTerrainData, bool needsNewNoise)
     {
+        gameObject.SetActive(true);
+        
         this.neighbors = neighbors;
 
         // if (terrainData.lod != newTerrainData.lod && newTerrainData.waterLevel > 0)

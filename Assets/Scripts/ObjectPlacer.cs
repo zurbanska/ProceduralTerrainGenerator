@@ -62,7 +62,7 @@ public class ObjectPlacer : MonoBehaviour
 
         foreach (Vector3 pos in validPositions)
         {
-            if (newRandom.Next(0,100) < terrainData.objectDensity / 3)
+            if (newRandom.Next(0,100) < terrainData.objectDensity / 10)
             {
                 GameObject treeToInstantiate = Random.value < 0.5f ? tree1 : tree2;
 

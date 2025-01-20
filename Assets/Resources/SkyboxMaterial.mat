@@ -142,6 +142,7 @@ Material:
     - _FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _GroundColor: {r: 0.369, g: 0.349, b: 0.341, a: 1}
     - _LightColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    - _ShadowColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _SkyTint: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-    - _Tint: {r: 0.66140085, g: 0.8396226, b: 0.76188576, a: 1}
+    - _Tint: {r: 0.509, g: 0.802, b: 0.682, a: 1}
   m_BuildTextureStacks: []

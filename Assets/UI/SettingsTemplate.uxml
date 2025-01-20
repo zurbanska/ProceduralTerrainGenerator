@@ -1,10 +1,11 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <ui:Template name="ColorPickerTemplate" src="project://database/Assets/UI/ColorPickerTemplate.uxml?fileID=9197481963319205126&amp;guid=ea93d0b81a53d0543a714473bcb4fc13&amp;type=3#ColorPickerTemplate" />
     <Style src="project://database/Assets/UI/style.uss?fileID=7433441132597879392&amp;guid=e712a1d83a1bcfd45b5422f17e22f323&amp;type=3#style" />
     <ui:VisualElement name="background" picking-mode="Ignore" style="flex-grow: 1; visibility: visible; display: flex;">
         <ui:VisualElement name="settings-box" class="settings-box" style="left: 10px; top: 10px; flex-wrap: nowrap; text-overflow: clip; height: 70%; flex-basis: 0; flex-direction: column; display: none; overflow: visible; visibility: visible; max-height: none; background-color: rgba(41, 41, 41, 0);">
-            <ui:Label tabindex="-1" text="Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" enable-rich-text="false" name="settings-label" style="position: absolute; top: 0; flex-grow: 1; width: 100%; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-top: 5px; padding-right: 10px; padding-bottom: 5px; padding-left: 10px; background-color: rgb(42, 42, 42); -unity-font-style: bold; -unity-font: initial; border-bottom-right-radius: 0; border-top-left-radius: 5px; border-top-right-radius: 5px; color: rgb(210, 212, 209); border-bottom-width: 1px; border-left-color: rgb(64, 64, 64); border-right-color: rgb(64, 64, 64); border-top-color: rgb(64, 64, 64); border-bottom-color: rgb(64, 64, 64); height: 30px; justify-content: flex-start; align-items: auto; -unity-text-align: middle-left;" />
-            <ui:ScrollView mouse-wheel-scroll-size="100" vertical-page-size="2" elasticity="0.1" name="settings-panel" style="height: 95%; top: 30px; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; flex-direction: column; justify-content: flex-start; align-self: auto; background-color: rgb(56, 56, 56); border-top-left-radius: 0; border-top-right-radius: 0; border-bottom-right-radius: 5px; border-bottom-left-radius: 5px; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0;">
-                <ui:VisualElement name="settings-container" style="flex-grow: 1; padding-right: 5px; padding-left: 5px; padding-top: 5px; padding-bottom: 5px;">
+            <ui:Label tabindex="-1" text="Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" enable-rich-text="false" name="settings-label" class="settings-label" />
+            <ui:ScrollView mouse-wheel-scroll-size="1000" name="settings-panel" class="settings-panel">
+                <ui:VisualElement name="settings-container" style="flex-grow: 1; padding-right: 5px; padding-left: 5px; padding-top: 5px; padding-bottom: 5px; display: flex;">
                     <ui:Toggle label="Allow Camera Movement" name="movement-toggle" class="toggle" />
                     <ui:Toggle label="Auto Update" name="auto-update-toggle" class="toggle" />
                     <ui:Label tabindex="-1" text="Noise Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" name="noise-settings-label" class="sub-label" style="-unity-font-style: bold; -unity-background-scale-mode: stretch-to-fill;" />
@@ -27,6 +28,7 @@
                     <ui:Button text="Generate Terrain" parse-escape-sequences="true" display-tooltip-when-elided="true" name="generate-terrain-button" class="button" />
                 </ui:VisualElement>
             </ui:ScrollView>
+            <ui:Instance template="ColorPickerTemplate" name="sky-color-picker" style="position: absolute; width: 298px; top: 782px; left: 14px;" />
         </ui:VisualElement>
         <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="settings-button" class="settings-button" style="-unity-text-align: middle-center;">
             <ui:VisualElement style="flex-grow: 1; background-image: resource(&apos;Icons/settings&apos;); -unity-background-image-tint-color: rgb(210, 212, 209); -unity-background-scale-mode: scale-to-fit; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; width: 70%; height: 70%;" />
