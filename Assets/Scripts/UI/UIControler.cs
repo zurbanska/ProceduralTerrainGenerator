@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -6,7 +7,17 @@ public class UIControler : MonoBehaviour
 {
     [SerializeField] private TerrainManager terrainManager;
     [SerializeField] private Camera cam;
+    [SerializeField] private Light mainLight;
     private bool autoUpdate = false;
+
+    private Button generalTabButton;
+    private Button shaderTabButton;
+
+    private ScrollView generalSettingsPanel;
+    private ScrollView shaderSettingsPanel;
+
+    private List<Button> Tabs;
+    private List<ScrollView> Panels;
 
 
     public Toggle camMoveToggle;
@@ -31,13 +42,35 @@ public class UIControler : MonoBehaviour
 
     public Button genTerrainButton;
 
+
+    public Slider timeSlider;
+
     public Button settingsButton;
     public VisualElement settingsBox;
 
 
     void Start()
     {
+        Tabs = new();
+        Panels = new();
+
         var root = GetComponent<UIDocument>().rootVisualElement;
+
+        generalSettingsPanel = root.Q<ScrollView>("settings-panel");
+        shaderSettingsPanel = root.Q<ScrollView>("shader-settings-panel");
+
+        Panels.Add(generalSettingsPanel);
+        Panels.Add(shaderSettingsPanel);
+
+        generalTabButton = root.Q<Button>("general-tab-button");
+        generalTabButton.clicked += () => TabSwitched(generalTabButton, generalSettingsPanel);
+
+        shaderTabButton = root.Q<Button>("shader-tab-button");
+        shaderTabButton.clicked += () => TabSwitched(shaderTabButton, shaderSettingsPanel);
+
+        Tabs.Add(generalTabButton);
+        Tabs.Add(shaderTabButton);
+
 
         camMoveToggle = root.Q<Toggle>("movement-toggle");
         camMoveToggle.RegisterValueChangedCallback(e => CamMoveToggled(e.newValue));
@@ -110,10 +143,32 @@ public class UIControler : MonoBehaviour
         genTerrainButton.clicked += GenTerrainButtonPressed;
 
 
+        timeSlider = root.Q<Slider>("time-slider");
+        timeSlider.RegisterValueChangedCallback(e => TimeChanged(e.newValue));
+        timeSlider.value = mainLight.GetComponent<TimeControler>().time;
+
+
         settingsButton = root.Q<Button>("settings-button");
         settingsButton.clicked += SettingsButtonPressed;
 
         settingsBox = root.Q<VisualElement>("settings-box");
+    }
+
+
+    void TabSwitched(Button chosenTabButton, ScrollView chosenPanel)
+    {
+        foreach (var tab in Tabs)
+        {
+            tab.AddToClassList("tab-button-inactive");
+        }
+
+        foreach (var panel in Panels)
+        {
+            panel.style.display = DisplayStyle.None;
+        }
+
+        chosenTabButton.RemoveFromClassList("tab-button-inactive");
+        chosenPanel.style.display = DisplayStyle.Flex;
     }
 
     void CamMoveToggled(bool isOn)
@@ -206,6 +261,11 @@ public class UIControler : MonoBehaviour
         cam.GetComponent<TerraformingCamera>().brushSize = newValue;
     }
 
+
+    void TimeChanged(float newValue)
+    {
+        mainLight.GetComponent<TimeControler>().SetTime(newValue);
+    }
 
 
     void GenTerrainButtonPressed()

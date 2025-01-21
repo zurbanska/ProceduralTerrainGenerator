@@ -289,7 +289,7 @@ void GenerateNoise (uint3 id : SV_DispatchThreadID)
     //     newDensity = currentDensity - id.y;
     // }
 
-    if (id.y <= lod)
+    if (id.y <= 8)
     {
         // newDensity = 1; // allow holes in bottom layer
         newDensity = 0; // bottom layer always solid

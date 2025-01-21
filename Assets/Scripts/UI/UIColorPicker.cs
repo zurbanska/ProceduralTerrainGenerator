@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -6,46 +8,122 @@ public class UIColorPicker : MonoBehaviour
     [SerializeField] private Material skyMaterial;
     [SerializeField] private Material terrainMaterial;
     [SerializeField] private Material waterMaterial;
+    [SerializeField] private List<Material> treeeMaterials;
 
-    public Slider skyColorSlider_red, skyColorSlider_green, skyColorSlider_blue;
-    public VisualElement oldSkycolorPreview;
-    public VisualElement newSkycolorPreview;
+    [SerializeField] private Light mainLight;
+
+    private Color currentColor;
+    private Action<Color> currentAction;
+
+    public Slider colorSlider_red, colorSlider_green, colorSlider_blue;
+    public VisualElement oldColorPreview;
+    public VisualElement newColorPreview;
+
+
+    public Button skyColorPicker;
+    public Button fogColorPicker;
+    public Button lightColorPicker;
 
     void Start()
     {
         var root = GetComponent<UIDocument>().rootVisualElement;
 
-        var colorPicker = root.Q<TemplateContainer>("sky-color-picker");
+        var colorPicker = root.Q<TemplateContainer>("color-picker");
 
-        skyColorSlider_red = colorPicker.Q<Slider>("red-slider");
-        skyColorSlider_red.value = skyMaterial.GetColor("_Tint").r;
+        colorSlider_red = colorPicker.Q<Slider>("red-slider");
+        colorSlider_green = colorPicker.Q<Slider>("green-slider");
+        colorSlider_blue = colorPicker.Q<Slider>("blue-slider");
 
-        skyColorSlider_green = colorPicker.Q<Slider>("green-slider");
-        skyColorSlider_green.value = skyMaterial.GetColor("_Tint").g;
+        oldColorPreview = colorPicker.Q<VisualElement>("old-color-preview");
+        newColorPreview = colorPicker.Q<VisualElement>("new-color-preview");
 
-        skyColorSlider_blue = colorPicker.Q<Slider>("blue-slider");
-        skyColorSlider_blue.value = skyMaterial.GetColor("_Tint").b;
+        colorSlider_red.RegisterValueChangedCallback(e => ColorChanged());
+        colorSlider_green.RegisterValueChangedCallback(e => ColorChanged());
+        colorSlider_blue.RegisterValueChangedCallback(e => ColorChanged());
 
-        oldSkycolorPreview = colorPicker.Q<VisualElement>("old-color-preview");
-        oldSkycolorPreview.style.backgroundColor = skyMaterial.GetColor("_Tint");
-        newSkycolorPreview = colorPicker.Q<VisualElement>("new-color-preview");
-        newSkycolorPreview.style.backgroundColor = skyMaterial.GetColor("_Tint");
+        skyColorPicker = root.Q<Button>("sky-color-picker");
+        skyColorPicker.style.backgroundColor = skyMaterial.GetColor("_Tint");
+        skyColorPicker.clicked += () => currentAction = ChangeSkyColor;
+        skyColorPicker.clicked += () => colorPicker.style.display = DisplayStyle.Flex;
+        skyColorPicker.clicked += () => InitColorPicker(skyMaterial.GetColor("_Tint"));
 
-        skyColorSlider_red.RegisterValueChangedCallback(e => SkyColorChanged());
-        skyColorSlider_green.RegisterValueChangedCallback(e => SkyColorChanged());
-        skyColorSlider_blue.RegisterValueChangedCallback(e => SkyColorChanged());
+        fogColorPicker = root.Q<Button>("fog-color-picker");
+        fogColorPicker.style.backgroundColor = terrainMaterial.GetColor("_FogColor");
+        fogColorPicker.clicked += () => currentAction = ChangeFogColor;
+        fogColorPicker.clicked += () => colorPicker.style.display = DisplayStyle.Flex;
+        fogColorPicker.clicked += () => InitColorPicker(terrainMaterial.GetColor("_FogColor"));
+
+        lightColorPicker = root.Q<Button>("light-color-picker");
+        lightColorPicker.style.backgroundColor = mainLight.GetComponent<TimeControler>().baseLightColor;
+        lightColorPicker.clicked += () => currentAction = ChangeLightColor;
+        lightColorPicker.clicked += () => colorPicker.style.display = DisplayStyle.Flex;
+        lightColorPicker.clicked += () => InitColorPicker(mainLight.GetComponent<TimeControler>().baseLightColor);
+
+
+        root.RegisterCallback<MouseDownEvent>(e =>
+        {
+            if (!colorPicker.worldBound.Contains(e.mousePosition)) colorPicker.style.display = DisplayStyle.None;
+        });
     }
 
-    void SkyColorChanged()
+    void InitColorPicker(Color color)
     {
-        Color newColor = new Color(skyColorSlider_red.value, skyColorSlider_green.value, skyColorSlider_blue.value);
+        colorSlider_red.value = color.r;
+        colorSlider_green.value = color.g;
+        colorSlider_blue.value = color.b;
+
+        UpdateColorPreview(color);
+    }
+
+    void UpdateColorPreview(Color newColor)
+    {
+        oldColorPreview.style.backgroundColor = newColor;
+        newColorPreview.style.backgroundColor = newColor;
+    }
+
+    void ChangeSkyColor(Color newColor)
+    {
+        // newColor *= mainLight.color;
+
         skyMaterial.SetColor("_Tint", newColor);
         waterMaterial.SetColor("_SkyColor", newColor);
-        oldSkycolorPreview.style.backgroundColor = newColor;
-        newSkycolorPreview.style.backgroundColor = newColor;
+        foreach (var mat in treeeMaterials)
+        {
+            mat.SetColor("_SkyColor", newColor);
+        }
+
+        skyColorPicker.style.backgroundColor = newColor;
 
         // update environment lighting (for accurate terrain color)
         DynamicGI.UpdateEnvironment();
+    }
+
+    void ChangeFogColor(Color newColor)
+    {
+        terrainMaterial.SetColor("_FogColor", newColor);
+
+        foreach (var mat in treeeMaterials)
+        {
+            mat.SetColor("_FogColor", newColor);
+        }
+
+        fogColorPicker.style.backgroundColor = newColor;
+    }
+
+    void ChangeLightColor(Color newColor)
+    {
+        // mainLight.color = newColor;
+        mainLight.GetComponent<TimeControler>().SetBaseLightColor(newColor);
+        lightColorPicker.style.backgroundColor = newColor;
+    }
+
+
+    void ColorChanged()
+    {
+        Color newColor = new Color(colorSlider_red.value, colorSlider_green.value, colorSlider_blue.value);
+        UpdateColorPreview(newColor);
+
+        currentAction?.Invoke(newColor);
     }
 
 }

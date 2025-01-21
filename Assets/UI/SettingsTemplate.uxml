@@ -1,10 +1,14 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
     <ui:Template name="ColorPickerTemplate" src="project://database/Assets/UI/ColorPickerTemplate.uxml?fileID=9197481963319205126&amp;guid=ea93d0b81a53d0543a714473bcb4fc13&amp;type=3#ColorPickerTemplate" />
     <Style src="project://database/Assets/UI/style.uss?fileID=7433441132597879392&amp;guid=e712a1d83a1bcfd45b5422f17e22f323&amp;type=3#style" />
-    <ui:VisualElement name="background" picking-mode="Ignore" style="flex-grow: 1; visibility: visible; display: flex;">
+    <ui:VisualElement name="background" picking-mode="Ignore" style="flex-grow: 1; visibility: visible; display: flex; border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px;">
         <ui:VisualElement name="settings-box" class="settings-box" style="left: 10px; top: 10px; flex-wrap: nowrap; text-overflow: clip; height: 70%; flex-basis: 0; flex-direction: column; display: none; overflow: visible; visibility: visible; max-height: none; background-color: rgba(41, 41, 41, 0);">
-            <ui:Label tabindex="-1" text="Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" enable-rich-text="false" name="settings-label" class="settings-label" />
-            <ui:ScrollView mouse-wheel-scroll-size="1000" name="settings-panel" class="settings-panel">
+            <ui:Label tabindex="-1" text="Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" enable-rich-text="false" name="settings-label" class="settings-label" style="border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0;" />
+            <ui:VisualElement name="tab-container" style="flex-grow: 1; height: 30px; flex-direction: row; top: 30px; max-height: 30px; background-color: rgb(42, 42, 42); border-left-color: rgb(64, 64, 64); border-right-color: rgb(64, 64, 64); border-top-color: rgb(64, 64, 64); border-bottom-color: rgb(64, 64, 64); align-items: flex-end; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-top: 0; padding-right: 5px; padding-bottom: 0; padding-left: 5px;">
+                <ui:Button text="General" parse-escape-sequences="true" display-tooltip-when-elided="true" name="general-tab-button" class="tab-button" />
+                <ui:Button text="Shader" parse-escape-sequences="true" display-tooltip-when-elided="true" name="shader-tab-button" class="tab-button tab-button-inactive" />
+            </ui:VisualElement>
+            <ui:ScrollView mouse-wheel-scroll-size="1000" name="settings-panel" class="settings-panel" style="height: 90%; align-items: stretch; display: flex;">
                 <ui:VisualElement name="settings-container" style="flex-grow: 1; padding-right: 5px; padding-left: 5px; padding-top: 5px; padding-bottom: 5px; display: flex;">
                     <ui:Toggle label="Allow Camera Movement" name="movement-toggle" class="toggle" />
                     <ui:Toggle label="Auto Update" name="auto-update-toggle" class="toggle" />
@@ -18,7 +22,7 @@
                     <ui:FloatField label="Scale" value="10" name="scale-input" class="num-field" />
                     <ui:Label tabindex="-1" text="Terrain Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" name="terrain-settings-label" class="sub-label" />
                     <ui:IntegerField label="Render Distance" value="2" name="render-distance-input" class="num-field" />
-                    <ui:SliderInt picking-mode="Ignore" label="Level of Detail" value="1" high-value="5" show-input-field="true" low-value="1" name="lod-slider" class="num-field" />
+                    <ui:SliderInt picking-mode="Ignore" label="Level of Detail" value="1" high-value="4" show-input-field="true" low-value="1" name="lod-slider" class="num-field" />
                     <ui:FloatField label="Ground Level" value="12" name="ground-level-input" class="num-field" />
                     <ui:FloatField label="Water Level" value="16.5" name="water-level-input" class="num-field" />
                     <ui:SliderInt picking-mode="Ignore" label="Tree Density" value="1" high-value="100" show-input-field="true" low-value="0" name="object-density-slider" class="num-field" />
@@ -28,8 +32,27 @@
                     <ui:Button text="Generate Terrain" parse-escape-sequences="true" display-tooltip-when-elided="true" name="generate-terrain-button" class="button" />
                 </ui:VisualElement>
             </ui:ScrollView>
-            <ui:Instance template="ColorPickerTemplate" name="sky-color-picker" style="position: absolute; width: 298px; top: 782px; left: 14px;" />
+            <ui:ScrollView mouse-wheel-scroll-size="1000" name="shader-settings-panel" class="settings-panel" style="height: 90%; align-items: stretch; display: none;">
+                <ui:VisualElement name="shader-settings-container" style="flex-grow: 1; padding-right: 5px; padding-left: 5px; padding-top: 5px; padding-bottom: 5px; display: flex;">
+                    <ui:Label tabindex="-1" text="Color Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" name="color-settings-label" class="sub-label" style="-unity-font-style: bold; -unity-background-scale-mode: stretch-to-fill;" />
+                    <ui:VisualElement name="sky-color" style="flex-grow: 1; flex-direction: row; align-items: center; justify-content: flex-start; align-self: stretch;">
+                        <ui:Label tabindex="-1" text="Sky Color" parse-escape-sequences="true" display-tooltip-when-elided="true" class="unity-toggle__label" style="width: 50%;" />
+                        <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="sky-color-picker" enable-rich-text="true" class="color-swatch-button" style="overflow: hidden; height: 80%; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; margin-top: 2px; margin-right: 2px; margin-bottom: 2px; margin-left: 2px; max-width: 100%;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="fog-color" style="flex-grow: 1; flex-direction: row; align-items: center; justify-content: flex-start; align-self: stretch;">
+                        <ui:Label tabindex="-1" text="Fog Color" parse-escape-sequences="true" display-tooltip-when-elided="true" class="unity-toggle__label" style="width: 50%;" />
+                        <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="fog-color-picker" enable-rich-text="true" class="color-swatch-button" style="overflow: hidden; height: 80%; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; margin-top: 2px; margin-right: 2px; margin-bottom: 2px; margin-left: 2px; max-width: 100%;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="light-color" style="flex-grow: 1; flex-direction: row; align-items: center; justify-content: flex-start; align-self: stretch;">
+                        <ui:Label tabindex="-1" text="Light Color" parse-escape-sequences="true" display-tooltip-when-elided="true" class="unity-toggle__label" style="width: 50%;" />
+                        <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="light-color-picker" enable-rich-text="true" class="color-swatch-button" style="overflow: hidden; height: 80%; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; margin-top: 2px; margin-right: 2px; margin-bottom: 2px; margin-left: 2px; max-width: 100%;" />
+                    </ui:VisualElement>
+                    <ui:Label tabindex="-1" text="Light Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" name="light-settings-label" class="sub-label" style="-unity-font-style: bold; -unity-background-scale-mode: stretch-to-fill;" />
+                    <ui:Slider picking-mode="Ignore" label="Time of Day" value="42" high-value="24" name="time-slider" show-input-field="true" />
+                </ui:VisualElement>
+            </ui:ScrollView>
         </ui:VisualElement>
+        <ui:Instance template="ColorPickerTemplate" name="color-picker" style="position: absolute; width: 298px; top: 20%; left: 420px; display: none; height: 188px;" />
         <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="settings-button" class="settings-button" style="-unity-text-align: middle-center;">
             <ui:VisualElement style="flex-grow: 1; background-image: resource(&apos;Icons/settings&apos;); -unity-background-image-tint-color: rgb(210, 212, 209); -unity-background-scale-mode: scale-to-fit; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; width: 70%; height: 70%;" />
         </ui:Button>
