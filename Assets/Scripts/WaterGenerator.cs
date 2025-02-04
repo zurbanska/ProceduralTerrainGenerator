@@ -14,6 +14,8 @@ public class WaterGenerator
             Transform.Destroy(existingWater);
         }
 
+        if (waterLevel <= 0) return;
+
         GameObject water = new GameObject("Water");
         water.transform.parent = parent;
         water.transform.position = parent.position;

@@ -72,6 +72,7 @@ public class ObjectPlacer : MonoBehaviour
                 newTree.layer = LayerMask.NameToLayer("Objects");
                 newTree.transform.parent = transform;
                 newTree.transform.localScale = Vector3.one * terrainData.scale * 0.2f * terrainData.lod;
+                // newTree.transform.localScale = Vector3.one * 0.1f;
             }
         }
     }

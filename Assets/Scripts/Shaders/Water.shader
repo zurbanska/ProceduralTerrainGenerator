@@ -3,16 +3,17 @@ Shader "Custom/Water"
     Properties
     {
         _BaseColor ("Base Color", Color) = (0.0, 0.5, 1.0, 1.0)
-        _DeepColor ("Deep Color", Color) = (0.0, 0.5, 1.0, 1.0)
         _DepthStart ("Depth Start", Float) = 5.0
         _DepthEnd ("Depth End", Float) = 20.0
         _WaterLevel ("Water Level", float) = 10
-        // _Cubemap ("Reflection Cubemap", Cube) = "" {}
-        _NormalMap ("Normal Map", 2D) = "bump" {}
-        _NormalStrength ("Normal Strength", Range(0, 1)) = 0.5
+
         _SkyColor ("Sky Color", Color) = (1.0, 1.0, 1.0, 1.0)
 
-        _DepthFadeDist ("Depth Fade Distance", Float) = 0.5
+        _MainTex ("Main Texture", 2D) = "white" {}
+        _NoiseTex ("Noise Texture", 2D) = "white" {}
+        _TextureDistort("Texture Distort", range(0,1)) = 0.1
+        _TextureScale("Texture Scale", float) = 1.5
+
         _WaveFrequency ("Wave Frequency", Float) = 0.5
         _WaveSpeed ("Wave Speed", Float) = 0.5
         _WaveStrength ("Wave Strength", Float) = 0.5
@@ -51,16 +52,16 @@ Shader "Custom/Water"
             };
 
             float4 _BaseColor;
-            float4 _DeepColor;
             float _DepthStart;
             float _DepthEnd;
             float _WaterLevel;
-            // samplerCUBE _Cubemap;
-            sampler2D _NormalMap;
-            float _NormalStrength;
+
             float4 _SkyColor;
 
-            float _DepthFadeDist;
+            sampler2D _MainTex;
+            sampler2D _NoiseTex;
+            float _TextureDistort;
+            float _TextureScale;
 
             float _WaveFrequency;
             float _WaveSpeed;
@@ -71,21 +72,18 @@ Shader "Custom/Water"
                 v2f o;
                 o.pos = UnityObjectToClipPos(v.vertex);
                 o.uv = v.uv;
-                o.screenPos = ComputeScreenPos(o.pos); // For depth lookup
+                o.screenPos = ComputeScreenPos(o.pos); // for terrain depth lookup
                 o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyzw;
 
-                float wave = sin(o.worldPos.x * _WaveFrequency + _Time.y * _WaveSpeed) +
-                             cos(o.worldPos.z * _WaveFrequency + _Time.y * _WaveSpeed);
-                // o.worldPos.y += wave;
-                // o.screenPos.y += wave;
-                o.pos.y += wave * _WaveStrength;
+                // wave movement
+                o.pos.y += sin(_Time.z * _WaveSpeed + (o.pos.x * o.pos.z * _WaveFrequency)) * _WaveStrength;
 
-                float dx = cos(o.worldPos.x * _WaveFrequency + _Time.y * _WaveSpeed) * _WaveFrequency;
-                float dz = -sin(o.worldPos.z * _WaveFrequency + _Time.y * _WaveSpeed) * _WaveFrequency;
+                float dx = cos(_Time.z * _WaveSpeed + (o.pos.x * o.pos.z * _WaveFrequency)) * _WaveStrength;
+                float dz = -sin(_Time.z * _WaveSpeed + (o.pos.x * o.pos.z * _WaveFrequency)) * _WaveStrength;
+
                 float3 vnormal = normalize(v.normal);
-                float3 normal = float3(vnormal.x - vnormal.y * dx * _WaveStrength, vnormal.y, vnormal.z - vnormal.y * dz * _WaveStrength);
+                float3 normal = float3(vnormal.x - vnormal.y * dz, vnormal.y, vnormal.z - vnormal.y * dx);
 
-                // float3 normal = normalize(v.normal);
                 o.worldNormal = UnityObjectToWorldNormal(normal);
                 o.normal = normal;
                 return o;
@@ -93,99 +91,30 @@ Shader "Custom/Water"
 
             float4 frag(v2f i) : SV_Target
             {
+
+                // water texture
+                float distort = tex2D(_NoiseTex, (i.worldPos.xz * _TextureScale) + (_Time.x * 2)).r;
+                float4 waterTex = tex2D(_MainTex, (i.worldPos.xz * _TextureScale) - (distort * _TextureDistort)) * i.normal.y;
+
+                // distance from camera to terrain under water
                 float terrainDepth = LinearEyeDepth(UNITY_SAMPLE_DEPTH(tex2Dproj(_CameraDepthTexture, UNITY_PROJ_COORD(i.screenPos))));
 
-                float camDist = distance(i.worldPos, _WorldSpaceCameraPos);
-
-                float waterDepth1 = terrainDepth - _WaterLevel;
-
-                float depthFactor2 = saturate((waterDepth1 - _DepthStart) / (_DepthEnd - _DepthStart));
-
-                // float depthFactor = saturate((terrainDepth - _DepthStart) / (_DepthEnd - _DepthStart));
-
-                // float4 finalColor = _BaseColor * depthFactor2;
-                // finalColor.a = lerp(0.6, 1, depthFactor2);
-                // // finalColor *= depthFactor;
-                // // return finalColor;
-
-                half3 normalTex = tex2D(_NormalMap, i.uv).rgb * 2.0 - 1.0;
-                normalTex = normalize(normalTex) + _NormalStrength;
-
-                half3 worldViewDir = normalize(UnityWorldSpaceViewDir(i.worldPos));
-                // half3 worldRefl = reflect(-_WorldSpaceLightPos0.xyz, normalTex);
-                half3 worldRefl = reflect(-worldViewDir.xyz, normalTex);
-
-                // default skybox cubemap
-                // half4 skyData = UNITY_SAMPLE_TEXCUBE(unity_SpecCube0, worldRefl);
-                // half3 skyColor = DecodeHDR (skyData, unity_SpecCube0_HDR);
-                float4 skyColor = _SkyColor;
-
-                float3 normal = _WorldSpaceLightPos0.xyz * i.normal * 0.5;
-                // float3 normal = i.normal;
-                float3 baseColor = _BaseColor.rgb + normal.xxx + normal.zzz + normal.yyy;
-
-                fixed4 c = 0;
-                c.rgb = skyColor.rgb * 0.7 + baseColor * 0.3;
-                c.rgb *= depthFactor2;
-
-                c.a = lerp(0.6, 1, depthFactor2);
-                return c;
-
-
-                // return float4((i.normal * 0.5 + 0.5), 1);
-
-
-                // // Sample depth at the current screen position
-                // float screenDepth = Linear01Depth(tex2D(_CameraDepthTexture, i.screenPos.xy / i.screenPos.w).r);
-
-                // // Map depth to a factor for color blending
-                // float depthFactor = saturate(screenDepth * _DepthFadeDist);
-
-                // // Interpolate between shallow and deep water colors
-                // float4 waterColor = lerp(_BaseColor, float4(0,0,0,1), screenDepth * 2000);
-
-                // return waterColor;
-
-                float sceneDepth = Linear01Depth(tex2D(_CameraDepthTexture, i.screenPos.xy / i.screenPos.w)) * 1300;
-
-
-
-                // float sceneDepth = LinearEyeDepth(UNITY_SAMPLE_DEPTH(tex2Dproj(_CameraDepthTexture, UNITY_PROJ_COORD(i.screenPos))));
-
-                sceneDepth = saturate(sceneDepth);
-
-                // float4 screenPos = i.screenPos;
-
-                // half waterDepth = sceneDepth - screenPos.a;
-
-                // waterDepth /= _DepthFadeDist;
-                // waterDepth = saturate(waterDepth);
-                // waterDepth = 1 - waterDepth;
-
-                float waterDepth = i.worldPos.a - sceneDepth;
-                // waterDepth /= _DepthFadeDist;
-                waterDepth = saturate(waterDepth);
-                waterDepth = 1 - waterDepth;
+                float waterDepth = terrainDepth - _WaterLevel;
 
                 float depthFactor = saturate((waterDepth - _DepthStart) / (_DepthEnd - _DepthStart));
 
-                // skyColor = skyColor.rgb + normal.xxx + normal.zzz;
-                float3 waterColor = lerp(baseColor, skyColor * 0.8 + baseColor * 0.2, waterDepth);
-                // waterColor.a = lerp(0, 1, waterDepth);
+                float4 skyColor = _SkyColor;
 
-                float4 finalColor;
-                finalColor.rgb = waterColor;
-                finalColor.a = lerp(0.6, 0.9, sceneDepth * waterDepth);
-                // finalColor.a = 1;
+                float3 normal = _WorldSpaceLightPos0.xyz * i.normal * 0.4;
+                float3 baseColor = _BaseColor.rgb + normal.xxx + normal.zzz + normal.yyy;
+
+                float4 finalColor = 1;
+                finalColor.rgb = baseColor * skyColor;
+                finalColor.rgb += waterTex * 0.1;
+
+                finalColor.a = lerp(0.7, 1, depthFactor);
 
                 return finalColor;
-                // return float4(waterDepth.xxx, 1);
-
-                // // float3 viewVector = normalize(_WorldSpaceCameraPos - i.worldPos);
-                // // return float4(viewVector,1);
-
-
-                // return float4(sceneDepth.xxx, 1);
 
             }
             ENDCG

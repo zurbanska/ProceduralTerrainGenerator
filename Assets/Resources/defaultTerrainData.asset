@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c143d52648df71d4897608ca530e39a3, type: 3}
   m_Name: defaultTerrainData
   m_EditorClassIdentifier: 
-  waterLevel: 15
-  groundLevel: 0
+  waterLevel: 12.3
+  groundLevel: 10
   lod: 1
   isoLevel: 0.85
-  seed: 917941
-  octaves: 3
+  seed: 13456
+  octaves: 4
   persistence: 1.03
   lacunarity: 1.91
   scale: 9
