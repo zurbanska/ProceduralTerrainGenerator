@@ -8,6 +8,10 @@ Shader "Custom/Water"
         _WaterLevel ("Water Level", float) = 10
 
         _SkyColor ("Sky Color", Color) = (1.0, 1.0, 1.0, 1.0)
+        _FogColor ("Fog Color", Color) = (1.0, 1.0, 1.0, 1.0)
+
+        _FogStart ("Fog Start Distance", Float) = 10
+        _FogEnd ("Fog End Distance", Float) = 20
 
         _MainTex ("Main Texture", 2D) = "white" {}
         _NoiseTex ("Noise Texture", 2D) = "white" {}
@@ -57,6 +61,9 @@ Shader "Custom/Water"
             float _WaterLevel;
 
             float4 _SkyColor;
+            float4 _FogColor;
+            float _FogStart;
+            float _FogEnd;
 
             sampler2D _MainTex;
             sampler2D _NoiseTex;
@@ -76,13 +83,11 @@ Shader "Custom/Water"
                 o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyzw;
 
                 // wave movement
-                o.pos.y += sin(_Time.z * _WaveSpeed + (o.pos.x * o.pos.z * _WaveFrequency)) * _WaveStrength;
-
-                float dx = cos(_Time.z * _WaveSpeed + (o.pos.x * o.pos.z * _WaveFrequency)) * _WaveStrength;
-                float dz = -sin(_Time.z * _WaveSpeed + (o.pos.x * o.pos.z * _WaveFrequency)) * _WaveStrength;
+                float wave = sin(_Time.z * _WaveSpeed + ((o.worldPos.x + o.worldPos.z) * _WaveFrequency));
+                o.pos.y += wave * _WaveStrength;
 
                 float3 vnormal = normalize(v.normal);
-                float3 normal = float3(vnormal.x - vnormal.y * dz, vnormal.y, vnormal.z - vnormal.y * dx);
+                float3 normal = float3(vnormal.x + vnormal.y * -wave, vnormal.y * -wave , vnormal.z + vnormal.y * -wave) * 0.2 * _WaveStrength;
 
                 o.worldNormal = UnityObjectToWorldNormal(normal);
                 o.normal = normal;
@@ -93,29 +98,36 @@ Shader "Custom/Water"
             {
 
                 // water texture
-                float distort = tex2D(_NoiseTex, (i.worldPos.xz * _TextureScale) + (_Time.x * 2)).r;
-                float4 waterTex = tex2D(_MainTex, (i.worldPos.xz * _TextureScale) - (distort * _TextureDistort)) * i.normal.y;
+                float distort = tex2D(_NoiseTex, (i.worldPos.xz * _TextureScale) + (_Time.x * 2));
+                float4 waterTex = tex2D(_MainTex, (i.worldPos.xz * _TextureScale) - (distort * _TextureDistort)) * abs(i.normal.y);
 
                 // distance from camera to terrain under water
                 float terrainDepth = LinearEyeDepth(UNITY_SAMPLE_DEPTH(tex2Dproj(_CameraDepthTexture, UNITY_PROJ_COORD(i.screenPos))));
-
                 float waterDepth = terrainDepth - _WaterLevel;
 
+                // distance from camera to water surface
+                float camDist = distance(i.worldPos, _WorldSpaceCameraPos);
+
                 float depthFactor = saturate((waterDepth - _DepthStart) / (_DepthEnd - _DepthStart));
+                float fogFactor = saturate((camDist - _FogStart) / (_FogEnd - _FogStart));
+
+                float4 foam = 1 - saturate(0.8 * (terrainDepth - i.screenPos.w));
 
                 float4 skyColor = _SkyColor;
 
-                float3 normal = _WorldSpaceLightPos0.xyz * i.normal * 0.4;
+                float3 normal = _WorldSpaceLightPos0.xyz * i.normal * 0.2;
                 float3 baseColor = _BaseColor.rgb + normal.xxx + normal.zzz + normal.yyy;
 
-                float4 finalColor = 1;
-                finalColor.rgb = baseColor * skyColor;
-                finalColor.rgb += waterTex * 0.1;
+                float4 waterColor = 1;
+                waterColor.rgb = baseColor * skyColor;
+                waterColor.rgb += waterTex * skyColor;
+                waterColor.rgb += step(0.6 * distort, foam) * skyColor;
 
+                float4 finalColor = 1;
+                finalColor.rgb = lerp(waterColor, _FogColor.rgb, fogFactor);
                 finalColor.a = lerp(0.7, 1, depthFactor);
 
                 return finalColor;
-
             }
             ENDCG
         }

@@ -101,6 +101,7 @@ public class UIColorPicker : MonoBehaviour
     void ChangeFogColor(Color newColor)
     {
         terrainMaterial.SetColor("_FogColor", newColor);
+        waterMaterial.SetColor("_FogColor", newColor);
 
         foreach (var mat in treeeMaterials)
         {
