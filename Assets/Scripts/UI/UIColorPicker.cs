@@ -14,6 +14,7 @@ public class UIColorPicker : MonoBehaviour
 
     private Color currentColor;
     private Action<Color> currentAction;
+    private Button currentGradientButton;
 
     public Slider colorSlider_red, colorSlider_green, colorSlider_blue;
     public VisualElement oldColorPreview;
@@ -24,11 +25,23 @@ public class UIColorPicker : MonoBehaviour
     public Button fogColorPicker;
     public Button lightColorPicker;
 
+    public GradientBuilder gradientBuilder = new();
+
+    public TemplateContainer gradientEditor;
+    public Button terrainGradientPicker;
+    List<Button> gradientButtons;
+    List<Slider> gradientCutoffs;
+
+    VisualElement background;
+
     void Start()
     {
         var root = GetComponent<UIDocument>().rootVisualElement;
 
         var colorPicker = root.Q<TemplateContainer>("color-picker");
+        gradientEditor = root.Q<TemplateContainer>("gradient-picker");
+
+        background = root.Q<VisualElement>("background");
 
         colorSlider_red = colorPicker.Q<Slider>("red-slider");
         colorSlider_green = colorPicker.Q<Slider>("green-slider");
@@ -60,9 +73,30 @@ public class UIColorPicker : MonoBehaviour
         lightColorPicker.clicked += () => InitColorPicker(mainLight.GetComponent<TimeControler>().baseLightColor);
 
 
+        terrainGradientPicker = root.Q<Button>("terrain-gradient-picker");
+        terrainGradientPicker.clicked += () => gradientEditor.style.display = DisplayStyle.Flex;
+
+        gradientButtons = root.Query<Button>(className: "gradient-button").ToList();
+        gradientCutoffs = root.Query<Slider>(className: "gradient-cutoff").ToList();
+
+        foreach (Button button in gradientButtons) {
+            button.clicked += () => colorPicker.style.display = DisplayStyle.Flex;
+            button.clicked += () => currentAction = ChangeGradient;
+            button.clicked += () => currentGradientButton = button;
+            button.clicked += () => InitColorPicker(button.style.backgroundColor.value);
+        }
+
+        foreach (Slider gradientCutoff in gradientCutoffs) {
+            gradientCutoff.RegisterValueChangedCallback(e => ChangeGradient(currentGradientButton.style.backgroundColor.value));
+        }
+
+
         root.RegisterCallback<MouseDownEvent>(e =>
         {
-            if (!colorPicker.worldBound.Contains(e.mousePosition)) colorPicker.style.display = DisplayStyle.None;
+            if (!colorPicker.worldBound.Contains(e.mousePosition)) {
+                colorPicker.style.display = DisplayStyle.None;
+                gradientEditor.style.display = DisplayStyle.None;
+            }
         });
     }
 
@@ -116,6 +150,28 @@ public class UIColorPicker : MonoBehaviour
         // mainLight.color = newColor;
         mainLight.GetComponent<TimeControler>().SetBaseLightColor(newColor);
         lightColorPicker.style.backgroundColor = newColor;
+    }
+
+
+    void ChangeGradient(Color newColor) {
+        currentGradientButton.style.backgroundColor = newColor;
+
+        var gradient = new Gradient();
+        var colors = new GradientColorKey[gradientButtons.Count];
+        var alphas = new GradientAlphaKey[gradientButtons.Count];
+
+        for (int i = 0; i < gradientButtons.Count; i++)
+        {
+           colors[i] = new GradientColorKey(gradientButtons[i].style.backgroundColor.value, gradientCutoffs[i].value);
+           alphas[i] = new GradientAlphaKey(1f, gradientCutoffs[i].value);
+        }
+
+        gradient.SetKeys(colors, alphas);
+
+        Texture2D tex = gradientBuilder.GenerateGradientTexture(gradient);
+        terrainGradientPicker.style.backgroundImage = tex;
+
+        terrainMaterial.SetTexture("_GradientTex", tex);
     }
 
 

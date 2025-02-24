@@ -73,25 +73,25 @@ public class MeshGenerator
         return mesh;
     }
 
-    private Color[] precomputedGradient;
-    private const int gradientResolution = 128;
+    // private Color[] precomputedGradient;
+    // private const int gradientResolution = 128;
 
-    private void PrecomputeGradient(Gradient gradient)
-    {
-        precomputedGradient = new Color[gradientResolution];
-        for (int i = 0; i < gradientResolution; i++)
-        {
-            float t = (float)i / (gradientResolution - 1); // Normalize to [0, 1]
-            precomputedGradient[i] = gradient.Evaluate(t);
-        }
-    }
+    // private void PrecomputeGradient(Gradient gradient)
+    // {
+    //     precomputedGradient = new Color[gradientResolution];
+    //     for (int i = 0; i < gradientResolution; i++)
+    //     {
+    //         float t = (float)i / (gradientResolution - 1); // Normalize to [0, 1]
+    //         precomputedGradient[i] = gradient.Evaluate(t);
+    //     }
+    // }
 
-    private float inverseHeightScale;
+    // private float inverseHeightScale;
 
-    private void PrecomputeInverseLerpScale(float min, float max)
-    {
-        inverseHeightScale = 1f / (max - min);
-    }
+    // private void PrecomputeInverseLerpScale(float min, float max)
+    // {
+    //     inverseHeightScale = 1f / (max - min);
+    // }
 
     // generate a mesh from an array of triangles
     private async Task<Mesh> CreateMesh(Triangle[] triangles, int width, int height, Gradient gradient, float[] biomeValues)
@@ -99,13 +99,13 @@ public class MeshGenerator
 
         var meshData = await Task.Run(() =>
         {
-            PrecomputeGradient(gradient);
-            PrecomputeInverseLerpScale(0, height);
+            // PrecomputeGradient(gradient);
+            // PrecomputeInverseLerpScale(0, height);
 
             Vector3[] meshVertices = new Vector3[triangles.Length * 3];
             int[] meshTriangles = new int[triangles.Length * 3];
             Vector2[] meshUVs = new Vector2[meshVertices.Length];
-            Color[] meshColors = new Color[meshVertices.Length];
+            // Color[] meshColors = new Color[meshVertices.Length];
 
             int realVertexCount = 0;
 
@@ -119,9 +119,9 @@ public class MeshGenerator
                 {
                     Vector3 vertex = triangleVerts[j];
 
-                    float normalizedY = (vertex.y - 0) * inverseHeightScale;
-                    int gradientIndex = Mathf.Clamp((int)(normalizedY * (gradientResolution - 1)), 0, gradientResolution - 1);
-                    meshColors[realVertexCount] = precomputedGradient[gradientIndex];
+                    // float normalizedY = (vertex.y - 0) * inverseHeightScale;
+                    // int gradientIndex = Mathf.Clamp((int)(normalizedY * (gradientResolution - 1)), 0, gradientResolution - 1);
+                    // meshColors[realVertexCount] = precomputedGradient[gradientIndex];
 
                     // meshColors[realVertexCount] = Color.black * biomeValues[(int)vertex.z * width + (int)vertex.x] + Color.white * (1 - biomeValues[(int)vertex.z * width + (int)vertex.x]);
 
@@ -132,7 +132,8 @@ public class MeshGenerator
                 }
             }
 
-            return (meshVertices, meshTriangles, meshUVs, meshColors);
+            // return (meshVertices, meshTriangles, meshUVs, meshColors);
+            return (meshVertices, meshTriangles, meshUVs);
         });
 
         Mesh mesh = new Mesh
@@ -140,7 +141,7 @@ public class MeshGenerator
             vertices = meshData.meshVertices,
             triangles = meshData.meshTriangles,
             uv = meshData.meshUVs,
-            colors = meshData.meshColors
+            // colors = meshData.meshColors
         };
 
         mesh.RecalculateNormals();

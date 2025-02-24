@@ -7,6 +7,9 @@ Shader "Custom/SimpleObjects"
         _FogEnd ("Fog End Distance", Float) = 20
         _FogColor ("Fog Color", Color) = (0,0,0,0)
         _SkyColor ("Sky Color", Color) = (0,0,0,0)
+
+        _Cutoff ("Alpha Cutoff", Range(0,1)) = 0.5
+        [KeywordEnum(Opaque, Cutout, Transparent)] _Mode ("Rendering Mode", Float) = 0
     }
     SubShader
     {
@@ -18,7 +21,7 @@ Shader "Custom/SimpleObjects"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            // #pragma multi_compile_fog
+            #pragma multi_compile _MODE_OPAQUE _MODE_CUTOUT _MODE_TRANSPARENT
 
             #include "UnityCG.cginc"
             #include "UnityLightingCommon.cginc"
@@ -44,6 +47,8 @@ Shader "Custom/SimpleObjects"
             float4 _FogColor;
             float _FogStart;
             float _FogEnd;
+
+            float _Cutoff;
 
             v2f vert (appdata v)
             {
@@ -73,9 +78,14 @@ Shader "Custom/SimpleObjects"
                 // col *= lightColor;
                 // col *= skyColor * 0.5;
 
-                float3 finalColor = lerp(baseColor, _FogColor.rgb, fogFactor);
+                float4 finalColor = textureColor;
+                finalColor.rgb = lerp(baseColor, _FogColor.rgb, fogFactor);
 
-                return float4(finalColor, 0);
+                #if _MODE_CUTOUT
+                if (finalColor.a < _Cutoff) discard;
+                #endif
+
+                return float4(finalColor);
             }
             ENDCG
         }

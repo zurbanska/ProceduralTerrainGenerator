@@ -1,0 +1,64 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/style.uss?fileID=7433441132597879392&amp;guid=e712a1d83a1bcfd45b5422f17e22f323&amp;type=3#style" />
+    <ui:VisualElement style="flex-grow: 1; background-color: rgba(32, 32, 32, 0); height: 200px;">
+        <ui:Label tabindex="-1" text="Edit gradient" parse-escape-sequences="true" display-tooltip-when-elided="true" name="edit-gradient-label" class="settings-label" style="width: 300px;" />
+        <ui:VisualElement name="gradient-box" class="settings-panel" style="flex-grow: 1; width: 300px; height: auto; position: absolute;">
+            <ui:VisualElement name="VisualElement" style="flex-grow: 1; align-self: stretch; justify-content: space-around; align-items: stretch; padding-right: 5px; padding-left: 5px; padding-bottom: 5px; padding-top: 5px;">
+                <ui:VisualElement name="color" style="flex-grow: 1; flex-direction: row; align-items: center; justify-content: flex-start; align-self: stretch;">
+                    <ui:Label tabindex="-1" text="Color 1" parse-escape-sequences="true" display-tooltip-when-elided="true" class="unity-toggle__label" style="width: 50%;" />
+                    <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="color-picker" enable-rich-text="true" class="color-swatch-button gradient-button" style="overflow: hidden; height: 80%; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; margin-top: 2px; margin-right: 2px; margin-bottom: 2px; margin-left: 2px; max-width: 100%;" />
+                </ui:VisualElement>
+                <ui:Slider picking-mode="Ignore" label="Color 1 cutoff" value="42" high-value="1" name="color-cutoff" show-input-field="true" class="gradient-cutoff num-field" />
+            </ui:VisualElement>
+            <ui:VisualElement name="VisualElement" style="flex-grow: 1; align-self: stretch; justify-content: space-around; align-items: stretch; padding-right: 5px; padding-left: 5px; padding-bottom: 5px; padding-top: 5px;">
+                <ui:VisualElement name="color" style="flex-grow: 1; flex-direction: row; align-items: center; justify-content: flex-start; align-self: stretch;">
+                    <ui:Label tabindex="-1" text="Color 1" parse-escape-sequences="true" display-tooltip-when-elided="true" class="unity-toggle__label" style="width: 50%;" />
+                    <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="color-picker" enable-rich-text="true" class="color-swatch-button gradient-button" style="overflow: hidden; height: 80%; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; margin-top: 2px; margin-right: 2px; margin-bottom: 2px; margin-left: 2px; max-width: 100%;" />
+                </ui:VisualElement>
+                <ui:Slider picking-mode="Ignore" label="Color 1 cutoff" value="42" high-value="1" name="color-cutoff" show-input-field="true" class="gradient-cutoff num-field" />
+            </ui:VisualElement>
+            <ui:VisualElement name="VisualElement" style="flex-grow: 1; align-self: stretch; justify-content: space-around; align-items: stretch; padding-right: 5px; padding-left: 5px; padding-bottom: 5px; padding-top: 5px;">
+                <ui:VisualElement name="color" style="flex-grow: 1; flex-direction: row; align-items: center; justify-content: flex-start; align-self: stretch;">
+                    <ui:Label tabindex="-1" text="Color 1" parse-escape-sequences="true" display-tooltip-when-elided="true" class="unity-toggle__label" style="width: 50%;" />
+                    <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="color-picker" enable-rich-text="true" class="color-swatch-button gradient-button" style="overflow: hidden; height: 80%; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; margin-top: 2px; margin-right: 2px; margin-bottom: 2px; margin-left: 2px; max-width: 100%;" />
+                </ui:VisualElement>
+                <ui:Slider picking-mode="Ignore" label="Color 1 cutoff" value="42" high-value="1" name="color-cutoff" show-input-field="true" class="gradient-cutoff num-field" />
+            </ui:VisualElement>
+            <ui:VisualElement name="VisualElement" style="flex-grow: 1; align-self: stretch; justify-content: space-around; align-items: stretch; padding-right: 5px; padding-left: 5px; padding-bottom: 5px; padding-top: 5px;">
+                <ui:VisualElement name="color" style="flex-grow: 1; flex-direction: row; align-items: center; justify-content: flex-start; align-self: stretch;">
+                    <ui:Label tabindex="-1" text="Color 1" parse-escape-sequences="true" display-tooltip-when-elided="true" class="unity-toggle__label" style="width: 50%;" />
+                    <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="color-picker" enable-rich-text="true" class="color-swatch-button gradient-button" style="overflow: hidden; height: 80%; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; margin-top: 2px; margin-right: 2px; margin-bottom: 2px; margin-left: 2px; max-width: 100%;" />
+                </ui:VisualElement>
+                <ui:Slider picking-mode="Ignore" label="Color 1 cutoff" value="42" high-value="1" name="color-cutoff" show-input-field="true" class="gradient-cutoff num-field" />
+            </ui:VisualElement>
+            <ui:VisualElement name="VisualElement" style="flex-grow: 1; align-self: stretch; justify-content: space-around; align-items: stretch; padding-right: 5px; padding-left: 5px; padding-bottom: 5px; padding-top: 5px;">
+                <ui:VisualElement name="color" style="flex-grow: 1; flex-direction: row; align-items: center; justify-content: flex-start; align-self: stretch;">
+                    <ui:Label tabindex="-1" text="Color 1" parse-escape-sequences="true" display-tooltip-when-elided="true" class="unity-toggle__label" style="width: 50%;" />
+                    <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="color-picker" enable-rich-text="true" class="color-swatch-button gradient-button" style="overflow: hidden; height: 80%; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; margin-top: 2px; margin-right: 2px; margin-bottom: 2px; margin-left: 2px; max-width: 100%;" />
+                </ui:VisualElement>
+                <ui:Slider picking-mode="Ignore" label="Color 1 cutoff" value="42" high-value="1" name="color-cutoff" show-input-field="true" class="gradient-cutoff num-field" />
+            </ui:VisualElement>
+            <ui:VisualElement name="VisualElement" style="flex-grow: 1; align-self: stretch; justify-content: space-around; align-items: stretch; padding-right: 5px; padding-left: 5px; padding-bottom: 5px; padding-top: 5px;">
+                <ui:VisualElement name="color" style="flex-grow: 1; flex-direction: row; align-items: center; justify-content: flex-start; align-self: stretch;">
+                    <ui:Label tabindex="-1" text="Color 1" parse-escape-sequences="true" display-tooltip-when-elided="true" class="unity-toggle__label" style="width: 50%;" />
+                    <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="color-picker" enable-rich-text="true" class="color-swatch-button gradient-button" style="overflow: hidden; height: 80%; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; margin-top: 2px; margin-right: 2px; margin-bottom: 2px; margin-left: 2px; max-width: 100%;" />
+                </ui:VisualElement>
+                <ui:Slider picking-mode="Ignore" label="Color 1 cutoff" value="42" high-value="1" name="color-cutoff" show-input-field="true" class="gradient-cutoff num-field" />
+            </ui:VisualElement>
+            <ui:VisualElement name="VisualElement" style="flex-grow: 1; align-self: stretch; justify-content: space-around; align-items: stretch; padding-right: 5px; padding-left: 5px; padding-bottom: 5px; padding-top: 5px;">
+                <ui:VisualElement name="color" style="flex-grow: 1; flex-direction: row; align-items: center; justify-content: flex-start; align-self: stretch;">
+                    <ui:Label tabindex="-1" text="Color 1" parse-escape-sequences="true" display-tooltip-when-elided="true" class="unity-toggle__label" style="width: 50%;" />
+                    <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="color-picker" enable-rich-text="true" class="color-swatch-button gradient-button" style="overflow: hidden; height: 80%; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; margin-top: 2px; margin-right: 2px; margin-bottom: 2px; margin-left: 2px; max-width: 100%;" />
+                </ui:VisualElement>
+                <ui:Slider picking-mode="Ignore" label="Color 1 cutoff" value="42" high-value="1" name="color-cutoff" show-input-field="true" class="gradient-cutoff num-field" />
+            </ui:VisualElement>
+            <ui:VisualElement name="VisualElement" style="flex-grow: 1; align-self: stretch; justify-content: space-around; align-items: stretch; padding-right: 5px; padding-left: 5px; padding-bottom: 5px; padding-top: 5px;">
+                <ui:VisualElement name="color" style="flex-grow: 1; flex-direction: row; align-items: center; justify-content: flex-start; align-self: stretch;">
+                    <ui:Label tabindex="-1" text="Color 1" parse-escape-sequences="true" display-tooltip-when-elided="true" class="unity-toggle__label" style="width: 50%;" />
+                    <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="color-picker" enable-rich-text="true" class="color-swatch-button gradient-button" style="overflow: hidden; height: 80%; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; margin-top: 2px; margin-right: 2px; margin-bottom: 2px; margin-left: 2px; max-width: 100%;" />
+                </ui:VisualElement>
+                <ui:Slider picking-mode="Ignore" label="Color 1 cutoff" value="42" high-value="1" name="color-cutoff" show-input-field="true" class="gradient-cutoff num-field" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

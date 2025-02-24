@@ -12,6 +12,10 @@ Shader "Custom/Terrain"
         _LightPosX ("World Light Pos X", float) = 0
         _LightPosY ("World Light Pos Y", float) = 0
         _LightPosZ ("World Light Pos Z", float) = 0
+
+        _GradientTex ("Gradient Texture", 2D) = "white" {}
+        _MinY ("Bottom Y", Float) = 0
+        _MaxY ("Top Y", Float) = 1
     }
     SubShader
     {
@@ -41,7 +45,7 @@ Shader "Custom/Terrain"
             struct v2f
             {
                 float4 pos : SV_POSITION;
-                float3 color : COLOR0;
+                // float3 color : COLOR0;
                 float2 uv : TEXCOORD0;
                 SHADOW_COORDS(1) // put shadows data into TEXCOORD1
                 fixed3 diff : COLOR1;
@@ -54,18 +58,23 @@ Shader "Custom/Terrain"
             float4 _FogColor;
             float _FogStart;
             float _FogEnd;
+            float4 _ShadowColor;
+
             float _WaterLevel;
             float _LightPosX;
             float _LightPosY;
             float _LightPosZ;
-            float4 _ShadowColor;
+
+            sampler2D _GradientTex;
+            float _MinY;
+            float _MaxY;
 
             v2f vert (appdata v)
             {
                 v2f o;
                 o.pos = UnityObjectToClipPos(v.vertex);
                 o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
-                o.color = v.color;
+                // o.color = v.color;
                 o.uv = v.uv;
                 o.normal = v.normal;
 
@@ -88,7 +97,10 @@ Shader "Custom/Terrain"
                 float3 lightFallOff = max(0.3, dot(lightDir, normal));
                 float3 lightColor = _LightColor0.rgb;
 
-                float3 terrainColor = i.color * lightFallOff * lightColor;
+                float t = saturate((i.worldPos.y - _MinY) / (_MaxY - _MinY)); // normalize y pos
+                fixed4 terrainGradientColor = tex2D(_GradientTex, t);
+
+                float3 terrainColor = terrainGradientColor * lightFallOff * lightColor;
 
                 float distance = length(_WorldSpaceCameraPos - i.worldPos);
                 float fogFactor = saturate((distance - _FogStart) / (_FogEnd - _FogStart));

@@ -123,6 +123,6 @@ Material:
     - _FogColor: {r: 0.809, g: 0.783, b: 0.623, a: 1}
     - _LightColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _ShadowColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-    - _SkyColor: {r: 1, g: 0.809, b: 0.743, a: 1}
+    - _SkyColor: {r: 0.698, g: 0.698, b: 0.743, a: 1}
     - _WaterColor: {r: 0, g: 0.5200343, b: 1, a: 0}
   m_BuildTextureStacks: []

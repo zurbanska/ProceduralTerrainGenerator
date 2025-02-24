@@ -11,7 +11,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: 3d2d6d78a09556249a6306de4d437fc2, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _MODE_OPAQUE
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -115,5 +116,5 @@ Material:
     - _HueVariation: {r: 1, g: 0.5, b: 0, a: 0.1}
     - _LightColor: {r: 1, g: 1, b: 1, a: 1}
     - _ShadowColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-    - _SkyColor: {r: 1, g: 0.809, b: 0.743, a: 1}
+    - _SkyColor: {r: 0.698, g: 0.698, b: 0.743, a: 1}
   m_BuildTextureStacks: []

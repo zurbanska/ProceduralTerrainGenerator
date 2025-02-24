@@ -160,6 +160,9 @@ public class TerrainManager : MonoBehaviour
 
     private void OnValidate() {
 
+        if (renderDistance > 10) {
+            renderDistance = 10; // max render distance for safety
+        }
         // chunk width and height have to be multiples of 8 and greater or equal 8
         chunkWidth = Mathf.Max(8, chunkWidth);
         if (chunkWidth % 8 != 0)

@@ -63,6 +63,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _GradientTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _LeftTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -142,9 +146,12 @@ Material:
     - _LightPosY: 10.17
     - _LightPosZ: 1.12
     - _LightingEnabled: 1
+    - _MaxY: 128
     - _Metallic: 0
+    - _MinY: 0
     - _Mode: 0
     - _NormalStrength: 0.5
+    - _NumColors: 3
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _Radius: 10

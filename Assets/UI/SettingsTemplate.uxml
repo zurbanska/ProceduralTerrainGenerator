@@ -1,5 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
     <ui:Template name="ColorPickerTemplate" src="project://database/Assets/UI/ColorPickerTemplate.uxml?fileID=9197481963319205126&amp;guid=ea93d0b81a53d0543a714473bcb4fc13&amp;type=3#ColorPickerTemplate" />
+    <ui:Template name="GradientTemplate" src="project://database/Assets/UI/GradientTemplate.uxml?fileID=9197481963319205126&amp;guid=b51ce07af10de114d841464a61ac0816&amp;type=3#GradientTemplate" />
     <Style src="project://database/Assets/UI/style.uss?fileID=7433441132597879392&amp;guid=e712a1d83a1bcfd45b5422f17e22f323&amp;type=3#style" />
     <ui:VisualElement name="background" picking-mode="Ignore" style="flex-grow: 1; visibility: visible; display: flex; border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px;">
         <ui:VisualElement name="settings-box" class="settings-box" style="left: 10px; top: 10px; flex-wrap: nowrap; text-overflow: clip; height: 70%; flex-basis: 0; flex-direction: column; display: none; overflow: visible; visibility: visible; max-height: none; background-color: rgba(41, 41, 41, 0);">
@@ -8,7 +9,7 @@
                 <ui:Button text="General" parse-escape-sequences="true" display-tooltip-when-elided="true" name="general-tab-button" class="tab-button" />
                 <ui:Button text="Shader" parse-escape-sequences="true" display-tooltip-when-elided="true" name="shader-tab-button" class="tab-button tab-button-inactive" />
             </ui:VisualElement>
-            <ui:ScrollView mouse-wheel-scroll-size="1000" name="settings-panel" class="settings-panel" style="height: 90%; align-items: stretch; display: flex;">
+            <ui:ScrollView mouse-wheel-scroll-size="1000" name="settings-panel" class="settings-panel" style="height: 90%; align-items: stretch; display: flex; visibility: visible;">
                 <ui:VisualElement name="settings-container" style="flex-grow: 1; padding-right: 5px; padding-left: 5px; padding-top: 5px; padding-bottom: 5px; display: flex;">
                     <ui:Toggle label="Allow Camera Movement" name="movement-toggle" class="toggle" />
                     <ui:Toggle label="Auto Update" name="auto-update-toggle" class="toggle" />
@@ -49,10 +50,16 @@
                     </ui:VisualElement>
                     <ui:Label tabindex="-1" text="Light Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" name="light-settings-label" class="sub-label" style="-unity-font-style: bold; -unity-background-scale-mode: stretch-to-fill;" />
                     <ui:Slider picking-mode="Ignore" label="Time of Day" value="42" high-value="24" name="time-slider" show-input-field="true" />
+                    <ui:Label tabindex="-1" text="Terrain Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" name="terrain-settings-label" class="sub-label" style="-unity-font-style: bold; -unity-background-scale-mode: stretch-to-fill;" />
+                    <ui:VisualElement name="terrain-gradient" style="flex-grow: 1; flex-direction: row; align-items: center; justify-content: flex-start; align-self: stretch;">
+                        <ui:Label tabindex="-1" text="Gradient" parse-escape-sequences="true" display-tooltip-when-elided="true" class="unity-toggle__label" style="width: 50%;" />
+                        <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="terrain-gradient-picker" enable-rich-text="true" class="color-swatch-button" style="overflow: hidden; height: 80%; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; margin-top: 2px; margin-right: 2px; margin-bottom: 2px; margin-left: 2px; max-width: 100%; background-color: rgba(56, 56, 56, 0); background-image: none;" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
             </ui:ScrollView>
         </ui:VisualElement>
         <ui:Instance template="ColorPickerTemplate" name="color-picker" style="position: absolute; width: 298px; top: 20%; left: 420px; display: none; height: 188px;" />
+        <ui:Instance template="GradientTemplate" name="gradient-picker" style="position: absolute; left: 730px; top: 120px; display: none;" />
         <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="settings-button" class="settings-button" style="-unity-text-align: middle-center;">
             <ui:VisualElement style="flex-grow: 1; background-image: resource(&apos;Icons/settings&apos;); -unity-background-image-tint-color: rgb(210, 212, 209); -unity-background-scale-mode: scale-to-fit; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; width: 70%; height: 70%;" />
         </ui:Button>
