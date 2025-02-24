@@ -28,4 +28,7 @@ public class TerrainData : ScriptableObject
     // objects
     public int objectDensity;
 
+
+    public Gradient gradient;
+
 }

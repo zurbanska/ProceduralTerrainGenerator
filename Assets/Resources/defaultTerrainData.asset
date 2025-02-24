@@ -13,14 +13,44 @@ MonoBehaviour:
   m_Name: defaultTerrainData
   m_EditorClassIdentifier: 
   waterLevel: 33.6
-  groundLevel: 20
+  groundLevel: 26
   lod: 1
   isoLevel: 0.9
-  seed: 663067
+  seed: 543774
   octaves: 4
   persistence: 0.55
   lacunarity: 2.11
   scale: 10.45
   offsetX: 0
   offsetZ: 0
-  objectDensity: 11
+  objectDensity: 17
+  gradient:
+    serializedVersion: 2
+    key0: {r: 1, g: 0.68882424, b: 0, a: 1}
+    key1: {r: 0.741, g: 0.563, b: 0, a: 1}
+    key2: {r: 0.9843137, g: 0.8902686, b: 0.44705877, a: 1}
+    key3: {r: 0.358, g: 0.605, b: 0.125, a: 1}
+    key4: {r: 0.563, g: 0.44, b: 0.317, a: 1}
+    key5: {r: 0, g: 0, b: 0, a: 0}
+    key6: {r: 0, g: 0, b: 0, a: 0}
+    key7: {r: 0, g: 0, b: 0, a: 0}
+    ctime0: 0
+    ctime1: 655
+    ctime2: 7864
+    ctime3: 24248
+    ctime4: 59637
+    ctime5: 0
+    ctime6: 0
+    ctime7: 0
+    atime0: 0
+    atime1: 655
+    atime2: 7864
+    atime3: 24248
+    atime4: 59637
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_ColorSpace: -1
+    m_NumColorKeys: 5
+    m_NumAlphaKeys: 5

@@ -58,8 +58,8 @@
                 </ui:VisualElement>
             </ui:ScrollView>
         </ui:VisualElement>
-        <ui:Instance template="ColorPickerTemplate" name="color-picker" style="position: absolute; width: 298px; top: 20%; left: 420px; display: none; height: 188px;" />
-        <ui:Instance template="GradientTemplate" name="gradient-picker" style="position: absolute; left: 730px; top: 120px; display: none;" />
+        <ui:Instance template="ColorPickerTemplate" name="color-picker" style="position: absolute; width: 298px; top: 10px; left: 420px; display: none; height: 188px;" />
+        <ui:Instance template="GradientTemplate" name="gradient-picker" style="position: absolute; left: 420px; top: 208px; display: none;" />
         <ui:Button parse-escape-sequences="true" display-tooltip-when-elided="true" name="settings-button" class="settings-button" style="-unity-text-align: middle-center;">
             <ui:VisualElement style="flex-grow: 1; background-image: resource(&apos;Icons/settings&apos;); -unity-background-image-tint-color: rgb(210, 212, 209); -unity-background-scale-mode: scale-to-fit; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; width: 70%; height: 70%;" />
         </ui:Button>

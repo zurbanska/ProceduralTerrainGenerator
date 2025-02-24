@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -12,7 +13,8 @@ public class UIColorPicker : MonoBehaviour
 
     [SerializeField] private Light mainLight;
 
-    private Color currentColor;
+    [SerializeField] private TerrainManager terrainManager;
+
     private Action<Color> currentAction;
     private Button currentGradientButton;
 
@@ -31,8 +33,10 @@ public class UIColorPicker : MonoBehaviour
     public Button terrainGradientPicker;
     List<Button> gradientButtons;
     List<Slider> gradientCutoffs;
+    List<VisualElement> gradientColors;
 
-    VisualElement background;
+    Gradient terrainGradient;
+
 
     void Start()
     {
@@ -41,7 +45,6 @@ public class UIColorPicker : MonoBehaviour
         var colorPicker = root.Q<TemplateContainer>("color-picker");
         gradientEditor = root.Q<TemplateContainer>("gradient-picker");
 
-        background = root.Q<VisualElement>("background");
 
         colorSlider_red = colorPicker.Q<Slider>("red-slider");
         colorSlider_green = colorPicker.Q<Slider>("green-slider");
@@ -78,6 +81,7 @@ public class UIColorPicker : MonoBehaviour
 
         gradientButtons = root.Query<Button>(className: "gradient-button").ToList();
         gradientCutoffs = root.Query<Slider>(className: "gradient-cutoff").ToList();
+        gradientColors = root.Query<VisualElement>(className: "gradient-color").ToList();
 
         foreach (Button button in gradientButtons) {
             button.clicked += () => colorPicker.style.display = DisplayStyle.Flex;
@@ -86,9 +90,18 @@ public class UIColorPicker : MonoBehaviour
             button.clicked += () => InitColorPicker(button.style.backgroundColor.value);
         }
 
+        currentGradientButton = gradientButtons[0];
+
         foreach (Slider gradientCutoff in gradientCutoffs) {
             gradientCutoff.RegisterValueChangedCallback(e => ChangeGradient(currentGradientButton.style.backgroundColor.value));
         }
+
+        Button addGradientColor = root.Q<Button>("add-color");
+        addGradientColor.clicked += () => AddGradientColor();
+        Button deleteGradientColor = root.Q<Button>("delete-color");
+        deleteGradientColor.clicked += () => DeleteGradientColor();
+
+        InitGradient();
 
 
         root.RegisterCallback<MouseDownEvent>(e =>
@@ -153,17 +166,62 @@ public class UIColorPicker : MonoBehaviour
     }
 
 
+    void InitGradient() {
+
+        terrainGradient = terrainManager.terrainData.gradient;
+
+        for (int i = 0; i < gradientColors.Count; i++) {
+            if (terrainGradient.colorKeys.Length > i) {
+                gradientButtons[i].style.backgroundColor = terrainGradient.colorKeys[i].color;
+                gradientCutoffs[i].value = terrainGradient.colorKeys[i].time;
+                gradientColors[i].style.display = DisplayStyle.Flex;
+            } else {
+                gradientColors[i].style.display = DisplayStyle.None;
+            }
+        }
+
+        ChangeGradient(gradientButtons[0].style.backgroundColor.value);
+    }
+
+    void AddGradientColor() {
+        for (int i = 0; i < gradientColors.Count; i++)
+        {
+            if (gradientColors[i].style.display == DisplayStyle.None)
+            {
+                gradientColors[i].style.display = DisplayStyle.Flex;
+                break;
+            }
+        }
+        currentGradientButton = gradientButtons[0];
+        ChangeGradient(gradientButtons[0].style.backgroundColor.value);
+    }
+
+    void DeleteGradientColor() {
+        for (int i = gradientColors.Count - 1; i >= 0; i--)
+        {
+            if (gradientColors[i].style.display == DisplayStyle.Flex)
+            {
+                gradientColors[i].style.display = DisplayStyle.None;
+                break;
+            }
+        }
+        currentGradientButton = gradientButtons[0];
+        ChangeGradient(gradientButtons[0].style.backgroundColor.value);
+    }
+
+
     void ChangeGradient(Color newColor) {
         currentGradientButton.style.backgroundColor = newColor;
+        int visibleColorCount = gradientColors.Count(color => color.style.display == DisplayStyle.Flex);
 
         var gradient = new Gradient();
-        var colors = new GradientColorKey[gradientButtons.Count];
-        var alphas = new GradientAlphaKey[gradientButtons.Count];
+        var colors = new GradientColorKey[visibleColorCount];
+        var alphas = new GradientAlphaKey[visibleColorCount];
 
-        for (int i = 0; i < gradientButtons.Count; i++)
+        for (int i = 0; i < visibleColorCount; i++)
         {
-           colors[i] = new GradientColorKey(gradientButtons[i].style.backgroundColor.value, gradientCutoffs[i].value);
-           alphas[i] = new GradientAlphaKey(1f, gradientCutoffs[i].value);
+            colors[i] = new GradientColorKey(gradientButtons[i].style.backgroundColor.value, gradientCutoffs[i].value);
+            alphas[i] = new GradientAlphaKey(1f, gradientCutoffs[i].value);
         }
 
         gradient.SetKeys(colors, alphas);
@@ -171,6 +229,7 @@ public class UIColorPicker : MonoBehaviour
         Texture2D tex = gradientBuilder.GenerateGradientTexture(gradient);
         terrainGradientPicker.style.backgroundImage = tex;
 
+        terrainManager.terrainData.gradient = gradient;
         terrainMaterial.SetTexture("_GradientTex", tex);
     }
 
