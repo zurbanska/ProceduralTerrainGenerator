@@ -115,7 +115,7 @@ Shader "Custom/Water"
 
                 float4 skyColor = _SkyColor;
 
-                float3 normal = _WorldSpaceLightPos0.xyz * i.normal * 0.2;
+                float3 normal = _WorldSpaceLightPos0.xyz * i.normal;
                 float3 baseColor = _BaseColor.rgb + normal.xxx + normal.zzz + normal.yyy;
 
                 float4 waterColor = 1;

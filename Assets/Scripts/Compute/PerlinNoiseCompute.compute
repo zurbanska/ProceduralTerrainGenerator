@@ -22,6 +22,8 @@ float lacunarity;
 float scale;
 float groundLevel;
 
+float smoothLevel;
+
 float seed;
 
 StructuredBuffer<float> _BiomeValues;
@@ -83,9 +85,9 @@ float3 randomVector3D(float3 position)
 
 
 
-float perlinNoise2D(float2 position, int frequency)
+float perlinNoise2D(float2 position, uint frequency)
 {
-    float unit = _ChunkWidth / frequency;
+    float unit = (uint)_ChunkWidth / frequency;
 
     // get grid cell coordinates of candidate point
     float2 gridID = floor(position / unit);
@@ -131,7 +133,7 @@ float perlinNoise2D(float2 position, int frequency)
 
 float perlinNoise3D(float3 position, int frequency)
 {
-    float unit = _ChunkWidth / frequency;
+    float unit = (uint)_ChunkWidth / frequency;
 
     // get grid cube coordinates of candidate point
     float3 gridID = floor(position / unit);
@@ -248,7 +250,7 @@ float fractalNoise3D(float3 position, int octaves, float persistence, float lacu
 void GenerateNoise (uint3 id : SV_DispatchThreadID)
 {
     // return if index out of range
-    if (id.x >= _ChunkWidth|| id.y >= _ChunkHeight || id.z >= _ChunkWidth)
+    if (id.x >= (uint)_ChunkWidth || id.y >= (uint)_ChunkHeight || id.z >= (uint)_ChunkWidth)
         return;
 
 
@@ -264,33 +266,36 @@ void GenerateNoise (uint3 id : SV_DispatchThreadID)
     float noiseValue = fractalNoise3D(float3(globalX, globalY, globalZ), octaves, persistence, lacunarity);
     // float noiseValue = fractalNoise2D(float2(globalX, globalZ), octaves, persistence, lacunarity);
 
-    float currentDensity = _ChunkHeight * clamp(noiseValue, -0.9, 0.9) * 2; // noise multiplier
+    // height of solid terrain in given coordinates
+    float currentDensity = _ChunkHeight * clamp(noiseValue, -0.9, 0.9) * 2;
     currentDensity += groundLevel * 2;
 
     float newDensity = currentDensity;
 
-    float i = 0;
 
-    if (id.y <= currentDensity - i)
+    if (id.y <= currentDensity - smoothLevel)
     {
         newDensity = 0;
     }
-    else if (id.y > currentDensity + i)
+    else if (id.y > currentDensity + smoothLevel)
     {
         newDensity = 1;
+    }
+    else {
+        newDensity = smoothstep(currentDensity - smoothLevel, currentDensity + smoothLevel, id.y);
     }
 
     if (id.y <= 8)
     {
         newDensity = 0; // bottom layer always solid
     }
-    if (id.y >= _ChunkHeight - 1)
+    if (id.y >= (uint)_ChunkHeight - 1)
     {
         newDensity = 1;
     }
 
 
-    if (id.z == 0 && borderDown || id.z == _ChunkWidth - 1 && borderUp || id.x == 0 && borderLeft || id.x == _ChunkWidth - 1 && borderRight || id.y == 0)
+    if (id.z == 0 && borderDown || id.z == (uint)_ChunkWidth - 1 && borderUp || id.x == 0 && borderLeft || id.x == (uint)_ChunkWidth - 1 && borderRight || id.y == 0)
     {
         newDensity = 1;
     }

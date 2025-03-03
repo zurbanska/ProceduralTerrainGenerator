@@ -21,6 +21,7 @@
                     <ui:FloatField label="Persistence" value="0.7" name="persistence-input" class="num-field" />
                     <ui:FloatField label="Lacunarity" value="2" name="lacunarity-input" class="num-field" />
                     <ui:FloatField label="Scale" value="10" name="scale-input" class="num-field" />
+                    <ui:FloatField label="Smoothness" value="10" name="smoothness-input" class="num-field" />
                     <ui:Label tabindex="-1" text="Terrain Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" name="terrain-settings-label" class="sub-label" />
                     <ui:IntegerField label="Render Distance" value="2" name="render-distance-input" class="num-field" />
                     <ui:SliderInt picking-mode="Ignore" label="Level of Detail" value="1" high-value="4" show-input-field="true" low-value="1" name="lod-slider" class="num-field" />
@@ -31,6 +32,7 @@
                     <ui:Toggle label="Allow Terraforming" name="terraforming-toggle" value="true" class="toggle" />
                     <ui:FloatField label="Brush Size" value="10" name="brush-size-input" class="num-field" />
                     <ui:Button text="Generate Terrain" parse-escape-sequences="true" display-tooltip-when-elided="true" name="generate-terrain-button" class="button" />
+                    <ui:Button text="Export Terrain" parse-escape-sequences="true" display-tooltip-when-elided="true" name="export-terrain-button" class="button" />
                 </ui:VisualElement>
             </ui:ScrollView>
             <ui:ScrollView mouse-wheel-scroll-size="1000" name="shader-settings-panel" class="settings-panel" style="height: 90%; align-items: stretch; display: none;">

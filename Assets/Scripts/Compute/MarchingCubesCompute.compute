@@ -17,6 +17,8 @@ float3 _HitPosition;
 float _BrushSize;
 float _TerraformStrength;
 
+float smoothLevel;
+
 float borderDown;
 float borderRight;
 float borderUp;
@@ -46,7 +48,7 @@ float3 interp(float3 edgeVertex1, float valueAtVertex1, float3 edgeVertex2, floa
 void March(uint3 id : SV_DispatchThreadID)
 {
     // return if index out of range
-    if (id.x * _CubeSize >= _ChunkWidth - _CubeSize || id.y * _CubeSize >= _ChunkHeight - _CubeSize || id.z * _CubeSize >= _ChunkWidth - _CubeSize)
+    if (id.x * _CubeSize >= (uint)_ChunkWidth - _CubeSize || id.y * _CubeSize >= (uint)_ChunkHeight - _CubeSize || id.z * _CubeSize >= (uint)_ChunkWidth - _CubeSize)
         return;
 
     float cubeValues[8] = {
@@ -104,15 +106,16 @@ void March(uint3 id : SV_DispatchThreadID)
 [numthreads(8,8,8)]
 void UpdateDensity( uint3 id : SV_DispatchThreadID )
 {
-    if (id.x < 0 || id.x > _ChunkWidth - 1 || id.y > _ChunkHeight - 1 || id.z < 0 || id.z > _ChunkWidth - 1) return;
+    if (id.x >= (uint)_ChunkWidth || id.y >= (uint)_ChunkHeight || id.z >= (uint)_ChunkWidth) return;
 
     if (distance(id, _HitPosition) <= _BrushSize / 2)
     {
         _DensityValues[indexFromCoord(id.x, id.y, id.z)] = _TerraformStrength;
 
-        if (id.z == 0 && borderDown || id.z == _ChunkWidth - 1 && borderUp || id.x == 0 && borderLeft || id.x == _ChunkWidth - 1 && borderRight || id.y == 0)
+        if (id.z == 0 && borderDown || id.z == (uint)_ChunkWidth - 1 && borderUp || id.x == 0 && borderLeft || id.x == (uint)_ChunkWidth - 1 && borderRight || id.y == 0)
         {
             _DensityValues[indexFromCoord(id.x, id.y, id.z)] = 1;
         }
     }
+
 }

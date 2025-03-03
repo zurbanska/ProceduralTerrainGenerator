@@ -30,6 +30,7 @@ public class UIControler : MonoBehaviour
     public FloatField persistenceField;
     public FloatField lacunarityField;
     public FloatField scaleField;
+    public FloatField smoothnessField;
 
     public IntegerField renderDistField;
     public SliderInt lodSlider;
@@ -41,6 +42,7 @@ public class UIControler : MonoBehaviour
     public FloatField brushSizeField;
 
     public Button genTerrainButton;
+    public Button exportTerrainButton;
 
 
     public Slider timeSlider;
@@ -108,6 +110,10 @@ public class UIControler : MonoBehaviour
         scaleField.RegisterValueChangedCallback(e => ScaleChanged(e.newValue));
         scaleField.value = terrainManager.terrainData.scale;
 
+        smoothnessField = root.Q<FloatField>("smoothness-input");
+        smoothnessField.RegisterValueChangedCallback(e => SmoothnessChanged(e.newValue));
+        smoothnessField.value = terrainManager.terrainData.smoothLevel;
+
 
         renderDistField = root.Q<IntegerField>("render-distance-input");
         renderDistField.RegisterValueChangedCallback(e => RenderDistChanged(e.newValue));
@@ -141,6 +147,9 @@ public class UIControler : MonoBehaviour
 
         genTerrainButton = root.Q<Button>("generate-terrain-button");
         genTerrainButton.clicked += GenTerrainButtonPressed;
+
+        exportTerrainButton = root.Q<Button>("export-terrain-button");
+        exportTerrainButton.clicked += ExportTerrainButtonPressed;
 
 
         timeSlider = root.Q<Slider>("time-slider");
@@ -217,6 +226,11 @@ public class UIControler : MonoBehaviour
         if (autoUpdate) terrainManager.UpdateChunks();
     }
 
+    void SmoothnessChanged(float newValue) {
+        terrainManager.terrainData.smoothLevel = newValue;
+        if (autoUpdate) terrainManager.UpdateChunks();
+    }
+
 
 
     void RenderDistChanged(int newValue)
@@ -272,6 +286,11 @@ public class UIControler : MonoBehaviour
     {
         terrainManager.GenerateChunks();
         seedField.value = terrainManager.terrainData.seed;
+    }
+
+    void ExportTerrainButtonPressed()
+    {
+        terrainManager.ExportTerrainMesh();
     }
 
     void SettingsButtonPressed()

@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -24,6 +26,8 @@ public class TerrainManager : MonoBehaviour
 
     public bool allowTerraforming = true;
 
+    public MeshExporter meshExporter;
+
 
     private Dictionary<Vector2, GameObject> terrainChunkDictionary = new Dictionary<Vector2, GameObject>(); // dictionary of all created chunks and their coords
 
@@ -32,9 +36,11 @@ public class TerrainManager : MonoBehaviour
     void Start()
     {
         lastTerrainData = terrainData;
+        meshExporter = new();
         DeleteChunks();
         if (randomSeed) terrainData.seed = Mathf.FloorToInt(Random.value * 1000000);
         UpdateChunks();
+
     }
 
     // Update is called once per frame
@@ -155,6 +161,12 @@ public class TerrainManager : MonoBehaviour
                 }
             }
         }
+    }
+
+
+    public void ExportTerrainMesh()
+    {
+        meshExporter.ExportCombinedMesh(terrainChunkDictionary);
     }
 
 

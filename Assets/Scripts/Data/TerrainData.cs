@@ -7,6 +7,7 @@ public class TerrainData : ScriptableObject
     // terrain
     public float waterLevel;
     public float groundLevel;
+    public float smoothLevel;
     public int lod;
 
 

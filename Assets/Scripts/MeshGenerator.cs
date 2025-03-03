@@ -149,7 +149,7 @@ public class MeshGenerator
     }
 
 
-    public float[] UpdateDensity(int width, int height, float[] densityMap, Vector3 hitPosition, float brushSize, bool add, Vector4 neighbors)
+    public float[] UpdateDensity(int width, int height, float[] densityMap, Vector3 hitPosition, float brushSize, bool add, Vector4 neighbors, float smoothLevel)
     {
         densityBuffer.SetData(densityMap);
         int kernel = marchingCubesShader.FindKernel("UpdateDensity");
@@ -161,6 +161,7 @@ public class MeshGenerator
         marchingCubesShader.SetVector("_HitPosition", hitPosition);
         marchingCubesShader.SetFloat("_BrushSize", brushSize);
         marchingCubesShader.SetFloat("_TerraformStrength", add ? 1f : -1f);
+        marchingCubesShader.SetFloat("smoothLevel", smoothLevel);
 
         marchingCubesShader.SetBool("borderDown", neighbors[0] == 0);
         marchingCubesShader.SetBool("borderRight", neighbors[1] == 0);

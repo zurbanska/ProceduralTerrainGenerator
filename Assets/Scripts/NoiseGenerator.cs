@@ -40,6 +40,7 @@ public class NoiseGenerator
         noiseShader.SetFloat("persistence", terrainData.persistence);
         noiseShader.SetFloat("lacunarity", terrainData.lacunarity);
         noiseShader.SetFloat("groundLevel", terrainData.groundLevel);
+        noiseShader.SetFloat("smoothLevel", terrainData.smoothLevel);
         noiseShader.SetFloat("seed", terrainData.seed);
 
         int numThreadsXZ = Mathf.CeilToInt(width / 8);

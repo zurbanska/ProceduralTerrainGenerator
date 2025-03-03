@@ -13,6 +13,7 @@ public class ChunkManager : MonoBehaviour
     private NoiseGenerator noiseGenerator;
     private BiomeGenerator biomeGenerator;
     private WaterGenerator waterGenerator;
+    private GradientBuilder gradientBuilder;
 
     private ObjectPlacer objectPlacer;
 
@@ -36,6 +37,10 @@ public class ChunkManager : MonoBehaviour
         this.gradient = gradient;
         this.terrainData = ScriptableObject.CreateInstance<TerrainData>();
 
+        this.gradientBuilder = new GradientBuilder();
+
+        this.material.SetTexture("_GradientTex", gradientBuilder.GenerateGradientTexture(terrainData.gradient));
+
         noiseGenerator = new NoiseGenerator(noiseShader);
         meshGenerator = new MeshGenerator(meshShader);
         waterGenerator = new WaterGenerator();
@@ -56,7 +61,7 @@ public class ChunkManager : MonoBehaviour
     public async void UpdateChunk(Vector4 neighbors, TerrainData newTerrainData, bool needsNewNoise)
     {
         gameObject.SetActive(true);
-        
+
         this.neighbors = neighbors;
 
         // if (terrainData.lod != newTerrainData.lod && newTerrainData.waterLevel > 0)
@@ -122,7 +127,7 @@ public class ChunkManager : MonoBehaviour
     public async void Terraform(Vector3 hitPosition, float brushSize, bool add, Bounds brushBounds)
     {
         meshGenerator.CreateBuffers(width + 1, height + 1);
-        densityValues = meshGenerator.UpdateDensity(width + 1, height + 1, densityValues, hitPosition, brushSize, add, neighbors);
+        densityValues = meshGenerator.UpdateDensity(width + 1, height + 1, densityValues, hitPosition, brushSize, add, neighbors, terrainData.smoothLevel);
         AsyncGPUReadback.WaitAllRequests();
 
         Mesh newMesh = await GenerateMesh(false);

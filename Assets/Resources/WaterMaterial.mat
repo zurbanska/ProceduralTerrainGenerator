@@ -106,10 +106,10 @@ Material:
     - _SpecularHighlights: 1
     - _Speed: 0.297
     - _SrcBlend: 1
-    - _TextureDistort: 0.405
+    - _TextureDistort: 0.5
     - _TextureScale: 0.31
     - _UVSec: 0
-    - _WaterLevel: 33.6
+    - _WaterLevel: 20
     - _WaveFrequency: 0.12
     - _WaveSpeed: 0.1
     - _WaveStrength: 0.3
@@ -120,9 +120,9 @@ Material:
     - _DeepColor: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _FoamC: {r: 1, g: 0, b: 0, a: 1}
-    - _FogColor: {r: 0.603, g: 0.824, b: 1, a: 1}
+    - _FogColor: {r: 1, g: 1, b: 1, a: 1}
     - _LightColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _ShadowColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-    - _SkyColor: {r: 0.646, g: 0.728, b: 0.851, a: 1}
+    - _SkyColor: {r: 0.465, g: 0.559, b: 0.644, a: 1}
     - _WaterColor: {r: 0, g: 0.5200343, b: 1, a: 0}
   m_BuildTextureStacks: []
