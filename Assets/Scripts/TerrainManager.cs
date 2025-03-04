@@ -4,6 +4,10 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
+#if UNITY_EDITOR
+using UnityEditor.Formats.Fbx.Exporter;
+#endif
+
 public class TerrainManager : MonoBehaviour
 {
     // shaders used for mesh generating
@@ -26,7 +30,13 @@ public class TerrainManager : MonoBehaviour
 
     public bool allowTerraforming = true;
 
-    public MeshExporter meshExporter;
+    #if UNITY_EDITOR
+    public FBXExporter fbxExporter;
+    #endif
+
+    public OBJExporter objExporter = new();
+
+    private WaterGenerator waterGenerator = new();
 
 
     private Dictionary<Vector2, GameObject> terrainChunkDictionary = new Dictionary<Vector2, GameObject>(); // dictionary of all created chunks and their coords
@@ -36,16 +46,14 @@ public class TerrainManager : MonoBehaviour
     void Start()
     {
         lastTerrainData = terrainData;
-        meshExporter = new();
+
+        #if UNITY_EDITOR
+        fbxExporter = GetComponent<FBXExporter>();
+        #endif
+
         DeleteChunks();
         if (randomSeed) terrainData.seed = Mathf.FloorToInt(Random.value * 1000000);
         UpdateChunks();
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
 
     }
 
@@ -71,6 +79,13 @@ public class TerrainManager : MonoBehaviour
             {
                 DisableChunk(coord);
             }
+        }
+
+        // generate water
+        if (terrainData.waterLevel > 0 && renderDistance > 0)
+        {
+            Vector2 startPoint = new Vector2(-(renderDistance - 1) * chunkWidth, -(renderDistance - 1) * chunkWidth);
+            waterGenerator.GenerateWater(this.transform, startPoint, chunkWidth * (renderDistance * 2 - 1), terrainData.waterLevel, terrainData.lod);
         }
 
     }
@@ -166,7 +181,21 @@ public class TerrainManager : MonoBehaviour
 
     public void ExportTerrainMesh()
     {
-        meshExporter.ExportCombinedMesh(terrainChunkDictionary);
+        List<GameObject> objectList = new();
+
+        foreach (var chunk in terrainChunkDictionary)
+        {
+            objectList.Add(chunk.Value);
+        }
+
+        if (transform.Find("Water") != null) objectList.Add(transform.Find("Water").gameObject);
+
+        #if UNITY_EDITOR
+        fbxExporter.ExportToFBX(objectList);
+        #endif
+
+        objExporter.ExportCombinedMesh(objectList);
+
     }
 
 

@@ -1,13 +1,16 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class WaterGenerator
 {
 
     private float shrinkFactor;
+    private List<Mesh> meshes = new();
 
-    public void GenerateWater(Transform parent, float width, float waterLevel, int lod, Vector4 neighbors)
+    public void GenerateWater(Transform parent, Vector2 startPoint, float width, float waterLevel, int lod)
     {
+        meshes.Clear();
         GameObject existingWater = parent.Find("Water")?.gameObject;
         if (existingWater != null)
         {
@@ -16,111 +19,116 @@ public class WaterGenerator
 
         if (waterLevel <= 0) return;
 
-        GameObject water = new GameObject("Water");
-        water.transform.parent = parent;
-        water.transform.position = parent.position;
-        water.layer = LayerMask.NameToLayer("Water");
-
         Material waterMaterial = Resources.Load<Material>("WaterMaterial");
         waterMaterial.SetFloat("_WaterLevel", waterLevel);
 
         shrinkFactor = lod * 1.5f;
 
         // top plane corner vertices
-        Vector3 t1 = new Vector3((1 - neighbors[3]) * shrinkFactor, waterLevel, (1 - neighbors[0]) * shrinkFactor); // bottom left
-        Vector3 t2 = new Vector3(width - (1 - neighbors[1]) * shrinkFactor, waterLevel, (1 - neighbors[0]) * shrinkFactor); // bottom right
-        Vector3 t3 = new Vector3((1 - neighbors[3]) * shrinkFactor, waterLevel, width - (1 - neighbors[2]) * shrinkFactor); // top left
-        Vector3 t4 = new Vector3(width - (1 - neighbors[1]) * shrinkFactor, waterLevel, width - (1 - neighbors[2]) * shrinkFactor); // top right
+        Vector3 t1 = new Vector3(shrinkFactor, waterLevel, shrinkFactor); // bottom left
+        Vector3 t2 = new Vector3(width -  shrinkFactor, waterLevel, shrinkFactor); // bottom right
+        Vector3 t3 = new Vector3(shrinkFactor, waterLevel, width - shrinkFactor); // top left
+        Vector3 t4 = new Vector3(width - shrinkFactor, waterLevel, width - shrinkFactor); // top right
 
 
         // bottom plane corner vertices
-        Vector3 b1 = new Vector3((1 - neighbors[3]) * shrinkFactor, 0, (1 - neighbors[0]) * shrinkFactor); // bottom left
-        Vector3 b2 = new Vector3(width - (1 - neighbors[1]) * shrinkFactor, 0, (1 - neighbors[0]) * shrinkFactor); // bottom right
-        Vector3 b3 = new Vector3((1 - neighbors[3]) * shrinkFactor, 0, width - (1 - neighbors[2]) * shrinkFactor); // top left
-        Vector3 b4 = new Vector3(width - (1 - neighbors[1]) * shrinkFactor, 0, width - (1 - neighbors[2]) * shrinkFactor); // top right
+        Vector3 b1 = new Vector3(shrinkFactor, shrinkFactor, shrinkFactor); // bottom left
+        Vector3 b2 = new Vector3(width - shrinkFactor, shrinkFactor, shrinkFactor); // bottom right
+        Vector3 b3 = new Vector3(shrinkFactor, shrinkFactor, width - shrinkFactor); // top left
+        Vector3 b4 = new Vector3(width - shrinkFactor, shrinkFactor, width - shrinkFactor); // top right
 
 
         // resolution (subdivision) of planes
-        // Vector2Int flatRes = new Vector2Int(Mathf.CeilToInt(((width / 4) + 1) / lod), Mathf.CeilToInt(((width / 4) + 1) / lod));
-        // Vector2Int sideRes = new Vector2Int(Mathf.CeilToInt(((width / 4) + 1) / lod), Mathf.CeilToInt(waterLevel / (4 * lod)));
-
         Vector2Int flatRes = new Vector2Int(Mathf.CeilToInt(((width / 2) + 1) / lod), Mathf.CeilToInt(((width / 2) + 1) / lod));
         Vector2Int sideRes = new Vector2Int(Mathf.CeilToInt(((width / 2) + 1) / lod), Mathf.CeilToInt(waterLevel / (2 * lod)));
 
+
+        // generating water meshes for each side
+
         // top plane
         Mesh topMesh = GenerateFlatMesh(flatRes, Vector3.up, t1, t2, t3, t4);
-        GenerateWaterPlaneObject(topMesh, water.transform, waterMaterial);
+        meshes.Add(topMesh);
 
         // bottom plane
         Mesh bottomMesh = GenerateFlatMesh(flatRes, Vector3.down, b1, b2, b3, b4);
-        GenerateWaterPlaneObject(bottomMesh, water.transform, waterMaterial);
+        meshes.Add(bottomMesh);
+
+        // south plane + southeast corner
+        Mesh sideMesh1 = GenerateSideMesh(sideRes, Vector3.back, new Vector2(0, -shrinkFactor * 0.5f), b1, b2, t1, t2);
+        meshes.Add(sideMesh1);
+
+        Mesh cornerMesh1 = GenerateCornerMesh(b2, t2, sideRes.y, Vector3.back + Vector3.right, new Vector2(shrinkFactor * 0.5f, -shrinkFactor * 0.5f));
+        meshes.Add(cornerMesh1);
+
+        // east plane + northeast corner
+        Mesh sideMesh2 = GenerateSideMesh(sideRes, Vector3.right, new Vector2(shrinkFactor * 0.5f, 0), b2, b4, t2, t4);
+        meshes.Add(sideMesh2);
+
+        Mesh cornerMesh2 = GenerateCornerMesh(b4, t4, sideRes.y, Vector3.right + Vector3.forward, new Vector2(shrinkFactor * 0.5f, shrinkFactor * 0.5f));
+        meshes.Add(cornerMesh2);
+
+        // north plane + northwest corner
+        Mesh sideMesh3 = GenerateSideMesh(sideRes, Vector3.forward, new Vector2(0, shrinkFactor * 0.5f), b3, b4, t3, t4);
+        meshes.Add(sideMesh3);
+
+        Mesh cornerMesh3 = GenerateCornerMesh(b3, t3, sideRes.y, Vector3.forward + Vector3.left, new Vector2(-shrinkFactor * 0.5f, shrinkFactor * 0.5f));
+        meshes.Add(cornerMesh3);
+
+        // west plane + southwest corner
+        Mesh sideMesh4 = GenerateSideMesh(sideRes, Vector3.left, new Vector2(-shrinkFactor * 0.5f, 0), b3, b1, t3, t1);
+        meshes.Add(sideMesh4);
+
+        Mesh cornerMesh4 = GenerateCornerMesh(b1, t1, sideRes.y, Vector3.left + Vector3.back, new Vector2(-shrinkFactor * 0.5f, -shrinkFactor * 0.5f));
+        meshes.Add(cornerMesh4);
 
 
-        // checking for absent neighboring chunks to generate a water edge (side plane)
-        if (neighbors[0] == 0)
-        {
-            Mesh sideMesh = GenerateSideMesh(sideRes, Vector3.back, new Vector2(0, -shrinkFactor * 0.5f), b1, b2, t1, t2);
-            GenerateWaterPlaneObject(sideMesh, water.transform, waterMaterial);
-
-            if (neighbors[1] == 0)
-            {
-                Mesh cornerMesh = GenerateCornerMesh(b2, t2, sideRes.y, Vector3.back + Vector3.right, new Vector2(shrinkFactor * 0.5f, -shrinkFactor * 0.5f));
-                GenerateWaterPlaneObject(cornerMesh, water.transform, waterMaterial);
-            }
-        }
-
-        if (neighbors[1] == 0)
-        {
-            Mesh sideMesh = GenerateSideMesh(sideRes, Vector3.right, new Vector2(shrinkFactor * 0.5f, 0), b2, b4, t2, t4);
-            GenerateWaterPlaneObject(sideMesh, water.transform, waterMaterial);
-
-            if (neighbors[2] == 0)
-            {
-                Mesh cornerMesh = GenerateCornerMesh(b4, t4, sideRes.y, Vector3.right + Vector3.forward, new Vector2(shrinkFactor * 0.5f, shrinkFactor * 0.5f));
-                GenerateWaterPlaneObject(cornerMesh, water.transform, waterMaterial);
-            }
-        }
-
-        if (neighbors[2] == 0)
-        {
-            Mesh sideMesh = GenerateSideMesh(sideRes, Vector3.forward, new Vector2(0, shrinkFactor * 0.5f), b3, b4, t3, t4);
-            GenerateWaterPlaneObject(sideMesh, water.transform, waterMaterial);
-
-            if (neighbors[3] == 0)
-            {
-                Mesh cornerMesh = GenerateCornerMesh(b3, t3, sideRes.y, Vector3.forward + Vector3.left, new Vector2(-shrinkFactor * 0.5f, shrinkFactor * 0.5f));
-                GenerateWaterPlaneObject(cornerMesh, water.transform, waterMaterial);
-            }
-        }
-
-        if (neighbors[3] == 0)
-        {
-            Mesh sideMesh = GenerateSideMesh(sideRes, Vector3.left, new Vector2(-shrinkFactor * 0.5f, 0), b3, b1, t3, t1);
-            GenerateWaterPlaneObject(sideMesh, water.transform, waterMaterial);
-
-            if (neighbors[0] == 0)
-            {
-                Mesh cornerMesh = GenerateCornerMesh(b1, t1, sideRes.y, Vector3.left + Vector3.back, new Vector2(-shrinkFactor * 0.5f, -shrinkFactor * 0.5f));
-                GenerateWaterPlaneObject(cornerMesh, water.transform, waterMaterial);
-            }
-        }
+        // combine all water planes into single object
+        Mesh combinedMesh = CombineMeshes();
+        GenerateWaterObject(combinedMesh, parent.transform, startPoint, waterMaterial);
 
     }
+
+
+    private Mesh CombineMeshes()
+    {
+        if (meshes == null || meshes.Count == 0) return null;
+
+        List<CombineInstance> combineInstances = new();
+
+        foreach (Mesh mesh in meshes)
+        {
+            CombineInstance ci = new CombineInstance
+            {
+                mesh = mesh,
+                transform = Matrix4x4.identity
+            };
+            combineInstances.Add(ci);
+        }
+
+        Mesh combinedMesh = new();
+        combinedMesh.CombineMeshes(combineInstances.ToArray(), true, false);
+        combinedMesh.MarkDynamic();
+
+        return combinedMesh;
+    }
+
 
     // generating object from mesh
-    private void GenerateWaterPlaneObject(Mesh mesh, Transform parent, Material material)
+    private void GenerateWaterObject(Mesh mesh, Transform parent, Vector2 startPoint, Material material)
     {
-        GameObject waterPlane = new GameObject();
-        waterPlane.transform.position = new Vector3(parent.position.x, parent.position.y, parent.position.z);
-        waterPlane.transform.parent = parent.transform;
+        GameObject water = new GameObject();
+        water.transform.position = new Vector3(startPoint.x, parent.position.y, startPoint.y);
+        water.transform.parent = parent.transform;
+        water.name = "Water";
 
-        MeshFilter meshFilter = waterPlane.AddComponent<MeshFilter>();
-        MeshRenderer meshRenderer = waterPlane.AddComponent<MeshRenderer>();
+        MeshFilter meshFilter = water.AddComponent<MeshFilter>();
+        MeshRenderer meshRenderer = water.AddComponent<MeshRenderer>();
 
         meshRenderer.material = material;
-        waterPlane.layer = LayerMask.NameToLayer("Water");
+        water.layer = LayerMask.NameToLayer("Water");
         meshFilter.mesh = mesh;
     }
+
 
 
     // top and bottom meshes

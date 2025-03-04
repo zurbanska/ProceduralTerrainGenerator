@@ -12,7 +12,6 @@ public class ChunkManager : MonoBehaviour
     private MeshGenerator meshGenerator;
     private NoiseGenerator noiseGenerator;
     private BiomeGenerator biomeGenerator;
-    private WaterGenerator waterGenerator;
     private GradientBuilder gradientBuilder;
 
     private ObjectPlacer objectPlacer;
@@ -43,7 +42,6 @@ public class ChunkManager : MonoBehaviour
 
         noiseGenerator = new NoiseGenerator(noiseShader);
         meshGenerator = new MeshGenerator(meshShader);
-        waterGenerator = new WaterGenerator();
         biomeGenerator = new BiomeGenerator();
 
         gameObject.AddComponent<MeshFilter>();
@@ -63,9 +61,6 @@ public class ChunkManager : MonoBehaviour
         gameObject.SetActive(true);
 
         this.neighbors = neighbors;
-
-        // if (terrainData.lod != newTerrainData.lod && newTerrainData.waterLevel > 0)
-        waterGenerator.GenerateWater(gameObject.transform, width, newTerrainData.waterLevel, newTerrainData.lod, neighbors);
 
         terrainData = newTerrainData;
         Mesh newMesh = await GenerateMesh(needsNewNoise);

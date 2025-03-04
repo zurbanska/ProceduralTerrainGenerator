@@ -109,7 +109,7 @@ Material:
     - _TextureDistort: 0.5
     - _TextureScale: 0.31
     - _UVSec: 0
-    - _WaterLevel: 20
+    - _WaterLevel: 20.9
     - _WaveFrequency: 0.12
     - _WaveSpeed: 0.1
     - _WaveStrength: 0.3

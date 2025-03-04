@@ -145,6 +145,7 @@ public class MeshGenerator
         };
 
         mesh.RecalculateNormals();
+        mesh.MarkDynamic();
         return mesh;
     }
 

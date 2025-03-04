@@ -2,38 +2,43 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-public class MeshExporter
+public class OBJExporter
 {
 
-    public void ExportCombinedMesh(Dictionary<Vector2, GameObject> terrainChunks)
+    public void ExportCombinedMesh(List<GameObject> objectList)
     {
-        if (terrainChunks == null || terrainChunks.Count == 0) return;
+        if (objectList == null || objectList.Count == 0) return;
 
         string desktopPath = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Desktop);
-        string filePath = Path.Combine(desktopPath, "CombinedMesh.obj");
+        string filePath = Path.Combine(desktopPath, "ExportedTerrain.obj");
 
         using (StreamWriter writer = new StreamWriter(filePath))
         {
-            writer.Write(CombineTerrainChunksToObj(terrainChunks));
+            writer.Write(CombineTerrainChunksToObj(objectList));
         }
 
-        Debug.Log("Mesh exported to: " + filePath);
+        Debug.Log("Terrain exported to: " + filePath);
     }
 
-    private string CombineTerrainChunksToObj(Dictionary<Vector2, GameObject> terrainChunks)
+    private string CombineTerrainChunksToObj(List<GameObject> objectList)
     {
         System.Text.StringBuilder sb = new System.Text.StringBuilder();
         int vertexOffset = 0; // keep track of vertex indices across chunks
 
-        foreach (var chunk in terrainChunks)
+        sb.AppendLine("o Terrain");
+        foreach (var obj in objectList)
         {
-            GameObject chunkObject = chunk.Value;
-            MeshFilter mf = chunkObject.GetComponent<MeshFilter>();
+            MeshFilter mf = obj.GetComponent<MeshFilter>();
 
             if (mf == null || mf.sharedMesh == null) continue;
 
             Mesh mesh = mf.sharedMesh;
-            Transform transform = chunkObject.transform;
+            Transform transform = obj.transform;
+
+            if (obj.name == "Water")
+            {
+                sb.AppendLine("o Water");
+            }
 
             // vertices (converted to world space)
             foreach (Vector3 v in mesh.vertices)
@@ -62,7 +67,7 @@ public class MeshExporter
                 int v1 = triangles[i] + 1 + vertexOffset;
                 int v2 = triangles[i + 1] + 1 + vertexOffset;
                 int v3 = triangles[i + 2] + 1 + vertexOffset;
-                sb.AppendLine($"f {v1} {v2} {v3}");
+                sb.AppendLine($"f {v1}//{v1} {v2}//{v2} {v3}//{v3}");
             }
 
             vertexOffset += mesh.vertexCount; // increase vertex offset for next chunk

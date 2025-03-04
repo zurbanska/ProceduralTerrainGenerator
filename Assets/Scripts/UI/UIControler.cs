@@ -1,4 +1,6 @@
+using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -50,6 +52,8 @@ public class UIControler : MonoBehaviour
     public Button settingsButton;
     public VisualElement settingsBox;
 
+    public VisualElement loadingScreen;
+
 
     void Start()
     {
@@ -57,6 +61,9 @@ public class UIControler : MonoBehaviour
         Panels = new();
 
         var root = GetComponent<UIDocument>().rootVisualElement;
+
+        loadingScreen = root.Q<VisualElement>("loading-screen");
+        loadingScreen.style.display = DisplayStyle.None;
 
         generalSettingsPanel = root.Q<ScrollView>("settings-panel");
         shaderSettingsPanel = root.Q<ScrollView>("shader-settings-panel");
@@ -290,8 +297,17 @@ public class UIControler : MonoBehaviour
 
     void ExportTerrainButtonPressed()
     {
-        terrainManager.ExportTerrainMesh();
+        StartCoroutine(ExportTerrainCoroutine());
     }
+
+    private IEnumerator ExportTerrainCoroutine()
+    {
+        loadingScreen.style.display = DisplayStyle.Flex;
+        yield return null;
+        terrainManager.ExportTerrainMesh();
+        loadingScreen.style.display = DisplayStyle.None;
+    }
+
 
     void SettingsButtonPressed()
     {
