@@ -4,20 +4,40 @@ using UnityEngine;
 
 public class OBJExporter
 {
+    int count = 0;
+    string fileName = "ExportedTerrain";
 
     public void ExportCombinedMesh(List<GameObject> objectList)
     {
         if (objectList == null || objectList.Count == 0) return;
 
-        string desktopPath = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Desktop);
-        string filePath = Path.Combine(desktopPath, "ExportedTerrain.obj");
+        string path = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Desktop); // path to desktop
+        string objFilePath = Path.Combine(path, fileName + ".obj");
+        string mtlFilePath = Path.Combine(path, fileName + ".mtl");
 
-        using (StreamWriter writer = new StreamWriter(filePath))
+        // ensure unique file name
+        while (File.Exists(objFilePath))
+        {
+            count++;
+            objFilePath = Path.Combine(path, fileName + $"({count}).obj");
+            mtlFilePath = Path.Combine(path, fileName + $"({count}).mtl");
+        }
+
+        using (StreamWriter writer = new StreamWriter(objFilePath))
         {
             writer.Write(CombineTerrainChunksToObj(objectList));
         }
 
-        Debug.Log("Terrain exported to: " + filePath);
+        using (StreamWriter writer = new StreamWriter(mtlFilePath))
+        {
+            writer.WriteLine("newmtl Terrain");
+            writer.WriteLine("Kd 1.0 1.0 1.0");
+
+            writer.WriteLine("newmtl Water");
+            writer.WriteLine("Kd 0.2 0.6 0.8");
+        }
+
+        Debug.Log("Terrain exported to: " + objFilePath);
     }
 
     private string CombineTerrainChunksToObj(List<GameObject> objectList)
@@ -25,7 +45,12 @@ public class OBJExporter
         System.Text.StringBuilder sb = new System.Text.StringBuilder();
         int vertexOffset = 0; // keep track of vertex indices across chunks
 
-        sb.AppendLine("o Terrain");
+        if (count == 0)
+        {
+            sb.AppendLine($"mtllib {fileName}.mtl");
+        } else sb.AppendLine($"mtllib {fileName}({count}).mtl");
+
+
         foreach (var obj in objectList)
         {
             MeshFilter mf = obj.GetComponent<MeshFilter>();
@@ -37,7 +62,11 @@ public class OBJExporter
 
             if (obj.name == "Water")
             {
-                sb.AppendLine("o Water");
+                sb.AppendLine("g Water");
+                sb.AppendLine("usemtl Water");
+            } else {
+                sb.AppendLine("g Terrain");
+                sb.AppendLine("usemtl Terrain");
             }
 
             // vertices (converted to world space)
