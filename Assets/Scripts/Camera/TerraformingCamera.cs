@@ -6,6 +6,9 @@ public class TerraformingCamera : MonoBehaviour
     Vector3 hitPoint;
     Camera cam;
     public float brushSize = 2f;
+    
+    [Range(0,1)]
+    public float brushStrength = 0.1f;
     public TerrainManager terrainManager;
 
     private void Awake() {
@@ -13,11 +16,11 @@ public class TerraformingCamera : MonoBehaviour
     }
 
     private void LateUpdate() {
-        if (Input.GetMouseButtonDown(0) && terrainManager.allowTerraforming)
+        if (Input.GetMouseButton(0) && terrainManager.allowTerraforming)
         {
             Terraform(true);
         }
-        else if (Input.GetMouseButtonDown(1) && terrainManager.allowTerraforming)
+        else if (Input.GetMouseButton(1) && terrainManager.allowTerraforming)
         {
             Terraform(false);
         }
@@ -32,7 +35,7 @@ public class TerraformingCamera : MonoBehaviour
         // only terraform if raycast hit "terrain" layer and pointer is NOT over UI element
         if (Physics.Raycast(ray, out hit, 1000, layerMask) && !EventSystem.current.IsPointerOverGameObject()) {
             hitPoint = hit.point;
-            terrainManager.ModifyTerrain(hitPoint, brushSize, add);
+            terrainManager.ModifyTerrain(hitPoint, brushSize, brushStrength, add);
         }
     }
 

@@ -35,6 +35,9 @@ public class OBJExporter
 
             writer.WriteLine("newmtl Water");
             writer.WriteLine("Kd 0.2 0.6 0.8");
+
+            writer.WriteLine("newmtl Tree");
+            writer.WriteLine("Kd 0.5 0.8 0.4");
         }
 
         Debug.Log("Terrain exported to: " + objFilePath);
@@ -100,6 +103,54 @@ public class OBJExporter
             }
 
             vertexOffset += mesh.vertexCount; // increase vertex offset for next chunk
+
+            foreach (Transform child in obj.transform)
+            {
+                if (child.GetComponent<MeshFilter>() == obj.GetComponent<MeshFilter>())
+                    continue;
+
+                MeshFilter childMeshFilter = child.GetComponentInChildren<MeshFilter>();
+                if (childMeshFilter == null || childMeshFilter.sharedMesh == null) continue;
+
+                Mesh childMesh = childMeshFilter.sharedMesh;
+                Transform childTransform = child.transform;
+
+                sb.AppendLine("g Tree"); // assume child objects are trees
+                sb.AppendLine("usemtl Tree");
+
+                // vertices (converted to world space)
+                foreach (Vector3 v in childMesh.vertices)
+                {
+                    Vector3 worldPos = childTransform.TransformPoint(v);
+                    sb.AppendLine($"v {worldPos.x} {worldPos.y} {worldPos.z}");
+                }
+
+                // normals (converted to world space)
+                foreach (Vector3 n in childMesh.normals)
+                {
+                    Vector3 worldNormal = childTransform.TransformDirection(n);
+                    sb.AppendLine($"vn {worldNormal.x} {worldNormal.y} {worldNormal.z}");
+                }
+
+                // UVs
+                foreach (Vector2 uv in childMesh.uv)
+                {
+                    sb.AppendLine($"vt {uv.x} {uv.y}");
+                }
+
+                // faces (adjusting index with vertexOffset)
+                int[] childTriangles = childMesh.triangles;
+                for (int i = 0; i < childTriangles.Length; i += 3)
+                {
+                    int v1 = childTriangles[i] + 1 + vertexOffset;
+                    int v2 = childTriangles[i + 1] + 1 + vertexOffset;
+                    int v3 = childTriangles[i + 2] + 1 + vertexOffset;
+                    sb.AppendLine($"f {v1}//{v1} {v2}//{v2} {v3}//{v3}");
+                }
+
+                vertexOffset += childMesh.vertexCount;
+            }
+
         }
 
         return sb.ToString();

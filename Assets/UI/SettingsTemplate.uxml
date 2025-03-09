@@ -3,7 +3,7 @@
     <ui:Template name="GradientTemplate" src="project://database/Assets/UI/GradientTemplate.uxml?fileID=9197481963319205126&amp;guid=b51ce07af10de114d841464a61ac0816&amp;type=3#GradientTemplate" />
     <Style src="project://database/Assets/UI/style.uss?fileID=7433441132597879392&amp;guid=e712a1d83a1bcfd45b5422f17e22f323&amp;type=3#style" />
     <ui:VisualElement name="background" picking-mode="Ignore" style="flex-grow: 1; visibility: visible; display: flex; border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px;">
-        <ui:VisualElement name="settings-box" class="settings-box" style="left: 10px; top: 10px; flex-wrap: nowrap; text-overflow: clip; height: 70%; flex-basis: 0; flex-direction: column; display: none; overflow: visible; visibility: visible; max-height: none; background-color: rgba(41, 41, 41, 0);">
+        <ui:VisualElement name="settings-box" class="settings-box" style="left: 10px; top: 10px; flex-wrap: nowrap; text-overflow: clip; height: 80%; flex-basis: 0; flex-direction: column; display: none; overflow: visible; visibility: visible; max-height: none; background-color: rgba(41, 41, 41, 0);">
             <ui:Label tabindex="-1" text="Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" enable-rich-text="false" name="settings-label" class="settings-label" style="border-top-width: 0; border-right-width: 0; border-bottom-width: 0; border-left-width: 0;" />
             <ui:VisualElement name="tab-container" style="flex-grow: 1; height: 30px; flex-direction: row; top: 30px; max-height: 30px; background-color: rgb(42, 42, 42); border-left-color: rgb(64, 64, 64); border-right-color: rgb(64, 64, 64); border-top-color: rgb(64, 64, 64); border-bottom-color: rgb(64, 64, 64); align-items: flex-end; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-top: 0; padding-right: 5px; padding-bottom: 0; padding-left: 5px;">
                 <ui:Button text="General" parse-escape-sequences="true" display-tooltip-when-elided="true" name="general-tab-button" class="tab-button" />
@@ -31,6 +31,7 @@
                     <ui:Label tabindex="-1" text="Terraforming Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" name="terraforming-settings" class="sub-label" />
                     <ui:Toggle label="Allow Terraforming" name="terraforming-toggle" value="true" class="toggle" />
                     <ui:FloatField label="Brush Size" value="10" name="brush-size-input" class="num-field" />
+                    <ui:Slider picking-mode="Ignore" label="Brush Strength" value="0.1" high-value="1" name="brush-strength-slider" show-input-field="true" class="num-field" />
                     <ui:Button text="Generate Terrain" parse-escape-sequences="true" display-tooltip-when-elided="true" name="generate-terrain-button" class="button" />
                     <ui:Button text="Export Terrain" parse-escape-sequences="true" display-tooltip-when-elided="true" name="export-terrain-button" class="button" />
                 </ui:VisualElement>

@@ -42,6 +42,7 @@ public class UIControler : MonoBehaviour
 
     public Toggle terraformToggle;
     public FloatField brushSizeField;
+    public Slider brushStrengthSlider;
 
     public Button genTerrainButton;
     public Button exportTerrainButton;
@@ -150,6 +151,10 @@ public class UIControler : MonoBehaviour
         brushSizeField = root.Q<FloatField>("brush-size-input");
         brushSizeField.RegisterValueChangedCallback(e => BrushSizeChanged(e.newValue));
         brushSizeField.value = cam.GetComponent<TerraformingCamera>().brushSize;
+
+        brushStrengthSlider = root.Q<Slider>("brush-strength-slider");
+        brushStrengthSlider.RegisterValueChangedCallback(e => BrushStrengthChanged(e.newValue));
+        brushStrengthSlider.value = cam.GetComponent<TerraformingCamera>().brushStrength;
 
 
         genTerrainButton = root.Q<Button>("generate-terrain-button");
@@ -281,6 +286,12 @@ public class UIControler : MonoBehaviour
     {
         cam.GetComponent<TerraformingCamera>().brushSize = newValue;
     }
+
+    void BrushStrengthChanged(float newValue)
+    {
+        cam.GetComponent<TerraformingCamera>().brushStrength = newValue;
+    }
+
 
 
     void TimeChanged(float newValue)

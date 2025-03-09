@@ -86,6 +86,9 @@ public class TerrainManager : MonoBehaviour
         {
             Vector2 startPoint = new Vector2(-(renderDistance - 1) * chunkWidth, -(renderDistance - 1) * chunkWidth);
             waterGenerator.GenerateWater(this.transform, startPoint, chunkWidth * (renderDistance * 2 - 1), terrainData.waterLevel, terrainData.lod);
+        } else {
+            GameObject water = transform.Find("Water").gameObject;
+            if (water != null) Destroy(water);
         }
 
     }
@@ -159,7 +162,7 @@ public class TerrainManager : MonoBehaviour
         return chunkNeighbors;
     }
 
-    public void ModifyTerrain(Vector3 hitPoint, float brushSize, bool add)
+    public void ModifyTerrain(Vector3 hitPoint, float brushSize, float brushStrength, bool add)
     {
         Bounds brushBounds = new Bounds(hitPoint, Vector3.one * brushSize);
 
@@ -172,7 +175,7 @@ public class TerrainManager : MonoBehaviour
                 if (chunkManager.bounds.Intersects(brushBounds))
                 {
                     Vector3 localHitPoint = hitPoint - chunk.transform.position;
-                    chunkManager.Terraform(localHitPoint, brushSize, add, brushBounds);
+                    chunkManager.Terraform(localHitPoint, brushSize, brushStrength, add, brushBounds);
                 }
             }
         }

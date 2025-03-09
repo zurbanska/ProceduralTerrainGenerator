@@ -119,10 +119,10 @@ public class ChunkManager : MonoBehaviour
         UnityEngine.Object.DestroyImmediate(gameObject);
     }
 
-    public async void Terraform(Vector3 hitPosition, float brushSize, bool add, Bounds brushBounds)
+    public async void Terraform(Vector3 hitPosition, float brushSize, float brushStrength, bool add, Bounds brushBounds)
     {
         meshGenerator.CreateBuffers(width + 1, height + 1);
-        densityValues = meshGenerator.UpdateDensity(width + 1, height + 1, densityValues, hitPosition, brushSize, add, neighbors, terrainData.smoothLevel);
+        densityValues = meshGenerator.UpdateDensity(width + 1, height + 1, densityValues, hitPosition, brushSize, brushStrength, add, neighbors, terrainData.smoothLevel);
         AsyncGPUReadback.WaitAllRequests();
 
         Mesh newMesh = await GenerateMesh(false);

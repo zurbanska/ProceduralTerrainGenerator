@@ -16,6 +16,7 @@ int _CubeSize;
 float3 _HitPosition;
 float _BrushSize;
 float _TerraformStrength;
+float _BrushStrength;
 
 float smoothLevel;
 
@@ -110,7 +111,7 @@ void UpdateDensity( uint3 id : SV_DispatchThreadID )
 
     if (distance(id, _HitPosition) <= _BrushSize / 2)
     {
-        _DensityValues[indexFromCoord(id.x, id.y, id.z)] = _TerraformStrength;
+        _DensityValues[indexFromCoord(id.x, id.y, id.z)] += _TerraformStrength * _BrushStrength;
 
         if (id.z == 0 && borderDown || id.z == (uint)_ChunkWidth - 1 && borderUp || id.x == 0 && borderLeft || id.x == (uint)_ChunkWidth - 1 && borderRight || id.y == 0)
         {
