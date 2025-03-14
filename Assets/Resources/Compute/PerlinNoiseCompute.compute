@@ -1,0 +1,306 @@
+#pragma kernel GenerateNoise
+
+// width of chunk is a multiple of 8 but an extra thread is needed to calculate the noise values at the edges of chunk
+static const uint numthreads = 9;
+
+RWStructuredBuffer<float> _Values;
+
+int _ChunkWidth;
+int _ChunkHeight;
+float _OffsetX;
+float _OffsetZ;
+int lod;
+
+float borderDown;
+float borderRight;
+float borderUp;
+float borderLeft;
+
+int octaves;
+float persistence;
+float lacunarity;
+float scale;
+float groundLevel;
+
+float smoothLevel;
+
+float seed;
+
+StructuredBuffer<float> _BiomeValues;
+
+
+// returns index for _Values array from current coords
+int indexFromCoord(int x, int y, int z)
+{
+    return x + _ChunkWidth * (y + _ChunkHeight * z);
+}
+
+// returns a pseudo-random float between 0 and 1
+float rand(float2 position)
+{
+    // return frac(sin(dot(position, float2(12.9898,78.233))) * 43758.5453);
+    return frac(sin(dot(position, float2(127.1, 311.7))) * 43758.5453);
+}
+
+float rand3D(float3 position)
+{
+    // return frac(sin(dot(position, float3(12.9898,78.233,45.543))) * 43758.5453);
+    return frac(sin(dot(position, float3(12.1, 31.7, 74.7))) * 43758.5453);
+}
+
+
+// returns a pseudo-random angle from 0 to 2 * pi
+float randomAngle(float2 position)
+{
+    return rand(position) * 2 * 3.1415;
+}
+
+float randomAngle3D(float3 position)
+{
+    return rand3D(position) * 2 * 3.1415;
+}
+
+float randomElevation(float3 position)
+{
+    return rand3D(position + 123.456) * 3.1415;
+}
+
+
+// returns a pseudo-random unit length vector
+float2 randomVector(float2 position)
+{
+    position = position + 0.02;
+    float angle = randomAngle(position);
+    float2 vec = float2(cos(angle), sin(angle));
+    return vec;
+}
+
+float3 randomVector3D(float3 position)
+{
+    float angle = randomAngle3D(position);
+    float elevation = randomElevation(position);
+    float3 vec = float3(cos(angle) * sin(elevation), sin(angle) * cos(elevation), sin(elevation));
+    return vec;
+}
+
+
+
+float perlinNoise2D(float2 position, uint frequency)
+{
+    float unit = (uint)_ChunkWidth / frequency;
+
+    // get grid cell coordinates of candidate point
+    float2 gridID = floor(position / unit);
+    float2 gridUV = frac(position / unit);
+
+    // get grid cell of the candidate point
+    float2 gridCell = gridID + gridUV;
+
+    // find coords of grid corners
+    float2 bl = gridID + float2(0,0);
+    float2 br = gridID + float2(1,0);
+    float2 tl = gridID + float2(0,1);
+    float2 tr = gridID + float2(1,1);
+
+    // find random vector (gradient) for each grid corner
+    float2 gradBL = randomVector(bl);
+    float2 gradBR = randomVector(br);
+    float2 gradTL = randomVector(tl);
+    float2 gradTR = randomVector(tr);
+
+    // find displacement vectors from each corner to candidate point (offset vectors)
+    float2 offsetBL = gridUV - float2(0,0);
+    float2 offsetBR = gridUV - float2(1,0);
+    float2 offsetTL = gridUV - float2(0,1);
+    float2 offsetTR = gridUV - float2(1,1);
+
+    // calculate dot products of gradient vectors and offset vectors
+    float dotBL = dot(gradBL, offsetBL);
+    float dotBR = dot(gradBR, offsetBR);
+    float dotTL = dot(gradTL, offsetTL);
+    float dotTR = dot(gradTR, offsetTR);
+
+    // smooth out gridUVs
+    gridUV = smoothstep(0.01, 1, gridUV);
+
+    // interpolate between dot products
+    float bottom = lerp(dotBL, dotBR, gridUV.x);
+    float top = lerp(dotTL, dotTR, gridUV.x);
+    float perlin = lerp(bottom, top, gridUV.y);
+
+    return perlin;
+}
+
+float perlinNoise3D(float3 position, int frequency)
+{
+    float unit = (uint)_ChunkWidth / frequency;
+
+    // get grid cube coordinates of candidate point
+    float3 gridID = floor(position / unit);
+    float3 gridUV = frac(position / unit);
+
+    // find coords of cube corners
+    float3 blb = gridID + float3(0,0,0);
+    float3 blf = gridID + float3(0,0,1);
+    float3 brb = gridID + float3(1,0,0);
+    float3 brf = gridID + float3(1,0,1);
+    float3 tlb = gridID + float3(0,1,0);
+    float3 tlf = gridID + float3(0,1,1);
+    float3 trb = gridID + float3(1,1,0);
+    float3 trf = gridID + float3(1,1,1);
+
+
+    // find random vector (gradient) for each cube corner
+    float3 gradBLB = randomVector3D(blb);
+    float3 gradBLF = randomVector3D(blf);
+    float3 gradBRB = randomVector3D(brb);
+    float3 gradBRF = randomVector3D(brf);
+    float3 gradTLB = randomVector3D(tlb);
+    float3 gradTLF = randomVector3D(tlf);
+    float3 gradTRB = randomVector3D(trb);
+    float3 gradTRF = randomVector3D(trf);
+
+    // find displacement vectors from each corner to candidate point (offset vectors)
+    float3 offsetBLB = gridUV - float3(0, 0, 0);
+    float3 offsetBLF = gridUV - float3(0, 0, 1);
+    float3 offsetBRB = gridUV - float3(1, 0, 0);
+    float3 offsetBRF = gridUV - float3(1, 0, 1);
+    float3 offsetTLB = gridUV - float3(0, 1, 0);
+    float3 offsetTLF = gridUV - float3(0, 1, 1);
+    float3 offsetTRB = gridUV - float3(1, 1, 0);
+    float3 offsetTRF = gridUV - float3(1, 1, 1);
+
+
+    // calculate dot products of gradient vectors and offset vectors
+    float dotBLB = dot(gradBLB, offsetBLB);
+    float dotBLF = dot(gradBLF, offsetBLF);
+    float dotBRB = dot(gradBRB, offsetBRB);
+    float dotBRF = dot(gradBRF, offsetBRF);
+    float dotTLB = dot(gradTLB, offsetTLB);
+    float dotTLF = dot(gradTLF, offsetTLF);
+    float dotTRB = dot(gradTRB, offsetTRB);
+    float dotTRF = dot(gradTRF, offsetTRF);
+
+    // smooth out gridUVs
+    gridUV = clamp(gridUV, 0.0, 1.0);
+    gridUV = smoothstep(0.01, 0.99, gridUV);
+
+    // interpolate between dot products
+    // x axis
+    float bb = lerp(dotBLB, dotBRB, gridUV.x);
+    float tb = lerp(dotTLB, dotTRB, gridUV.x);
+    float bf = lerp(dotBLF, dotBRF, gridUV.x);
+    float tf = lerp(dotTLF, dotTRF, gridUV.x);
+
+    // y axis
+    float back = lerp(bb, tb, gridUV.y);
+    float front = lerp(bf, tf, gridUV.y);
+
+
+    float perlin = lerp(back, front, gridUV.z);
+
+    return perlin;
+}
+
+
+// layered (fractal) perlin noise
+float fractalNoise2D(float2 position, int octaves, float persistence, float lacunarity)
+{
+    float result = 0;
+    float frequency = 1.5;
+    float amplitude = 1;
+    float maxValue = 0; // for normalization
+
+    for (int i = 0; i < octaves; i++)
+    {
+        result += perlinNoise2D(position, frequency) * amplitude;
+
+        // increase frequency and decrease amplitude each octave
+        maxValue += amplitude;
+        amplitude *= persistence;
+        frequency *= lacunarity;
+    }
+
+    return result / maxValue;
+}
+
+float fractalNoise3D(float3 position, int octaves, float persistence, float lacunarity)
+{
+    float result = 0;
+    float frequency = 1.5;
+    float amplitude = 1;
+    float maxValue = 0; // for normalization
+
+    for (int i = 0; i < octaves; i++)
+    {
+        result += perlinNoise3D(position, frequency) * amplitude;
+
+        // increase frequency and decrease amplitude each octave
+        maxValue += amplitude;
+        amplitude *= persistence;
+        frequency *= lacunarity;
+    }
+
+    return result / maxValue;
+}
+
+
+
+[numthreads(numthreads, numthreads, numthreads)]
+void GenerateNoise (uint3 id : SV_DispatchThreadID)
+{
+    // return if index out of range
+    if (id.x >= (uint)_ChunkWidth || id.y >= (uint)_ChunkHeight || id.z >= (uint)_ChunkWidth)
+        return;
+
+
+    // global coords accounting for chunk offset and noise scale
+    float globalX = (id.x + _OffsetX + seed) * (1 / scale);
+    float globalY = (id.y) * (1 / scale);
+    float globalZ = (id.z + _OffsetZ + seed) * (1 / scale);
+
+    // float biomeValue = (_BiomeValues[id.z * _ChunkWidth + id.x] - 0.5) * 10;
+    // biomeValue = 1;
+
+
+    float noiseValue = fractalNoise3D(float3(globalX, globalY, globalZ), octaves, persistence, lacunarity);
+    // float noiseValue = fractalNoise2D(float2(globalX, globalZ), octaves, persistence, lacunarity);
+
+    // height of solid terrain in given coordinates
+    float currentDensity = _ChunkHeight * clamp(noiseValue, -0.9, 0.9) * 2;
+    currentDensity += groundLevel * 2;
+
+    float newDensity = currentDensity;
+
+
+    if (id.y <= currentDensity - smoothLevel)
+    {
+        newDensity = 0;
+    }
+    else if (id.y > currentDensity + smoothLevel)
+    {
+        newDensity = 1;
+    }
+    else {
+        newDensity = smoothstep(currentDensity - smoothLevel, currentDensity + smoothLevel, id.y);
+    }
+
+    if (id.y <= 8)
+    {
+        newDensity = 0; // bottom layer always solid
+    }
+    if (id.y >= (uint)_ChunkHeight - 1)
+    {
+        newDensity = 1;
+    }
+
+
+    if (id.z == 0 && borderDown || id.z == (uint)_ChunkWidth - 1 && borderUp || id.x == 0 && borderLeft || id.x == (uint)_ChunkWidth - 1 && borderRight || id.y == 0)
+    {
+        newDensity = 1;
+    }
+
+    // assign density to array of noise values
+    _Values[indexFromCoord(id.x, id.y, id.z)] = newDensity;
+
+}

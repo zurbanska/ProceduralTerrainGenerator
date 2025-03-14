@@ -4,9 +4,6 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
-#if UNITY_EDITOR
-using UnityEditor.Formats.Fbx.Exporter;
-#endif
 
 public class TerrainManager : MonoBehaviour
 {
@@ -15,46 +12,44 @@ public class TerrainManager : MonoBehaviour
     public ComputeShader marchingCubesShader;
 
     public TerrainData terrainData;
-    private TerrainData lastTerrainData;
 
     public Material material;
-    public Gradient gradient;
 
 
     public int chunkWidth = 8; // points per x & z axis
     public int chunkHeight = 8; // points per y axis
 
-    public int renderDistance;
+    public int renderDistance = 1;
 
     public bool randomSeed = false;
 
     public bool allowTerraforming = true;
 
-    #if UNITY_EDITOR
-    public FBXExporter fbxExporter;
-    #endif
-
     public OBJExporter objExporter = new();
 
     private WaterGenerator waterGenerator = new();
+    private float previousWaterLevel;
 
 
-    private Dictionary<Vector2, GameObject> terrainChunkDictionary = new Dictionary<Vector2, GameObject>(); // dictionary of all created chunks and their coords
+    public Dictionary<Vector2, GameObject> terrainChunkDictionary = new Dictionary<Vector2, GameObject>(); // dictionary of all created chunks and their coords
 
 
-    // Start is called before the first frame update
+    // used in testing
+    public void Initialize(ComputeShader noiseShader, ComputeShader marchingCubesShader, Material material, TerrainData terrainData)
+    {
+        this.noiseShader = noiseShader;
+        this.marchingCubesShader = marchingCubesShader;
+        this.material = material;
+        this.terrainData = terrainData;
+    }
+
+
     void Start()
     {
-        lastTerrainData = terrainData;
-
-        #if UNITY_EDITOR
-        fbxExporter = GetComponent<FBXExporter>();
-        #endif
-
+        previousWaterLevel = -1;
         DeleteChunks();
         if (randomSeed) terrainData.seed = Mathf.FloorToInt(Random.value * 1000000);
         UpdateChunks();
-
     }
 
 
@@ -67,7 +62,7 @@ public class TerrainManager : MonoBehaviour
                 {
                     Vector2 chunkCoord = new Vector2(i, j);
                     Vector4 chunkNeighbors = CheckForChunkNeighbors(i, j);
-                    EnableChunk(chunkCoord, terrainData.lod, chunkNeighbors, needsNewNoise);
+                    EnableChunk(chunkCoord, chunkNeighbors, needsNewNoise);
                 }
             }
 
@@ -82,19 +77,20 @@ public class TerrainManager : MonoBehaviour
         }
 
         // generate water
+        Transform existingWater = transform.Find("Water");
+        if (existingWater != null && previousWaterLevel != terrainData.waterLevel) Destroy(existingWater.gameObject);
+
         if (terrainData.waterLevel > 0 && renderDistance > 0)
         {
             Vector2 startPoint = new Vector2(-(renderDistance - 1) * chunkWidth, -(renderDistance - 1) * chunkWidth);
             waterGenerator.GenerateWater(this.transform, startPoint, chunkWidth * (renderDistance * 2 - 1), terrainData.waterLevel, terrainData.lod);
-        } else {
-            GameObject water = transform.Find("Water").gameObject;
-            if (water != null) Destroy(water);
         }
+
+        previousWaterLevel = terrainData.waterLevel;
 
     }
 
 
-    // used in editor
     public void GenerateChunks()
     {
         DeleteChunks();
@@ -103,7 +99,7 @@ public class TerrainManager : MonoBehaviour
     }
 
 
-    public void CreateChunk(Vector2 coord, int chunkLod, Vector4 chunkNeighbors)
+    public void CreateChunk(Vector2 coord, Vector4 chunkNeighbors)
     {
         GameObject newChunk = new GameObject("Terrain Chunk " + coord);
         newChunk.transform.parent = transform;
@@ -114,13 +110,12 @@ public class TerrainManager : MonoBehaviour
         chunkManager.width = chunkWidth;
         chunkManager.height = chunkHeight;
         chunkManager.coord = coord;
-        chunkManager.InitChunk(noiseShader, marchingCubesShader, material, gradient, terrainData, chunkNeighbors);
-        // chunkManager.UpdateChunk(chunkNeighbors, terrainData);
+        chunkManager.InitChunk(noiseShader, marchingCubesShader, material, terrainData, chunkNeighbors);
 
         terrainChunkDictionary[coord] = newChunk;
     }
 
-    private void DeleteChunks()
+    public void DeleteChunks()
     {
         foreach (var chunk in terrainChunkDictionary.Values)
         {
@@ -142,12 +137,12 @@ public class TerrainManager : MonoBehaviour
         }
     }
 
-    private void EnableChunk(Vector2 coord, int chunkLod, Vector4 chunkNeighbors, bool needsNewNoise)
+    private void EnableChunk(Vector2 coord, Vector4 chunkNeighbors, bool needsNewNoise)
     {
         if (terrainChunkDictionary.ContainsKey(coord))
         {
             terrainChunkDictionary[coord].GetComponent<ChunkManager>().UpdateChunk(chunkNeighbors, terrainData, needsNewNoise);
-        } else CreateChunk(coord, chunkLod, chunkNeighbors);
+        } else CreateChunk(coord, chunkNeighbors);
     }
 
     private Vector4 CheckForChunkNeighbors(int x, int z)
@@ -164,6 +159,8 @@ public class TerrainManager : MonoBehaviour
 
     public void ModifyTerrain(Vector3 hitPoint, float brushSize, float brushStrength, bool add)
     {
+        if (!allowTerraforming) return;
+
         Bounds brushBounds = new Bounds(hitPoint, Vector3.one * brushSize);
 
         foreach (var item in terrainChunkDictionary)
@@ -193,33 +190,45 @@ public class TerrainManager : MonoBehaviour
 
         if (transform.Find("Water") != null) objectList.Add(transform.Find("Water").gameObject);
 
-        #if UNITY_EDITOR
-        fbxExporter.ExportToFBX(objectList);
-        #endif
-
         objExporter.ExportCombinedMesh(objectList);
 
     }
 
 
-    private void OnValidate() {
+    public void ValidateSettings()
+    {
+        if (renderDistance > 10) renderDistance = 10; // max render distance for safety
+        if (renderDistance < 0) renderDistance = 0;
 
-        if (renderDistance > 10) {
-            renderDistance = 10; // max render distance for safety
-        }
         // chunk width and height have to be multiples of 8 and greater or equal 8
         chunkWidth = Mathf.Max(8, chunkWidth);
-        if (chunkWidth % 8 != 0)
-        {
-            chunkWidth = Mathf.RoundToInt(chunkWidth / 8.0f) * 8;
-        }
+        if (chunkWidth % 8 != 0) chunkWidth = Mathf.RoundToInt(chunkWidth / 8.0f) * 8;
 
         chunkHeight = Mathf.Max(chunkHeight, chunkWidth);
-        if (chunkHeight % 8 != 0)
+        if (chunkHeight % 8 != 0) chunkHeight = Mathf.RoundToInt(chunkHeight / 8.0f) * 8;
+
+        if (terrainData != null)
         {
-            chunkHeight = Mathf.RoundToInt(chunkHeight / 8.0f) * 8;
+            if (terrainData.waterLevel < 0) terrainData.waterLevel = 0;
+
+            if (terrainData.smoothLevel < 0) terrainData.smoothLevel = 0;
+
+            if (terrainData.lod < 1) terrainData.lod = 1;
+            if (terrainData.lod > 8) terrainData.lod = 8;
+
+            if (terrainData.isoLevel < 0) terrainData.isoLevel = 0;
+            if (terrainData.isoLevel > 1) terrainData.isoLevel = 1;
+
+            if (terrainData.octaves < 1) terrainData.octaves = 1;
+            if (terrainData.octaves > 6) terrainData.octaves = 6;
         }
 
+    }
+
+
+    private void OnValidate()
+    {
+        ValidateSettings();
     }
 
 

@@ -17,6 +17,8 @@ public class ObjectPlacer : MonoBehaviour
 
     public void PlaceObjects(TerrainData terrainData)
     {
+        if (this == null) return;
+        
         DestroyObjects();
 
         System.Random newRandom = new System.Random(1);

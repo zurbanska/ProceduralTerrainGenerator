@@ -1,0 +1,122 @@
+#pragma kernel March
+#pragma kernel UpdateDensity
+
+// lookup tables for marching cubes algorithm
+#include "./MarchingTable.hlsl"
+
+
+RWStructuredBuffer<float> _DensityValues;
+
+float _IsoLevel;
+int _ChunkWidth;
+int _ChunkHeight;
+
+int _CubeSize;
+
+float3 _HitPosition;
+float _BrushSize;
+float _TerraformStrength;
+float _BrushStrength;
+
+float smoothLevel;
+
+float borderDown;
+float borderRight;
+float borderUp;
+float borderLeft;
+
+
+struct Triangle {
+    float3 a, b, c;
+};
+
+AppendStructuredBuffer<Triangle> _Triangles;
+
+int indexFromCoord(int x, int y, int z)
+{
+    return (x + (_ChunkWidth) * (y + (_ChunkHeight) * z)) * _CubeSize;
+}
+
+float3 interp(float3 edgeVertex1, float valueAtVertex1, float3 edgeVertex2, float valueAtVertex2)
+{
+    float t = (_IsoLevel - valueAtVertex1) / (valueAtVertex2 - valueAtVertex1 + 0.000001);
+    float3 val = lerp(edgeVertex1, edgeVertex2, t);
+    return val;
+}
+
+
+[numthreads(8,8,8)]
+void March(uint3 id : SV_DispatchThreadID)
+{
+    // return if index out of range
+    if (id.x * _CubeSize >= (uint)_ChunkWidth - _CubeSize || id.y * _CubeSize >= (uint)_ChunkHeight - _CubeSize || id.z * _CubeSize >= (uint)_ChunkWidth - _CubeSize)
+        return;
+
+    float cubeValues[8] = {
+        _DensityValues[indexFromCoord(id.x, id.y, (id.z + 1))],
+        _DensityValues[indexFromCoord((id.x + 1), id.y, (id.z + 1))],
+        _DensityValues[indexFromCoord((id.x + 1), id.y, id.z)],
+        _DensityValues[indexFromCoord(id.x, id.y, id.z)],
+        _DensityValues[indexFromCoord(id.x, (id.y + 1), (id.z + 1))],
+        _DensityValues[indexFromCoord((id.x + 1), (id.y + 1), (id.z + 1))],
+        _DensityValues[indexFromCoord((id.x + 1), (id.y + 1), id.z)],
+        _DensityValues[indexFromCoord(id.x, (id.y + 1), id.z)]
+    };
+
+
+    int cubeIndex = 0;
+    if (cubeValues[0] < _IsoLevel) cubeIndex |= 1;
+    if (cubeValues[1] < _IsoLevel) cubeIndex |= 2;
+    if (cubeValues[2] < _IsoLevel) cubeIndex |= 4;
+    if (cubeValues[3] < _IsoLevel) cubeIndex |= 8;
+    if (cubeValues[4] < _IsoLevel) cubeIndex |= 16;
+    if (cubeValues[5] < _IsoLevel) cubeIndex |= 32;
+    if (cubeValues[6] < _IsoLevel) cubeIndex |= 64;
+    if (cubeValues[7] < _IsoLevel) cubeIndex |= 128;
+
+    if (cubeIndex == 0 || cubeIndex == 255) return;
+
+
+    int edges[] = triTable[cubeIndex];
+
+    for (int i = 0; edges[i] != -1; i += 3)
+    {
+        // First edge lies between vertex e00 and vertex e01
+        int e00 = edgeConnections[edges[i]][0];
+        int e01 = edgeConnections[edges[i]][1];
+
+        // Second edge lies between vertex e10 and vertex e11
+        int e10 = edgeConnections[edges[i + 1]][0];
+        int e11 = edgeConnections[edges[i + 1]][1];
+
+        // Third edge lies between vertex e20 and vertex e21
+        int e20 = edgeConnections[edges[i + 2]][0];
+        int e21 = edgeConnections[edges[i + 2]][1];
+
+        Triangle tri;
+
+        tri.a = (interp(cornerOffsets[e00], cubeValues[e00], cornerOffsets[e01], cubeValues[e01]) + id) * _CubeSize;
+        tri.b = (interp(cornerOffsets[e10], cubeValues[e10], cornerOffsets[e11], cubeValues[e11]) + id) * _CubeSize;
+        tri.c = (interp(cornerOffsets[e20], cubeValues[e20], cornerOffsets[e21], cubeValues[e21]) + id) * _CubeSize;
+
+        _Triangles.Append(tri);
+    }
+
+}
+
+[numthreads(8,8,8)]
+void UpdateDensity( uint3 id : SV_DispatchThreadID )
+{
+    if (id.x >= (uint)_ChunkWidth || id.y >= (uint)_ChunkHeight || id.z >= (uint)_ChunkWidth) return;
+
+    if (distance(id, _HitPosition) <= _BrushSize / 2)
+    {
+        _DensityValues[indexFromCoord(id.x, id.y, id.z)] += _TerraformStrength * _BrushStrength;
+
+        if (id.z == 0 && borderDown || id.z == (uint)_ChunkWidth - 1 && borderUp || id.x == 0 && borderLeft || id.x == (uint)_ChunkWidth - 1 && borderRight || id.y == 0)
+        {
+            _DensityValues[indexFromCoord(id.x, id.y, id.z)] = 1;
+        }
+    }
+
+}

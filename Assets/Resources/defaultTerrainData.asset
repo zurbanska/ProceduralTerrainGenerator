@@ -15,7 +15,7 @@ MonoBehaviour:
   waterLevel: 20.9
   groundLevel: 10
   smoothLevel: 0
-  lod: 1
+  lod: 4
   isoLevel: 0.627
   seed: 193891
   octaves: 5

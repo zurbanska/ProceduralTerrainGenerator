@@ -37,7 +37,7 @@ public class MeshGenerator
         vertexCacheBuffer.Release();
     }
 
-    public async Task<Mesh> GenerateMesh(int width, int height, float isoLevel, float[] densityMap, int lod, Gradient gradient, float[] biomeValues)
+    public async Task<Mesh> GenerateMesh(int width, int height, float isoLevel, float[] densityMap, int lod, float[] biomeValues)
     {
         int cubeSize = lod;
 
@@ -67,7 +67,7 @@ public class MeshGenerator
         Triangle[] triangles = new Triangle[numTriangles];
         trianglesBuffer.GetData(triangles, 0, 0, numTriangles);
 
-        Mesh mesh = await CreateMesh(triangles, width, height, gradient, biomeValues);
+        Mesh mesh = await CreateMesh(triangles, width, height, biomeValues);
 
         ReleaseBuffers();
         return mesh;
@@ -94,7 +94,7 @@ public class MeshGenerator
     // }
 
     // generate a mesh from an array of triangles
-    private async Task<Mesh> CreateMesh(Triangle[] triangles, int width, int height, Gradient gradient, float[] biomeValues)
+    private async Task<Mesh> CreateMesh(Triangle[] triangles, int width, int height, float[] biomeValues)
     {
 
         var meshData = await Task.Run(() =>

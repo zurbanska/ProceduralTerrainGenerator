@@ -17,7 +17,6 @@ public class ChunkManager : MonoBehaviour
     private ObjectPlacer objectPlacer;
 
     private Material material;
-    private Gradient gradient;
 
     private Mesh mesh;
     public float[] densityValues;
@@ -30,10 +29,9 @@ public class ChunkManager : MonoBehaviour
     public Bounds bounds;
 
 
-    public void InitChunk(ComputeShader noiseShader, ComputeShader meshShader, Material material, Gradient gradient, TerrainData terrainData, Vector4 neighbors)
+    public void InitChunk(ComputeShader noiseShader, ComputeShader meshShader, Material material, TerrainData terrainData, Vector4 neighbors)
     {
         this.material = material;
-        this.gradient = gradient;
         this.terrainData = ScriptableObject.CreateInstance<TerrainData>();
 
         this.gradientBuilder = new GradientBuilder();
@@ -73,8 +71,11 @@ public class ChunkManager : MonoBehaviour
 
     private void SetMesh(Mesh newMesh)
     {
+        if (this == null) return;
+
         MeshFilter meshFilter = GetComponent<MeshFilter>();
         MeshCollider meshCollider = GetComponent<MeshCollider>();
+        MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
 
         if (meshFilter != null)
             meshFilter.mesh = newMesh;
@@ -82,7 +83,8 @@ public class ChunkManager : MonoBehaviour
         if (meshCollider != null)
             meshCollider.sharedMesh = newMesh;
 
-        GetComponent<MeshRenderer>().sharedMaterial = material;
+        if (meshRenderer != null)
+            meshRenderer.sharedMaterial = material;
 
         mesh = newMesh;
     }
@@ -103,7 +105,7 @@ public class ChunkManager : MonoBehaviour
 
         meshGenerator.CreateBuffers(width + 1, height + 1);
 
-        Task<Mesh> mesh = meshGenerator.GenerateMesh(width + 1, height + 1, terrainData.isoLevel, densityValues, terrainData.lod, gradient, biomeValues);
+        Task<Mesh> mesh = meshGenerator.GenerateMesh(width + 1, height + 1, terrainData.isoLevel, densityValues, terrainData.lod, biomeValues);
         AsyncGPUReadback.WaitAllRequests();
 
         return mesh;
@@ -116,10 +118,10 @@ public class ChunkManager : MonoBehaviour
 
     public void DestroyChunk()
     {
-        UnityEngine.Object.DestroyImmediate(gameObject);
+        Destroy(gameObject);
     }
 
-    public async void Terraform(Vector3 hitPosition, float brushSize, float brushStrength, bool add, Bounds brushBounds)
+    public virtual async void Terraform(Vector3 hitPosition, float brushSize, float brushStrength, bool add, Bounds brushBounds)
     {
         meshGenerator.CreateBuffers(width + 1, height + 1);
         densityValues = meshGenerator.UpdateDensity(width + 1, height + 1, densityValues, hitPosition, brushSize, brushStrength, add, neighbors, terrainData.smoothLevel);

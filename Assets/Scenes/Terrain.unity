@@ -883,6 +883,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   brushSize: 12
+  brushStrength: 0.1
   terrainManager: {fileID: 1459410724}
 --- !u!114 &963194233
 MonoBehaviour:
@@ -1108,7 +1109,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1459410725}
   - component: {fileID: 1459410724}
-  - component: {fileID: 1459410726}
   m_Layer: 0
   m_Name: Terrain Manager
   m_TagString: Untagged
@@ -1167,7 +1167,6 @@ MonoBehaviour:
   renderDistance: 1
   randomSeed: 0
   allowTerraforming: 0
-  fbxExporter: {fileID: 1459410726}
 --- !u!4 &1459410725
 Transform:
   m_ObjectHideFlags: 0
@@ -1185,18 +1184,6 @@ Transform:
   - {fileID: 1040721048}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1459410726
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1459410723}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4a0903eec6fafd14ea8a2161201d3eae, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1574652141
 GameObject:
   m_ObjectHideFlags: 0
