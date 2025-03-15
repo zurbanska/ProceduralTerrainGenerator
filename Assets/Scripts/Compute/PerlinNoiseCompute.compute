@@ -26,8 +26,6 @@ float smoothLevel;
 
 float seed;
 
-StructuredBuffer<float> _BiomeValues;
-
 
 // returns index for _Values array from current coords
 int indexFromCoord(int x, int y, int z)
@@ -258,9 +256,6 @@ void GenerateNoise (uint3 id : SV_DispatchThreadID)
     float globalX = (id.x + _OffsetX + seed) * (1 / scale);
     float globalY = (id.y) * (1 / scale);
     float globalZ = (id.z + _OffsetZ + seed) * (1 / scale);
-
-    // float biomeValue = (_BiomeValues[id.z * _ChunkWidth + id.x] - 0.5) * 10;
-    // biomeValue = 1;
 
 
     float noiseValue = fractalNoise3D(float3(globalX, globalY, globalZ), octaves, persistence, lacunarity);

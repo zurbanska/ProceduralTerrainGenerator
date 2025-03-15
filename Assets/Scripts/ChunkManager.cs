@@ -11,36 +11,33 @@ public class ChunkManager : MonoBehaviour
 
     private MeshGenerator meshGenerator;
     private NoiseGenerator noiseGenerator;
-    private BiomeGenerator biomeGenerator;
     private GradientBuilder gradientBuilder;
 
     private ObjectPlacer objectPlacer;
 
     private Material material;
 
-    private Mesh mesh;
+    public Mesh mesh;
     public float[] densityValues;
-    public float[] biomeValues;
 
-    TerrainData terrainData;
+    public TerrainData terrainData;
 
-    Vector4 neighbors;
+    public Vector4 neighbors;
 
     public Bounds bounds;
 
 
-    public void InitChunk(ComputeShader noiseShader, ComputeShader meshShader, Material material, TerrainData terrainData, Vector4 neighbors)
+    public void InitChunk(ComputeShader noiseShader, ComputeShader meshShader, Material material, TerrainData terrainData)
     {
         this.material = material;
-        this.terrainData = ScriptableObject.CreateInstance<TerrainData>();
+        this.terrainData = terrainData;
 
         this.gradientBuilder = new GradientBuilder();
 
-        this.material.SetTexture("_GradientTex", gradientBuilder.GenerateGradientTexture(terrainData.gradient));
+        if (this.material.HasProperty("_GradientTex")) this.material.SetTexture("_GradientTex", gradientBuilder.GenerateGradientTexture(terrainData.gradient));
 
         noiseGenerator = new NoiseGenerator(noiseShader);
         meshGenerator = new MeshGenerator(meshShader);
-        biomeGenerator = new BiomeGenerator();
 
         gameObject.AddComponent<MeshFilter>();
         gameObject.AddComponent<MeshRenderer>();
@@ -50,9 +47,8 @@ public class ChunkManager : MonoBehaviour
 
         bounds = new Bounds(new Vector3(width / 2, height / 2, width / 2) + transform.position, new Vector3(width, height, width));
 
-        UpdateChunk(neighbors, terrainData, true);
-
     }
+
 
     public async void UpdateChunk(Vector4 neighbors, TerrainData newTerrainData, bool needsNewNoise)
     {
@@ -69,9 +65,9 @@ public class ChunkManager : MonoBehaviour
         objectPlacer.PlaceObjects(terrainData);
     }
 
-    private void SetMesh(Mesh newMesh)
+    public void SetMesh(Mesh newMesh)
     {
-        if (this == null) return;
+        if (this == null || newMesh == null) return;
 
         MeshFilter meshFilter = GetComponent<MeshFilter>();
         MeshCollider meshCollider = GetComponent<MeshCollider>();
@@ -91,21 +87,18 @@ public class ChunkManager : MonoBehaviour
 
 
 
-    private Task<Mesh> GenerateMesh(bool needsNewNoise)
+    public Task<Mesh> GenerateMesh(bool needsNewNoise)
     {
         if (densityValues == null || needsNewNoise)
         {
             // check if chunk needs noise update
-            biomeValues = biomeGenerator.GenerateBiomes(width + 1, new Vector2(coord.x * width, coord.y * width), terrainData.seed);
-
-            densityValues = noiseGenerator.GenerateNoise(width + 1, height + 1, new Vector2(coord.x * width, coord.y * width), terrainData, neighbors, biomeValues);
+            densityValues = noiseGenerator.GenerateNoise(width + 1, height + 1, new Vector2(coord.x * width, coord.y * width), terrainData, neighbors);
             AsyncGPUReadback.WaitAllRequests();
-
         }
 
         meshGenerator.CreateBuffers(width + 1, height + 1);
 
-        Task<Mesh> mesh = meshGenerator.GenerateMesh(width + 1, height + 1, terrainData.isoLevel, densityValues, terrainData.lod, biomeValues);
+        Task<Mesh> mesh = meshGenerator.GenerateMesh(width + 1, height + 1, terrainData.isoLevel, densityValues, terrainData.lod);
         AsyncGPUReadback.WaitAllRequests();
 
         return mesh;
@@ -118,7 +111,11 @@ public class ChunkManager : MonoBehaviour
 
     public void DestroyChunk()
     {
+        #if UNITY_EDITOR
+        DestroyImmediate(gameObject);
+        #else
         Destroy(gameObject);
+        #endif
     }
 
     public virtual async void Terraform(Vector3 hitPosition, float brushSize, float brushStrength, bool add, Bounds brushBounds)

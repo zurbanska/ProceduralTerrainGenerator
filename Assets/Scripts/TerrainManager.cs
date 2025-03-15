@@ -26,6 +26,7 @@ public class TerrainManager : MonoBehaviour
     public bool allowTerraforming = true;
 
     public OBJExporter objExporter = new();
+    public PNGExporter pngExporter = new();
 
     private WaterGenerator waterGenerator = new();
     private float previousWaterLevel;
@@ -78,7 +79,14 @@ public class TerrainManager : MonoBehaviour
 
         // generate water
         Transform existingWater = transform.Find("Water");
-        if (existingWater != null && previousWaterLevel != terrainData.waterLevel) Destroy(existingWater.gameObject);
+        if (existingWater != null && previousWaterLevel != terrainData.waterLevel)
+        {
+            #if UNITY_EDITOR
+            DestroyImmediate(existingWater.gameObject);
+            #else
+            Destroy(existingWater.gameObject);
+            #endif
+        }
 
         if (terrainData.waterLevel > 0 && renderDistance > 0)
         {
@@ -110,23 +118,28 @@ public class TerrainManager : MonoBehaviour
         chunkManager.width = chunkWidth;
         chunkManager.height = chunkHeight;
         chunkManager.coord = coord;
-        chunkManager.InitChunk(noiseShader, marchingCubesShader, material, terrainData, chunkNeighbors);
+        chunkManager.InitChunk(noiseShader, marchingCubesShader, material, terrainData);
+        chunkManager.UpdateChunk(chunkNeighbors, terrainData, true);
 
         terrainChunkDictionary[coord] = newChunk;
     }
 
     public void DeleteChunks()
     {
-        foreach (var chunk in terrainChunkDictionary.Values)
-        {
-            chunk.GetComponent<ChunkManager>().DestroyChunk();
-        }
         terrainChunkDictionary.Clear();
 
-        while (transform.childCount > 0) {
-            DestroyImmediate(transform.GetChild(0).gameObject);
-        }
+        if (this == null || transform == null) return;
 
+        while (transform.childCount > 0) {
+            if (transform.GetChild(0) != null)
+            {
+                #if UNITY_EDITOR
+                DestroyImmediate(transform.GetChild(0).gameObject);
+                #else
+                Destroy(transform.GetChild(0).gameObject);
+                #endif
+            }
+        }
     }
 
     private void DisableChunk(Vector2 coord)
@@ -191,7 +204,11 @@ public class TerrainManager : MonoBehaviour
         if (transform.Find("Water") != null) objectList.Add(transform.Find("Water").gameObject);
 
         objExporter.ExportCombinedMesh(objectList);
+    }
 
+    public void ExportScreenshot()
+    {
+        pngExporter.ExportPNG();
     }
 
 
@@ -212,6 +229,7 @@ public class TerrainManager : MonoBehaviour
             if (terrainData.waterLevel < 0) terrainData.waterLevel = 0;
 
             if (terrainData.smoothLevel < 0) terrainData.smoothLevel = 0;
+            if (terrainData.smoothLevel > 1) terrainData.smoothLevel = 1;
 
             if (terrainData.lod < 1) terrainData.lod = 1;
             if (terrainData.lod > 8) terrainData.lod = 8;

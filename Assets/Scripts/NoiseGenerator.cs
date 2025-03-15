@@ -5,7 +5,6 @@ public class NoiseGenerator
 
     private ComputeShader noiseShader;
     public ComputeBuffer valuesBuffer;
-    public ComputeBuffer biomeValuesBuffer;
 
     public NoiseGenerator(ComputeShader noiseShader)
     {
@@ -13,17 +12,14 @@ public class NoiseGenerator
     }
 
 
-    public float[] GenerateNoise(int width, int height, Vector2 offset, TerrainData terrainData , Vector4 neighbors, float[] biomeValues)
+    public float[] GenerateNoise(int width, int height, Vector2 offset, TerrainData terrainData , Vector4 neighbors)
     {
 
         float[] noiseValues = new float[width * height * width]; // 1D array of noise values
 
         valuesBuffer = new ComputeBuffer(width * height * width, sizeof(float));
-        biomeValuesBuffer = new ComputeBuffer(width * width, sizeof(float));
-        biomeValuesBuffer.SetData(biomeValues);
 
         noiseShader.SetBuffer(0, "_Values", valuesBuffer);
-        noiseShader.SetBuffer(0, "_BiomeValues", biomeValuesBuffer);
         noiseShader.SetInt("_ChunkWidth", width);
         noiseShader.SetInt("_ChunkHeight", height);
         noiseShader.SetFloat("_OffsetX", offset.x + terrainData.offsetX);
@@ -46,12 +42,16 @@ public class NoiseGenerator
         int numThreadsXZ = Mathf.CeilToInt(width / 8);
         int numThreadsY = Mathf.CeilToInt(height / 8);
 
+        if (numThreadsXZ <= 0 || numThreadsY <= 0)
+        {
+            return noiseValues;
+        }
+
         noiseShader.Dispatch(0, numThreadsXZ, numThreadsY, numThreadsXZ);
 
         valuesBuffer.GetData(noiseValues);
 
         valuesBuffer.Release();
-        biomeValuesBuffer.Release();
 
         return noiseValues;
     }

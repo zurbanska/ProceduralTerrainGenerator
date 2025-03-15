@@ -6,6 +6,8 @@ public class GradientBuilder
 
     public Texture2D GenerateGradientTexture(Gradient gradient)
     {
+        if (gradient == null) return null;
+
         Texture2D texture = new Texture2D(textureWidth, 1, TextureFormat.RGBA32, false);
         texture.wrapMode = TextureWrapMode.Clamp;
         texture.filterMode = FilterMode.Bilinear;

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class WaterGenerator
 {
@@ -39,8 +40,8 @@ public class WaterGenerator
 
 
         // resolution (subdivision) of planes
-        Vector2Int flatRes = new Vector2Int(Mathf.CeilToInt(((width / 2) + 1) / lod), Mathf.CeilToInt(((width / 2) + 1) / lod));
-        Vector2Int sideRes = new Vector2Int(Mathf.CeilToInt(((width / 2) + 1) / lod), Mathf.CeilToInt(waterLevel / (2 * lod)));
+        Vector2Int flatRes = new Vector2Int(Mathf.CeilToInt(((width / 2) + 1) / (2 * lod)), Mathf.CeilToInt(((width / 2) + 1) / (2 * lod)));
+        Vector2Int sideRes = new Vector2Int(Mathf.CeilToInt(((width / 2) + 1) / (2 * lod)), Mathf.CeilToInt(waterLevel / (2 * lod)));
 
 
         // generating water meshes for each side
@@ -106,6 +107,7 @@ public class WaterGenerator
         }
 
         Mesh combinedMesh = new();
+        combinedMesh.indexFormat = IndexFormat.UInt32;
         combinedMesh.CombineMeshes(combineInstances.ToArray(), true, false);
         combinedMesh.MarkDynamic();
 

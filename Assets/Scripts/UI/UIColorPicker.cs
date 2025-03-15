@@ -130,8 +130,6 @@ public class UIColorPicker : MonoBehaviour
 
     void ChangeSkyColor(Color newColor)
     {
-        // newColor *= mainLight.color;
-
         skyMaterial.SetColor("_Tint", newColor);
         waterMaterial.SetColor("_SkyColor", newColor);
         foreach (var mat in treeeMaterials)
@@ -160,7 +158,6 @@ public class UIColorPicker : MonoBehaviour
 
     void ChangeLightColor(Color newColor)
     {
-        // mainLight.color = newColor;
         mainLight.GetComponent<TimeControler>().SetBaseLightColor(newColor);
         lightColorPicker.style.backgroundColor = newColor;
     }

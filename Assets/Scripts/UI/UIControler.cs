@@ -32,7 +32,7 @@ public class UIControler : MonoBehaviour
     public FloatField persistenceField;
     public FloatField lacunarityField;
     public FloatField scaleField;
-    public FloatField smoothnessField;
+    public Slider smoothnessSlider;
 
     public IntegerField renderDistField;
     public SliderInt lodSlider;
@@ -46,6 +46,7 @@ public class UIControler : MonoBehaviour
 
     public Button genTerrainButton;
     public Button exportTerrainButton;
+    public Button exportScreenshotButton;
 
 
     public Slider timeSlider;
@@ -118,9 +119,9 @@ public class UIControler : MonoBehaviour
         scaleField.RegisterValueChangedCallback(e => ScaleChanged(e.newValue));
         scaleField.value = terrainManager.terrainData.scale;
 
-        smoothnessField = root.Q<FloatField>("smoothness-input");
-        smoothnessField.RegisterValueChangedCallback(e => SmoothnessChanged(e.newValue));
-        smoothnessField.value = terrainManager.terrainData.smoothLevel;
+        smoothnessSlider = root.Q<Slider>("smoothness-slider");
+        smoothnessSlider.RegisterValueChangedCallback(e => SmoothnessChanged(e.newValue));
+        smoothnessSlider.value = terrainManager.terrainData.smoothLevel;
 
 
         renderDistField = root.Q<IntegerField>("render-distance-input");
@@ -162,6 +163,9 @@ public class UIControler : MonoBehaviour
 
         exportTerrainButton = root.Q<Button>("export-terrain-button");
         exportTerrainButton.clicked += ExportTerrainButtonPressed;
+
+        exportScreenshotButton = root.Q<Button>("export-screenshot-button");
+        exportScreenshotButton.clicked += ExportScreenshotButtonPressed;
 
 
         timeSlider = root.Q<Slider>("time-slider");
@@ -247,6 +251,17 @@ public class UIControler : MonoBehaviour
 
     void RenderDistChanged(int newValue)
     {
+        if (newValue < 0)
+        {
+            newValue = 0;
+            renderDistField.value = newValue;
+        }
+        if (newValue > 10) // max recommended render dist
+        {
+            newValue = 10;
+            renderDistField.value = newValue;
+        }
+
         terrainManager.renderDistance = newValue;
         if (autoUpdate) terrainManager.UpdateChunks();
     }
@@ -265,6 +280,17 @@ public class UIControler : MonoBehaviour
 
     void WaterLevelChanged(float newValue)
     {
+        if (newValue < 0)
+        {
+            newValue = 0;
+            waterLevelField.value = newValue;
+        }
+        if (newValue > terrainManager.chunkHeight)
+        {
+            newValue = terrainManager.chunkHeight;
+            waterLevelField.value = newValue;
+        }
+
         terrainManager.terrainData.waterLevel = newValue;
         if (autoUpdate) terrainManager.UpdateChunks(false);
     }
@@ -284,6 +310,12 @@ public class UIControler : MonoBehaviour
 
     void BrushSizeChanged(float newValue)
     {
+        if (newValue < 0)
+        {
+            newValue = 0;
+            brushSizeField.value = newValue;
+        }
+
         cam.GetComponent<TerraformingCamera>().brushSize = newValue;
     }
 
@@ -311,12 +343,32 @@ public class UIControler : MonoBehaviour
         StartCoroutine(ExportTerrainCoroutine());
     }
 
+    void ExportScreenshotButtonPressed()
+    {
+        StartCoroutine(ExportScreenshotCoroutine());
+    }
+
     private IEnumerator ExportTerrainCoroutine()
     {
         loadingScreen.style.display = DisplayStyle.Flex;
         yield return null;
         terrainManager.ExportTerrainMesh();
         loadingScreen.style.display = DisplayStyle.None;
+    }
+
+    private IEnumerator ExportScreenshotCoroutine()
+    {
+        settingsButton.style.display = DisplayStyle.None;
+        settingsBox.style.display = DisplayStyle.None;
+
+        yield return new WaitForEndOfFrame();
+
+        terrainManager.ExportScreenshot();
+
+        yield return new WaitForEndOfFrame();
+
+        settingsButton.style.display = DisplayStyle.Flex;
+        settingsBox.style.display = DisplayStyle.Flex;
     }
 
 

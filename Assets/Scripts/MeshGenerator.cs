@@ -37,7 +37,7 @@ public class MeshGenerator
         vertexCacheBuffer.Release();
     }
 
-    public async Task<Mesh> GenerateMesh(int width, int height, float isoLevel, float[] densityMap, int lod, float[] biomeValues)
+    public async Task<Mesh> GenerateMesh(int width, int height, float isoLevel, float[] densityMap, int lod)
     {
         int cubeSize = lod;
 
@@ -67,45 +67,22 @@ public class MeshGenerator
         Triangle[] triangles = new Triangle[numTriangles];
         trianglesBuffer.GetData(triangles, 0, 0, numTriangles);
 
-        Mesh mesh = await CreateMesh(triangles, width, height, biomeValues);
+        Mesh mesh = await CreateMesh(triangles, width, height);
 
         ReleaseBuffers();
         return mesh;
     }
 
-    // private Color[] precomputedGradient;
-    // private const int gradientResolution = 128;
-
-    // private void PrecomputeGradient(Gradient gradient)
-    // {
-    //     precomputedGradient = new Color[gradientResolution];
-    //     for (int i = 0; i < gradientResolution; i++)
-    //     {
-    //         float t = (float)i / (gradientResolution - 1); // Normalize to [0, 1]
-    //         precomputedGradient[i] = gradient.Evaluate(t);
-    //     }
-    // }
-
-    // private float inverseHeightScale;
-
-    // private void PrecomputeInverseLerpScale(float min, float max)
-    // {
-    //     inverseHeightScale = 1f / (max - min);
-    // }
 
     // generate a mesh from an array of triangles
-    private async Task<Mesh> CreateMesh(Triangle[] triangles, int width, int height, float[] biomeValues)
+    private async Task<Mesh> CreateMesh(Triangle[] triangles, int width, int height)
     {
 
         var meshData = await Task.Run(() =>
         {
-            // PrecomputeGradient(gradient);
-            // PrecomputeInverseLerpScale(0, height);
-
             Vector3[] meshVertices = new Vector3[triangles.Length * 3];
             int[] meshTriangles = new int[triangles.Length * 3];
             Vector2[] meshUVs = new Vector2[meshVertices.Length];
-            // Color[] meshColors = new Color[meshVertices.Length];
 
             int realVertexCount = 0;
 
@@ -119,12 +96,6 @@ public class MeshGenerator
                 {
                     Vector3 vertex = triangleVerts[j];
 
-                    // float normalizedY = (vertex.y - 0) * inverseHeightScale;
-                    // int gradientIndex = Mathf.Clamp((int)(normalizedY * (gradientResolution - 1)), 0, gradientResolution - 1);
-                    // meshColors[realVertexCount] = precomputedGradient[gradientIndex];
-
-                    // meshColors[realVertexCount] = Color.black * biomeValues[(int)vertex.z * width + (int)vertex.x] + Color.white * (1 - biomeValues[(int)vertex.z * width + (int)vertex.x]);
-
                     meshVertices[realVertexCount] = vertex;
                     meshUVs[realVertexCount] = new Vector2(vertex.x / width, vertex.z / width);
                     meshTriangles[startIndex + j] = realVertexCount;
@@ -132,7 +103,6 @@ public class MeshGenerator
                 }
             }
 
-            // return (meshVertices, meshTriangles, meshUVs, meshColors);
             return (meshVertices, meshTriangles, meshUVs);
         });
 
@@ -141,7 +111,6 @@ public class MeshGenerator
             vertices = meshData.meshVertices,
             triangles = meshData.meshTriangles,
             uv = meshData.meshUVs,
-            // colors = meshData.meshColors
         };
 
         mesh.RecalculateNormals();
@@ -173,7 +142,7 @@ public class MeshGenerator
         float numThreadsXZ = width;
         float numThreadsY = height;
 
-        // Dispatch shader
+        // dispatch shader
         marchingCubesShader.Dispatch(kernel, Mathf.CeilToInt(numThreadsXZ / 8.0f), Mathf.CeilToInt(numThreadsY / 8.0f), Mathf.CeilToInt(numThreadsXZ / 8.0f));
 
         float[] newDensityMap = new float[densityMap.Length];

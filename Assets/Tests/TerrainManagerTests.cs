@@ -91,7 +91,23 @@ public class TerrainManagerTests
 
         Vector2 disabledChunkCoord = new Vector2(1, 1);
 
-        Assert.IsTrue(!tm.terrainChunkDictionary[disabledChunkCoord].activeInHierarchy);
+        Assert.IsFalse(tm.terrainChunkDictionary[disabledChunkCoord].activeInHierarchy);
+    }
+
+
+    [Test]
+    public void TerrainManager_CreateChunk_HandlesDuplicateCoordinates()
+    {
+        var go = new GameObject();
+        TerrainManager tm = InitializeTerrainManager(go);
+
+        Vector2 coord = new Vector2(1,1);
+        Vector4 neighbors = Vector4.zero;
+
+        tm.CreateChunk(coord, neighbors);
+        tm.CreateChunk(coord, neighbors);
+
+        Assert.AreEqual(1, tm.terrainChunkDictionary.Count);
     }
 
 
@@ -158,6 +174,7 @@ public class TerrainManagerTests
 
         tm.UpdateChunks();
         yield return null;
+
         tm.terrainData.waterLevel = 20;
         tm.UpdateChunks();
         yield return null;
@@ -218,7 +235,7 @@ public class TerrainManagerTests
 
         tm.ModifyTerrain(hitPoint, brushSize, brushStrength, true);
 
-        Assert.IsTrue(!mockChunk.wasCalled);
+        Assert.IsFalse(mockChunk.wasCalled);
 
     }
 
@@ -228,6 +245,7 @@ public class TerrainManagerTests
     {
         var go = new GameObject();
         TerrainManager tm = InitializeTerrainManager(go);
+        tm.allowTerraforming = true;
 
         Vector3 hitPoint = new Vector3(0,0,0); // inside center chunk
         float brushSize = 1f;
@@ -246,6 +264,7 @@ public class TerrainManagerTests
     {
         var go = new GameObject();
         TerrainManager tm = InitializeTerrainManager(go);
+        tm.allowTerraforming = true;
 
         Vector3 hitPoint = new Vector3(0,0,0); // inside center chunk
         float brushSize = 1f;
@@ -258,7 +277,7 @@ public class TerrainManagerTests
 
         tm.ModifyTerrain(hitPoint, brushSize, brushStrength, true);
 
-        Assert.IsTrue(!mockChunk2.wasCalled);
+        Assert.IsFalse(mockChunk2.wasCalled);
     }
 
 

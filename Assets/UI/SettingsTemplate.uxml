@@ -9,7 +9,7 @@
                 <ui:Button text="General" parse-escape-sequences="true" display-tooltip-when-elided="true" name="general-tab-button" class="tab-button" />
                 <ui:Button text="Shader" parse-escape-sequences="true" display-tooltip-when-elided="true" name="shader-tab-button" class="tab-button tab-button-inactive" />
             </ui:VisualElement>
-            <ui:ScrollView mouse-wheel-scroll-size="1000" name="settings-panel" class="settings-panel" style="height: 90%; align-items: stretch; display: flex; visibility: visible;">
+            <ui:ScrollView mouse-wheel-scroll-size="1000" name="settings-panel" class="settings-panel" style="height: 90%; align-items: stretch; visibility: visible;">
                 <ui:VisualElement name="settings-container" style="flex-grow: 1; padding-right: 5px; padding-left: 5px; padding-top: 5px; padding-bottom: 5px; display: flex;">
                     <ui:Toggle label="Allow Camera Movement" name="movement-toggle" class="toggle" />
                     <ui:Toggle label="Auto Update" name="auto-update-toggle" class="toggle" />
@@ -21,7 +21,7 @@
                     <ui:FloatField label="Persistence" value="0.7" name="persistence-input" class="num-field" />
                     <ui:FloatField label="Lacunarity" value="2" name="lacunarity-input" class="num-field" />
                     <ui:FloatField label="Scale" value="10" name="scale-input" class="num-field" />
-                    <ui:FloatField label="Smoothness" value="10" name="smoothness-input" class="num-field" />
+                    <ui:Slider picking-mode="Ignore" label="Terrain Smoothness" value="0" high-value="1" name="smoothness-slider" show-input-field="true" class="num-field" />
                     <ui:Label tabindex="-1" text="Terrain Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" name="terrain-settings-label" class="sub-label" />
                     <ui:IntegerField label="Render Distance" value="2" name="render-distance-input" class="num-field" />
                     <ui:SliderInt picking-mode="Ignore" label="Level of Detail" value="1" high-value="4" show-input-field="true" low-value="1" name="lod-slider" class="num-field" />
@@ -34,6 +34,7 @@
                     <ui:Slider picking-mode="Ignore" label="Brush Strength" value="0.1" high-value="1" name="brush-strength-slider" show-input-field="true" class="num-field" />
                     <ui:Button text="Generate Terrain" parse-escape-sequences="true" display-tooltip-when-elided="true" name="generate-terrain-button" class="button" />
                     <ui:Button text="Export Terrain" parse-escape-sequences="true" display-tooltip-when-elided="true" name="export-terrain-button" class="button" />
+                    <ui:Button text="Save Screenshot" parse-escape-sequences="true" display-tooltip-when-elided="true" name="export-screenshot-button" class="button" />
                 </ui:VisualElement>
             </ui:ScrollView>
             <ui:ScrollView mouse-wheel-scroll-size="1000" name="shader-settings-panel" class="settings-panel" style="height: 90%; align-items: stretch; display: none;">
@@ -68,6 +69,6 @@
         </ui:Button>
     </ui:VisualElement>
     <ui:VisualElement name="loading-screen" focusable="true" style="flex-grow: 1; position: absolute; background-color: rgba(0, 0, 0, 0.4); width: 100%; height: 100%; display: none; justify-content: center; align-self: center; align-items: center;">
-        <ui:Label tabindex="-1" text="Exporting terrain..." parse-escape-sequences="true" display-tooltip-when-elided="true" style="color: rgb(210, 212, 209); font-size: 24px; -unity-font-style: bold; -unity-text-align: middle-center;" />
+        <ui:Label tabindex="-1" text="Processing..." parse-escape-sequences="true" display-tooltip-when-elided="true" style="color: rgb(210, 212, 209); font-size: 24px; -unity-font-style: bold; -unity-text-align: middle-center;" />
     </ui:VisualElement>
 </ui:UXML>
