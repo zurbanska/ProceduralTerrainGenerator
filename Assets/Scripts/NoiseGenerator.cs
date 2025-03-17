@@ -44,6 +44,7 @@ public class NoiseGenerator
 
         if (numThreadsXZ <= 0 || numThreadsY <= 0)
         {
+            valuesBuffer.Release();
             return noiseValues;
         }
 

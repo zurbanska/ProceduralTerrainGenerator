@@ -15,7 +15,7 @@ public class WaterGenerator
         GameObject existingWater = parent.Find("Water")?.gameObject;
         if (existingWater != null)
         {
-            Transform.Destroy(existingWater);
+            Transform.DestroyImmediate(existingWater);
         }
 
         if (waterLevel <= 0) return;

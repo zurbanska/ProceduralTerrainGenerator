@@ -133,11 +133,7 @@ public class TerrainManager : MonoBehaviour
         while (transform.childCount > 0) {
             if (transform.GetChild(0) != null)
             {
-                #if UNITY_EDITOR
                 DestroyImmediate(transform.GetChild(0).gameObject);
-                #else
-                Destroy(transform.GetChild(0).gameObject);
-                #endif
             }
         }
     }

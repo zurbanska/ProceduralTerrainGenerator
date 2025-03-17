@@ -6,10 +6,10 @@ using UnityEngine.Rendering;
 public class MeshGenerator
 {
     public ComputeBuffer trianglesBuffer;
-    ComputeBuffer triangleCountBuffer;
+    public ComputeBuffer triangleCountBuffer;
 
-    ComputeBuffer densityBuffer; // noise values are treated like terrain density
-    ComputeBuffer vertexCacheBuffer;
+    public ComputeBuffer densityBuffer; // noise values are treated like terrain density
+    public ComputeBuffer vertexCacheBuffer;
     public ComputeShader marchingCubesShader;
 
     public MeshGenerator(ComputeShader marchingCubesShader)
@@ -21,6 +21,8 @@ public class MeshGenerator
 
     public void CreateBuffers(int width, int height)
     {
+        if (width < 0 || height < 0) return;
+
         trianglesBuffer = new ComputeBuffer(maxTriangles, sizeof(float) * 3 * 3, ComputeBufferType.Append);
         trianglesBuffer.SetCounterValue(0);
         triangleCountBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
@@ -31,15 +33,25 @@ public class MeshGenerator
 
     public void ReleaseBuffers()
     {
-        trianglesBuffer.Release();
-        triangleCountBuffer.Release();
-        densityBuffer.Release();
-        vertexCacheBuffer.Release();
+        trianglesBuffer?.Release();
+        triangleCountBuffer?.Release();
+        densityBuffer?.Release();
+        vertexCacheBuffer?.Release();
     }
 
     public async Task<Mesh> GenerateMesh(int width, int height, float isoLevel, float[] densityMap, int lod)
     {
         int cubeSize = lod;
+
+        if (width <= 8 || height <= 8 || cubeSize > 8)
+        {
+            ReleaseBuffers();
+            return new Mesh();
+        };
+
+        // create buffers if none created
+        if (trianglesBuffer == null || triangleCountBuffer == null || densityBuffer == null || vertexCacheBuffer == null) CreateBuffers(width, height);
+
 
         densityBuffer.SetData(densityMap);
         int kernel = marchingCubesShader.FindKernel("March");
@@ -52,11 +64,17 @@ public class MeshGenerator
         marchingCubesShader.SetFloat("_IsoLevel", isoLevel);
         marchingCubesShader.SetInt("_CubeSize", cubeSize);
 
-        float numThreadsXZ = width / cubeSize;
-        float numThreadsY = height / cubeSize;
+        int numThreadsXZ = Mathf.CeilToInt(width / cubeSize / 8.0f);
+        int numThreadsY = Mathf.CeilToInt(height / cubeSize / 8.0f);
+
+        if (numThreadsXZ <= 0 || numThreadsY <= 0)
+        {
+            ReleaseBuffers();
+            return new Mesh();
+        }
 
         // dispatch shader
-        marchingCubesShader.Dispatch(kernel, Mathf.CeilToInt(numThreadsXZ / 8.0f), Mathf.CeilToInt(numThreadsY / 8.0f), Mathf.CeilToInt(numThreadsXZ / 8.0f));
+        marchingCubesShader.Dispatch(kernel, numThreadsXZ, numThreadsY, numThreadsXZ);
 
         // retrieve triangle data
         ComputeBuffer.CopyCount(trianglesBuffer, triangleCountBuffer, 0);
@@ -67,7 +85,7 @@ public class MeshGenerator
         Triangle[] triangles = new Triangle[numTriangles];
         trianglesBuffer.GetData(triangles, 0, 0, numTriangles);
 
-        Mesh mesh = await CreateMesh(triangles, width, height);
+        Mesh mesh = await CreateMesh(triangles, width);
 
         ReleaseBuffers();
         return mesh;
@@ -75,7 +93,7 @@ public class MeshGenerator
 
 
     // generate a mesh from an array of triangles
-    private async Task<Mesh> CreateMesh(Triangle[] triangles, int width, int height)
+    private async Task<Mesh> CreateMesh(Triangle[] triangles, int width)
     {
 
         var meshData = await Task.Run(() =>
@@ -106,7 +124,7 @@ public class MeshGenerator
             return (meshVertices, meshTriangles, meshUVs);
         });
 
-        Mesh mesh = new Mesh
+        Mesh mesh = new()
         {
             vertices = meshData.meshVertices,
             triangles = meshData.meshTriangles,
@@ -121,6 +139,17 @@ public class MeshGenerator
 
     public float[] UpdateDensity(int width, int height, float[] densityMap, Vector3 hitPosition, float brushSize, float brushStrength, bool add, Vector4 neighbors, float smoothLevel)
     {
+        if (width < 1 || height < 1)
+        {
+            ReleaseBuffers();
+            return densityMap;
+        }
+
+        // create buffers if none created
+        if (trianglesBuffer == null || triangleCountBuffer == null || densityBuffer == null || vertexCacheBuffer == null) CreateBuffers(width, height);
+
+        if (densityMap == null || densityMap.Length != width * width * height) densityMap = new float[width * width * height];
+
         densityBuffer.SetData(densityMap);
         int kernel = marchingCubesShader.FindKernel("UpdateDensity");
 
@@ -139,11 +168,17 @@ public class MeshGenerator
         marchingCubesShader.SetBool("borderUp", neighbors[2] == 0);
         marchingCubesShader.SetBool("borderLeft", neighbors[3] == 0);
 
-        float numThreadsXZ = width;
-        float numThreadsY = height;
+        int numThreadsXZ = Mathf.CeilToInt(width / 8.0f);
+        int numThreadsY = Mathf.CeilToInt(height / 8.0f);
+
+        if (numThreadsXZ <= 0 || numThreadsY <= 0)
+        {
+            ReleaseBuffers();
+            return densityMap;
+        }
 
         // dispatch shader
-        marchingCubesShader.Dispatch(kernel, Mathf.CeilToInt(numThreadsXZ / 8.0f), Mathf.CeilToInt(numThreadsY / 8.0f), Mathf.CeilToInt(numThreadsXZ / 8.0f));
+        marchingCubesShader.Dispatch(kernel, numThreadsXZ, numThreadsY, numThreadsXZ);
 
         float[] newDensityMap = new float[densityMap.Length];
 

@@ -17,7 +17,7 @@ MonoBehaviour:
   smoothLevel: 0
   lod: 1
   isoLevel: 0.627
-  seed: 445473
+  seed: 501486
   octaves: 5
   persistence: 0.36
   lacunarity: 2

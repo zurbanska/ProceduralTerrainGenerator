@@ -22,39 +22,39 @@ public class UIControler : MonoBehaviour
     private List<ScrollView> Panels;
 
 
-    public Toggle camMoveToggle;
-    public Toggle autoUpdateToggle;
+    private Toggle camMoveToggle;
+    private Toggle autoUpdateToggle;
 
-    public Toggle randomSeedToggle;
-    public IntegerField seedField;
-    public Slider isoLevelSlider;
-    public SliderInt octavesSlider;
-    public FloatField persistenceField;
-    public FloatField lacunarityField;
-    public FloatField scaleField;
-    public Slider smoothnessSlider;
+    private Toggle randomSeedToggle;
+    private IntegerField seedField;
+    private Slider isoLevelSlider;
+    private SliderInt octavesSlider;
+    private FloatField persistenceField;
+    private FloatField lacunarityField;
+    private FloatField scaleField;
+    private Slider smoothnessSlider;
 
-    public IntegerField renderDistField;
-    public SliderInt lodSlider;
-    public FloatField groundLevelField;
-    public FloatField waterLevelField;
-    public SliderInt objectDensitySlider;
+    private IntegerField renderDistField;
+    private SliderInt lodSlider;
+    private FloatField groundLevelField;
+    private FloatField waterLevelField;
+    private SliderInt objectDensitySlider;
 
-    public Toggle terraformToggle;
-    public FloatField brushSizeField;
-    public Slider brushStrengthSlider;
+    private Toggle terraformToggle;
+    private FloatField brushSizeField;
+    private Slider brushStrengthSlider;
 
-    public Button genTerrainButton;
-    public Button exportTerrainButton;
-    public Button exportScreenshotButton;
+    private Button genTerrainButton;
+    private Button exportTerrainButton;
+    private Button exportScreenshotButton;
 
 
-    public Slider timeSlider;
+    private Slider timeSlider;
 
-    public Button settingsButton;
-    public VisualElement settingsBox;
+    private Button settingsButton;
+    private VisualElement settingsBox;
 
-    public VisualElement loadingScreen;
+    private VisualElement loadingScreen;
 
 
     void Start()
@@ -180,7 +180,7 @@ public class UIControler : MonoBehaviour
     }
 
 
-    void TabSwitched(Button chosenTabButton, ScrollView chosenPanel)
+    private void TabSwitched(Button chosenTabButton, ScrollView chosenPanel)
     {
         foreach (var tab in Tabs)
         {
@@ -196,60 +196,60 @@ public class UIControler : MonoBehaviour
         chosenPanel.style.display = DisplayStyle.Flex;
     }
 
-    void CamMoveToggled(bool isOn)
+    private void CamMoveToggled(bool isOn)
     {
         cam.GetComponent<CameraMove>().allowMove = isOn;
     }
 
 
-    void RandomSeedToggled(bool isOn)
+    private void RandomSeedToggled(bool isOn)
     {
         terrainManager.randomSeed = isOn;
     }
-    void SeedChanged(int newValue)
+    private void SeedChanged(int newValue)
     {
         terrainManager.terrainData.seed = newValue;
         if (autoUpdate) terrainManager.UpdateChunks();
     }
 
-    void ISOLevelChanged(float newValue)
+    private void ISOLevelChanged(float newValue)
     {
         terrainManager.terrainData.isoLevel = newValue;
         if (autoUpdate) terrainManager.UpdateChunks(false);
     }
 
-    void OctavesChanged(int newValue)
+    private void OctavesChanged(int newValue)
     {
         terrainManager.terrainData.octaves = newValue;
         if (autoUpdate) terrainManager.UpdateChunks();
     }
 
-    void PersistenceChanged(float newValue)
+    private void PersistenceChanged(float newValue)
     {
         terrainManager.terrainData.persistence = newValue;
         if (autoUpdate) terrainManager.UpdateChunks();
     }
 
-    void LacunarityChanged(float newValue)
+    private void LacunarityChanged(float newValue)
     {
         terrainManager.terrainData.lacunarity = newValue;
         if (autoUpdate) terrainManager.UpdateChunks();
     }
 
-    void ScaleChanged(float newValue)
+    private void ScaleChanged(float newValue)
     {
         terrainManager.terrainData.scale = newValue;
         if (autoUpdate) terrainManager.UpdateChunks();
     }
 
-    void SmoothnessChanged(float newValue) {
+    private void SmoothnessChanged(float newValue) {
         terrainManager.terrainData.smoothLevel = newValue;
         if (autoUpdate) terrainManager.UpdateChunks();
     }
 
 
 
-    void RenderDistChanged(int newValue)
+    private void RenderDistChanged(int newValue)
     {
         if (newValue < 0)
         {
@@ -266,19 +266,19 @@ public class UIControler : MonoBehaviour
         if (autoUpdate) terrainManager.UpdateChunks();
     }
 
-    void LODChanged(int newValue)
+    private void LODChanged(int newValue)
     {
         terrainManager.terrainData.lod = (int)Mathf.Pow(2, newValue - 1);
         if (autoUpdate) terrainManager.UpdateChunks(false);
     }
 
-    void GroundLevelChanged(float newValue)
+    private void GroundLevelChanged(float newValue)
     {
         terrainManager.terrainData.groundLevel = newValue;
         if (autoUpdate) terrainManager.UpdateChunks();
     }
 
-    void WaterLevelChanged(float newValue)
+    private void WaterLevelChanged(float newValue)
     {
         if (newValue < 0)
         {
@@ -295,7 +295,7 @@ public class UIControler : MonoBehaviour
         if (autoUpdate) terrainManager.UpdateChunks(false);
     }
 
-    void ObjectDensityChanged(int newValue)
+    private void ObjectDensityChanged(int newValue)
     {
         terrainManager.terrainData.objectDensity = newValue;
         if (autoUpdate) terrainManager.UpdateChunks(false);
@@ -303,12 +303,12 @@ public class UIControler : MonoBehaviour
 
 
 
-    void TerraformToggled(bool isOn)
+    private void TerraformToggled(bool isOn)
     {
         terrainManager.allowTerraforming = isOn;
     }
 
-    void BrushSizeChanged(float newValue)
+    private void BrushSizeChanged(float newValue)
     {
         if (newValue < 0)
         {
@@ -319,31 +319,31 @@ public class UIControler : MonoBehaviour
         cam.GetComponent<TerraformingCamera>().brushSize = newValue;
     }
 
-    void BrushStrengthChanged(float newValue)
+    private void BrushStrengthChanged(float newValue)
     {
         cam.GetComponent<TerraformingCamera>().brushStrength = newValue;
     }
 
 
 
-    void TimeChanged(float newValue)
+    private void TimeChanged(float newValue)
     {
         mainLight.GetComponent<TimeControler>().SetTime(newValue);
     }
 
 
-    void GenTerrainButtonPressed()
+    private void GenTerrainButtonPressed()
     {
         terrainManager.GenerateChunks();
         seedField.value = terrainManager.terrainData.seed;
     }
 
-    void ExportTerrainButtonPressed()
+    private void ExportTerrainButtonPressed()
     {
         StartCoroutine(ExportTerrainCoroutine());
     }
 
-    void ExportScreenshotButtonPressed()
+    private void ExportScreenshotButtonPressed()
     {
         StartCoroutine(ExportScreenshotCoroutine());
     }
@@ -372,7 +372,7 @@ public class UIControler : MonoBehaviour
     }
 
 
-    void SettingsButtonPressed()
+    private void SettingsButtonPressed()
     {
         if (settingsBox.style.display == DisplayStyle.Flex)
         {

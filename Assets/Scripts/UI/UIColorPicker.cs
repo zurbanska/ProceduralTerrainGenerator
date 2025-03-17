@@ -18,24 +18,24 @@ public class UIColorPicker : MonoBehaviour
     private Action<Color> currentAction;
     private Button currentGradientButton;
 
-    public Slider colorSlider_red, colorSlider_green, colorSlider_blue;
-    public VisualElement oldColorPreview;
-    public VisualElement newColorPreview;
+    private Slider colorSlider_red, colorSlider_green, colorSlider_blue;
+    private VisualElement oldColorPreview;
+    private VisualElement newColorPreview;
 
 
-    public Button skyColorPicker;
-    public Button fogColorPicker;
-    public Button lightColorPicker;
+    private Button skyColorPicker;
+    private Button fogColorPicker;
+    private Button lightColorPicker;
 
-    public GradientBuilder gradientBuilder = new();
+    private GradientBuilder gradientBuilder = new();
 
-    public TemplateContainer gradientEditor;
-    public Button terrainGradientPicker;
-    List<Button> gradientButtons;
-    List<Slider> gradientCutoffs;
-    List<VisualElement> gradientColors;
+    private TemplateContainer gradientEditor;
+    private Button terrainGradientPicker;
+    private List<Button> gradientButtons;
+    private List<Slider> gradientCutoffs;
+    private List<VisualElement> gradientColors;
 
-    Gradient terrainGradient;
+    private Gradient terrainGradient;
 
 
     void Start()
@@ -113,7 +113,7 @@ public class UIColorPicker : MonoBehaviour
         });
     }
 
-    void InitColorPicker(Color color)
+    private void InitColorPicker(Color color)
     {
         colorSlider_red.value = color.r;
         colorSlider_green.value = color.g;
@@ -122,13 +122,13 @@ public class UIColorPicker : MonoBehaviour
         UpdateColorPreview(color);
     }
 
-    void UpdateColorPreview(Color newColor)
+    private void UpdateColorPreview(Color newColor)
     {
         oldColorPreview.style.backgroundColor = newColor;
         newColorPreview.style.backgroundColor = newColor;
     }
 
-    void ChangeSkyColor(Color newColor)
+    private void ChangeSkyColor(Color newColor)
     {
         skyMaterial.SetColor("_Tint", newColor);
         waterMaterial.SetColor("_SkyColor", newColor);
@@ -143,7 +143,7 @@ public class UIColorPicker : MonoBehaviour
         DynamicGI.UpdateEnvironment();
     }
 
-    void ChangeFogColor(Color newColor)
+    private void ChangeFogColor(Color newColor)
     {
         terrainMaterial.SetColor("_FogColor", newColor);
         waterMaterial.SetColor("_FogColor", newColor);
@@ -156,14 +156,14 @@ public class UIColorPicker : MonoBehaviour
         fogColorPicker.style.backgroundColor = newColor;
     }
 
-    void ChangeLightColor(Color newColor)
+    private void ChangeLightColor(Color newColor)
     {
         mainLight.GetComponent<TimeControler>().SetBaseLightColor(newColor);
         lightColorPicker.style.backgroundColor = newColor;
     }
 
 
-    void InitGradient() {
+    private void InitGradient() {
 
         terrainGradient = terrainManager.terrainData.gradient;
 
@@ -180,7 +180,7 @@ public class UIColorPicker : MonoBehaviour
         ChangeGradient(gradientButtons[0].style.backgroundColor.value);
     }
 
-    void AddGradientColor() {
+    private void AddGradientColor() {
         for (int i = 0; i < gradientColors.Count; i++)
         {
             if (gradientColors[i].style.display == DisplayStyle.None)
@@ -193,7 +193,7 @@ public class UIColorPicker : MonoBehaviour
         ChangeGradient(gradientButtons[0].style.backgroundColor.value);
     }
 
-    void DeleteGradientColor() {
+    private void DeleteGradientColor() {
         for (int i = gradientColors.Count - 1; i >= 0; i--)
         {
             if (gradientColors[i].style.display == DisplayStyle.Flex)
@@ -207,7 +207,7 @@ public class UIColorPicker : MonoBehaviour
     }
 
 
-    void ChangeGradient(Color newColor) {
+    private void ChangeGradient(Color newColor) {
         currentGradientButton.style.backgroundColor = newColor;
         int visibleColorCount = gradientColors.Count(color => color.style.display == DisplayStyle.Flex);
 
@@ -231,7 +231,7 @@ public class UIColorPicker : MonoBehaviour
     }
 
 
-    void ColorChanged()
+    private void ColorChanged()
     {
         Color newColor = new Color(colorSlider_red.value, colorSlider_green.value, colorSlider_blue.value);
         UpdateColorPreview(newColor);

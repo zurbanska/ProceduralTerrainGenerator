@@ -111,11 +111,7 @@ public class ChunkManager : MonoBehaviour
 
     public void DestroyChunk()
     {
-        #if UNITY_EDITOR
         DestroyImmediate(gameObject);
-        #else
-        Destroy(gameObject);
-        #endif
     }
 
     public virtual async void Terraform(Vector3 hitPosition, float brushSize, float brushStrength, bool add, Bounds brushBounds)
