@@ -8,6 +8,42 @@ using UnityEngine.TestTools;
 
 public class ChunkManagerTests
 {
+    private TerrainData InitializeTerrainData()
+    {
+        TerrainData td = ScriptableObject.CreateInstance<TerrainData>();
+
+        td.waterLevel = 20;
+        td.groundLevel = 20;
+        td.smoothLevel = 0;
+        td.lod = 1;
+        td.isoLevel = 0.9f;
+        td.seed = 0;
+        td.octaves = 3;
+        td.persistence = 0.7f;
+        td.lacunarity = 2;
+        td.scale = 10;
+        td.offsetX = 0;
+        td.offsetZ = 0;
+        td.objectDensity = 20;
+
+        var gradient = new Gradient();
+
+        var colors = new GradientColorKey[2];
+        colors[0] = new GradientColorKey(Color.yellow, 0.0f);
+        colors[1] = new GradientColorKey(Color.green, 1.0f);
+
+        var alphas = new GradientAlphaKey[2];
+        alphas[0] = new GradientAlphaKey(1.0f, 0.0f);
+        alphas[1] = new GradientAlphaKey(1.0f, 1.0f);
+
+        gradient.SetKeys(colors, alphas);
+
+        td.gradient = gradient;
+
+        return td;
+    }
+
+
     private ChunkManager InitializeChunkManager(GameObject go)
     {
         ChunkManager cm = go.AddComponent<ChunkManager>();
@@ -15,7 +51,7 @@ public class ChunkManagerTests
         ComputeShader noiseShader = Resources.Load<ComputeShader>("Compute/PerlinNoiseCompute");
         ComputeShader marchingCubesShader = Resources.Load<ComputeShader>("Compute/MarchingCubesCompute");
         Material material = Resources.Load<Material>("TerrainMaterial");
-        TerrainData terrainData = Resources.Load<TerrainData>("DefaultTerrainData");
+        TerrainData terrainData = InitializeTerrainData();
 
         cm.width = 32;
         cm.height = 128;
@@ -25,6 +61,7 @@ public class ChunkManagerTests
 
         return cm;
     }
+
 
     [Test]
     public void ChunkManager_InitChunk_HandlesEmptyValues()
@@ -37,6 +74,7 @@ public class ChunkManagerTests
         );
 
     }
+
 
     [Test]
     public void ChunkManager_InitChunk_SetsUpComponents()
@@ -76,6 +114,7 @@ public class ChunkManagerTests
 
         Assert.AreEqual(mesh, go.GetComponent<MeshFilter>().mesh);
     }
+
 
     [Test]
     public void ChunkManager_SetMesh_IgnoresEmptyMesh()
@@ -135,7 +174,7 @@ public class ChunkManagerTests
         var go = new GameObject();
         ChunkManager cm = InitializeChunkManager(go);
         MeshFilter meshFilter = go.GetComponent<MeshFilter>();
-        TerrainData terrainData = Resources.Load<TerrainData>("DefaultTerrainData");
+        TerrainData terrainData = cm.terrainData;
 
         cm.UpdateChunk(Vector4.zero, terrainData, false);
 
@@ -151,7 +190,7 @@ public class ChunkManagerTests
         var go = new GameObject();
         ChunkManager cm = InitializeChunkManager(go);
         MeshFilter meshFilter = go.GetComponent<MeshFilter>();
-        TerrainData terrainData = Resources.Load<TerrainData>("DefaultTerrainData");
+        TerrainData terrainData = cm.terrainData;
         float startTime = Time.time;
 
         cm.UpdateChunk(Vector4.zero, terrainData, false);
@@ -172,7 +211,7 @@ public class ChunkManagerTests
         var go = new GameObject();
         ChunkManager cm = InitializeChunkManager(go);
         MeshFilter meshFilter = go.GetComponent<MeshFilter>();
-        TerrainData terrainData = Resources.Load<TerrainData>("DefaultTerrainData");
+        TerrainData terrainData = cm.terrainData;
         float startTime = Time.time;
 
         cm.UpdateChunk(Vector4.zero, terrainData, false);
@@ -195,7 +234,7 @@ public class ChunkManagerTests
         var go = new GameObject();
         ChunkManager cm = InitializeChunkManager(go);
         MeshFilter meshFilter = go.GetComponent<MeshFilter>();
-        TerrainData terrainData = Resources.Load<TerrainData>("DefaultTerrainData");
+        TerrainData terrainData = cm.terrainData;
         float startTime = Time.time;
 
         cm.UpdateChunk(Vector4.zero, terrainData, false);

@@ -7,7 +7,7 @@ public class PNGExporter
 {
 
     int count = 0;
-    string fileName = "Terrain";
+    readonly string fileName = "Terrain";
 
     public void ExportPNG()
     {

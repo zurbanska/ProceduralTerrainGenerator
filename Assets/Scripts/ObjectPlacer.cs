@@ -3,11 +3,11 @@ using UnityEngine;
 
 public class ObjectPlacer : MonoBehaviour
 {
-    GameObject tree1;
-    GameObject tree2;
+    private GameObject tree1;
+    private GameObject tree2;
 
-    MeshFilter meshFilter;
-    List<Vector3> validPositions;
+    private MeshFilter meshFilter;
+    private List<Vector3> validPositions;
 
 
     void Awake()
@@ -17,15 +17,14 @@ public class ObjectPlacer : MonoBehaviour
 
     public void PlaceObjects(TerrainData terrainData)
     {
-        if (this == null) return;
-        
-        DestroyObjects();
-
-        System.Random newRandom = new System.Random(1);
-
+        System.Random newRandom = new(1);
         meshFilter = GetComponent<MeshFilter>();
+
+        if (this == null || meshFilter == null || meshFilter.sharedMesh == null || terrainData == null) return;
+
         Mesh mesh = meshFilter.sharedMesh;
 
+        DestroyObjects();
         LoadResources();
 
         Vector3[] vertices = mesh.vertices;
@@ -60,11 +59,9 @@ public class ObjectPlacer : MonoBehaviour
             return a.z.CompareTo(b.z);
         });
 
-        // ShowValidPositions();
-
         foreach (Vector3 pos in validPositions)
         {
-            if (newRandom.Next(0,100) < terrainData.objectDensity / 10)
+            if (newRandom.Next(0,1000) < terrainData.objectDensity)
             {
                 GameObject treeToInstantiate = Random.value < 0.5f ? tree1 : tree2;
 
@@ -73,21 +70,13 @@ public class ObjectPlacer : MonoBehaviour
                 newTree.transform.Rotate(0, Random.value * 360, 0);
                 newTree.layer = LayerMask.NameToLayer("Objects");
                 newTree.transform.parent = transform;
-                newTree.transform.localScale = Vector3.one * terrainData.scale * 0.2f * terrainData.lod;
-                // newTree.transform.localScale = Vector3.one * 0.1f;
+                newTree.transform.localScale = Vector3.one * 1.5f;
             }
         }
     }
 
-    // private void ShowValidPositions()
-    // {
-    //     foreach (var pos in validPositions)
-    //     {
-    //         Debug.DrawRay(pos, Vector3.up, Color.blue, 15f);
-    //     }
-    // }
 
-    public void DestroyObjects()
+    private void DestroyObjects()
     {
         for (int i = transform.childCount - 1; i >= 0; i--)
         {

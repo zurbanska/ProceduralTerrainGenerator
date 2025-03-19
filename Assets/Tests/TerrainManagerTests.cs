@@ -9,6 +9,42 @@ using UnityEngine.TestTools;
 public class TerrainManagerTests
 {
 
+    private TerrainData InitializeTerrainData()
+    {
+        TerrainData td = ScriptableObject.CreateInstance<TerrainData>();
+
+        td.waterLevel = 20;
+        td.groundLevel = 20;
+        td.smoothLevel = 0;
+        td.lod = 1;
+        td.isoLevel = 0.9f;
+        td.seed = 0;
+        td.octaves = 3;
+        td.persistence = 0.7f;
+        td.lacunarity = 2;
+        td.scale = 10;
+        td.offsetX = 0;
+        td.offsetZ = 0;
+        td.objectDensity = 20;
+
+        var gradient = new Gradient();
+
+        var colors = new GradientColorKey[2];
+        colors[0] = new GradientColorKey(Color.yellow, 0.0f);
+        colors[1] = new GradientColorKey(Color.green, 1.0f);
+
+        var alphas = new GradientAlphaKey[2];
+        alphas[0] = new GradientAlphaKey(1.0f, 0.0f);
+        alphas[1] = new GradientAlphaKey(1.0f, 1.0f);
+
+        gradient.SetKeys(colors, alphas);
+
+        td.gradient = gradient;
+
+        return td;
+    }
+
+
     private TerrainManager InitializeTerrainManager(GameObject go)
     {
         TerrainManager tm = go.AddComponent<TerrainManager>();
@@ -16,7 +52,7 @@ public class TerrainManagerTests
         ComputeShader noiseShader = Resources.Load<ComputeShader>("Compute/PerlinNoiseCompute");
         ComputeShader marchingCubesShader = Resources.Load<ComputeShader>("Compute/MarchingCubesCompute");
         Material material = Resources.Load<Material>("TerrainMaterial");
-        TerrainData terrainData = Resources.Load<TerrainData>("DefaultTerrainData");
+        TerrainData terrainData = InitializeTerrainData();
 
         tm.Initialize(noiseShader, marchingCubesShader, material, terrainData);
         return tm;
@@ -226,7 +262,7 @@ public class TerrainManagerTests
         TerrainManager tm = InitializeTerrainManager(go);
         tm.allowTerraforming = false;
 
-        Vector3 hitPoint = new Vector3(0,0,0); // inside center chunk
+        Vector3 hitPoint = Vector3.zero; // inside center chunk
         float brushSize = 1f;
         float brushStrength = 1f;
 
@@ -247,7 +283,7 @@ public class TerrainManagerTests
         TerrainManager tm = InitializeTerrainManager(go);
         tm.allowTerraforming = true;
 
-        Vector3 hitPoint = new Vector3(0,0,0); // inside center chunk
+        Vector3 hitPoint = Vector3.zero; // inside center chunk
         float brushSize = 1f;
         float brushStrength = 1f;
 
@@ -266,7 +302,7 @@ public class TerrainManagerTests
         TerrainManager tm = InitializeTerrainManager(go);
         tm.allowTerraforming = true;
 
-        Vector3 hitPoint = new Vector3(0,0,0); // inside center chunk
+        Vector3 hitPoint = Vector3.zero; // inside center chunk
         float brushSize = 1f;
         float brushStrength = 1f;
 

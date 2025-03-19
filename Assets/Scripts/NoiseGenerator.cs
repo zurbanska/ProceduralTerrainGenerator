@@ -14,6 +14,10 @@ public class NoiseGenerator
 
     public float[] GenerateNoise(int width, int height, Vector2 offset, TerrainData terrainData , Vector4 neighbors)
     {
+        if (width < 1 || height < 1)
+        {
+            return new float[0];
+        }
 
         float[] noiseValues = new float[width * height * width]; // 1D array of noise values
 
@@ -39,8 +43,8 @@ public class NoiseGenerator
         noiseShader.SetFloat("smoothLevel", terrainData.smoothLevel);
         noiseShader.SetFloat("seed", terrainData.seed);
 
-        int numThreadsXZ = Mathf.CeilToInt(width / 8);
-        int numThreadsY = Mathf.CeilToInt(height / 8);
+        int numThreadsXZ = Mathf.CeilToInt(width / 8.0f);
+        int numThreadsY = Mathf.CeilToInt(height / 8.0f);
 
         if (numThreadsXZ <= 0 || numThreadsY <= 0)
         {

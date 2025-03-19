@@ -12,7 +12,7 @@ public class MeshGeneratorTests
     public void MeshGenerator_CreateBuffers_CreatesAllBuffers()
     {
         ComputeShader marchingCubesShader = Resources.Load<ComputeShader>("Compute/MarchingCubesCompute");
-        var meshGenerator = new MeshGenerator(marchingCubesShader);
+        MeshGenerator meshGenerator = new(marchingCubesShader);
 
         meshGenerator.CreateBuffers(16, 16);
 
@@ -27,7 +27,7 @@ public class MeshGeneratorTests
     public void MeshGenerator_CreateBuffers_HandlesNegativeValues()
     {
         ComputeShader marchingCubesShader = Resources.Load<ComputeShader>("Compute/MarchingCubesCompute");
-        var meshGenerator = new MeshGenerator(marchingCubesShader);
+        MeshGenerator meshGenerator = new(marchingCubesShader);
 
         Assert.DoesNotThrow(() => meshGenerator.CreateBuffers(-1, -1));
     }
@@ -37,7 +37,7 @@ public class MeshGeneratorTests
     public void MeshGenerator_ReleaseBuffers_ReleasesAllBuffers()
     {
         ComputeShader marchingCubesShader = Resources.Load<ComputeShader>("Compute/MarchingCubesCompute");
-        var meshGenerator = new MeshGenerator(marchingCubesShader);
+        MeshGenerator meshGenerator = new(marchingCubesShader);
 
         meshGenerator.CreateBuffers(33, 33);
         meshGenerator.ReleaseBuffers();
@@ -52,7 +52,7 @@ public class MeshGeneratorTests
     public void MeshGenerator_ReleaseBuffers_HandlesReleasingEmptyBuffers()
     {
         ComputeShader marchingCubesShader = Resources.Load<ComputeShader>("Compute/MarchingCubesCompute");
-        var meshGenerator = new MeshGenerator(marchingCubesShader);
+        MeshGenerator meshGenerator = new(marchingCubesShader);
 
         Assert.DoesNotThrow(() => meshGenerator.ReleaseBuffers());
     }
@@ -63,7 +63,7 @@ public class MeshGeneratorTests
     public void MeshGenerator_GenerateMesh_CreatesBuffersIfNoneCreated()
     {
         ComputeShader marchingCubesShader = Resources.Load<ComputeShader>("Compute/MarchingCubesCompute");
-        var meshGenerator = new MeshGenerator(marchingCubesShader);
+        MeshGenerator meshGenerator = new(marchingCubesShader);
         int width = 33;
         int height = 33;
 
@@ -78,7 +78,7 @@ public class MeshGeneratorTests
     public IEnumerator MeshGenerator_GenerateMesh_CreatesMesh()
     {
         ComputeShader marchingCubesShader = Resources.Load<ComputeShader>("Compute/MarchingCubesCompute");
-        var meshGenerator = new MeshGenerator(marchingCubesShader);
+        MeshGenerator meshGenerator = new(marchingCubesShader);
         int width = 33;
         int height = 33;
 
@@ -96,7 +96,7 @@ public class MeshGeneratorTests
     public IEnumerator MeshGenerator_GenerateMesh_ReturnsExpectedMesh()
     {
         ComputeShader marchingCubesShader = Resources.Load<ComputeShader>("Compute/MarchingCubesCompute");
-        var meshGenerator = new MeshGenerator(marchingCubesShader);
+        MeshGenerator meshGenerator = new(marchingCubesShader);
         int width = 33;
         int height = 33;
 
@@ -115,7 +115,7 @@ public class MeshGeneratorTests
     public IEnumerator MeshGenerator_GenerateMesh_ReturnsEmptyMeshIfIncorrectChunkSizeRequested()
     {
         ComputeShader marchingCubesShader = Resources.Load<ComputeShader>("Compute/MarchingCubesCompute");
-        var meshGenerator = new MeshGenerator(marchingCubesShader);
+        MeshGenerator meshGenerator = new(marchingCubesShader);
         int width = 2;
         int height = 1;
 
@@ -134,8 +134,7 @@ public class MeshGeneratorTests
     public void MeshGenerator_UpdateDensity_HandlesEmptyDensityMap()
     {
         ComputeShader marchingCubesShader = Resources.Load<ComputeShader>("Compute/MarchingCubesCompute");
-        var meshGenerator = new MeshGenerator(marchingCubesShader);
-
+        MeshGenerator meshGenerator = new(marchingCubesShader);
         int width = 32;
         int height = 32;
 
@@ -147,8 +146,7 @@ public class MeshGeneratorTests
     public void MeshGenerator_UpdateDensity_HandlesIncorrectChunkSize()
     {
         ComputeShader marchingCubesShader = Resources.Load<ComputeShader>("Compute/MarchingCubesCompute");
-        var meshGenerator = new MeshGenerator(marchingCubesShader);
-
+        MeshGenerator meshGenerator = new(marchingCubesShader);
         int width = 0;
         int height = 0;
 
@@ -160,8 +158,7 @@ public class MeshGeneratorTests
     public void MeshGenerator_UpdateDensity_ReturnsExpectedDensityMap()
     {
         ComputeShader marchingCubesShader = Resources.Load<ComputeShader>("Compute/MarchingCubesCompute");
-        var meshGenerator = new MeshGenerator(marchingCubesShader);
-
+        MeshGenerator meshGenerator = new(marchingCubesShader);
         int width = 2;
         int height = 2;
         float brushSize = 8;
@@ -178,9 +175,4 @@ public class MeshGeneratorTests
     }
 
 
-    // create mesh handles empty triangles
-
-    // create mesh returns expected mesh
-
-    // create mesh handles incorrect width
 }

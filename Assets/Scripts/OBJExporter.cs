@@ -5,7 +5,7 @@ using UnityEngine;
 public class OBJExporter
 {
     int count = 0;
-    string fileName = "ExportedTerrain";
+    readonly string fileName = "ExportedTerrain";
 
     public void ExportCombinedMesh(List<GameObject> objectList)
     {
@@ -23,12 +23,12 @@ public class OBJExporter
             mtlFilePath = Path.Combine(path, fileName + $"({count}).mtl");
         }
 
-        using (StreamWriter writer = new StreamWriter(objFilePath))
+        using (StreamWriter writer = new(objFilePath))
         {
             writer.Write(CombineTerrainChunksToObj(objectList));
         }
 
-        using (StreamWriter writer = new StreamWriter(mtlFilePath))
+        using (StreamWriter writer = new(mtlFilePath))
         {
             writer.WriteLine("newmtl Terrain");
             writer.WriteLine("Kd 1.0 1.0 1.0");
@@ -43,9 +43,10 @@ public class OBJExporter
         Debug.Log("Terrain exported to: " + objFilePath);
     }
 
+
     private string CombineTerrainChunksToObj(List<GameObject> objectList)
     {
-        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        System.Text.StringBuilder sb = new();
         int vertexOffset = 0; // keep track of vertex indices across chunks
 
         if (count == 0)

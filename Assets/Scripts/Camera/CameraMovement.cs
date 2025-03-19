@@ -31,7 +31,7 @@ public class CameraMove : MonoBehaviour
 
         if (Input.mouseScrollDelta.y != 0 && canMove)
         {
-            cam.transform.position += Input.mouseScrollDelta.y * cam.transform.forward * zoomStrength;
+            cam.transform.position += Input.mouseScrollDelta.y * zoomStrength * cam.transform.forward;
         }
 
         if (Input.GetMouseButtonDown(1) && allowMove)

@@ -17,14 +17,14 @@ MonoBehaviour:
   smoothLevel: 0
   lod: 1
   isoLevel: 0.627
-  seed: 501486
+  seed: 573200
   octaves: 5
   persistence: 0.36
   lacunarity: 2
   scale: 9
   offsetX: 0
   offsetZ: 0
-  objectDensity: 13
+  objectDensity: 5
   gradient:
     serializedVersion: 2
     key0: {r: 1, g: 0.68882424, b: 0, a: 1}

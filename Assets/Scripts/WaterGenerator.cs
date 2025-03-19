@@ -12,13 +12,14 @@ public class WaterGenerator
     public void GenerateWater(Transform parent, Vector2 startPoint, float width, float waterLevel, int lod)
     {
         meshes.Clear();
-        GameObject existingWater = parent.Find("Water")?.gameObject;
-        if (existingWater != null)
+
+        if (parent == null) return;
+        if (parent.Find("Water") != null)
         {
-            Transform.DestroyImmediate(existingWater);
+            Transform.DestroyImmediate(parent.Find("Water").gameObject);
         }
 
-        if (waterLevel <= 0) return;
+        if (waterLevel <= 0 || width <= 0 ) return;
 
         Material waterMaterial = Resources.Load<Material>("WaterMaterial");
         waterMaterial.SetFloat("_WaterLevel", waterLevel);
