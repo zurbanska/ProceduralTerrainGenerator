@@ -60,7 +60,7 @@ public class ChunkManager : MonoBehaviour
         Mesh newMesh = await GenerateMesh(needsNewNoise);
         SetMesh(newMesh);
 
-        material.SetFloat("_WaterLevel", terrainData.waterLevel);
+        if (this.material.HasProperty("_WaterLevel")) material.SetFloat("_WaterLevel", terrainData.waterLevel);
 
         if (objectPlacer != null) objectPlacer.PlaceObjects(terrainData);
     }

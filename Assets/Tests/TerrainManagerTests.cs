@@ -132,7 +132,7 @@ public class TerrainManagerTests
 
 
     [Test]
-    public void TerrainManager_CreateChunk_HandlesDuplicateCoordinates()
+    public void TerrainManager_CreateChunk_HandlesDuplicateCoordinatesInDictionary()
     {
         var go = new GameObject();
         TerrainManager tm = InitializeTerrainManager(go);
@@ -144,6 +144,23 @@ public class TerrainManagerTests
         tm.CreateChunk(coord, neighbors);
 
         Assert.AreEqual(1, tm.terrainChunkDictionary.Count);
+    }
+
+
+    [Test]
+    public void TerrainManager_CreateChunk_DoesntCreateDuplicateGameObjects()
+    {
+        var go = new GameObject();
+        TerrainManager tm = InitializeTerrainManager(go);
+        tm.terrainData.waterLevel = 0; // prevent water generation
+
+        Vector2 coord = new Vector2(1,1);
+        Vector4 neighbors = Vector4.zero;
+
+        tm.CreateChunk(coord, neighbors);
+        tm.CreateChunk(coord, neighbors);
+
+        Assert.AreEqual(1, tm.transform.childCount); // especting only one child object (chunk)
     }
 
 
@@ -294,6 +311,7 @@ public class TerrainManagerTests
 
         Assert.IsTrue(mockChunk.wasCalled);
     }
+
 
     [Test]
     public void TerrainManager_ModifyTerrain_CallsTerraformInCorrectChunks()

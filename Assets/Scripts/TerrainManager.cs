@@ -29,7 +29,7 @@ public class TerrainManager : MonoBehaviour
     public PNGExporter pngExporter = new();
 
     private WaterGenerator waterGenerator = new();
-    private float previousWaterLevel;
+    private float previousWaterLevel = -1;
 
 
     public Dictionary<Vector2, GameObject> terrainChunkDictionary = new Dictionary<Vector2, GameObject>(); // dictionary of all created chunks and their coords
@@ -47,7 +47,6 @@ public class TerrainManager : MonoBehaviour
 
     void Start()
     {
-        previousWaterLevel = -1;
         DeleteChunks();
         if (randomSeed) terrainData.seed = Mathf.FloorToInt(Random.value * 1000000);
         UpdateChunks();
@@ -81,11 +80,7 @@ public class TerrainManager : MonoBehaviour
         Transform existingWater = transform.Find("Water");
         if (existingWater != null && previousWaterLevel != terrainData.waterLevel)
         {
-            #if UNITY_EDITOR
             DestroyImmediate(existingWater.gameObject);
-            #else
-            Destroy(existingWater.gameObject);
-            #endif
         }
 
         if (terrainData.waterLevel > 0 && renderDistance > 0)
@@ -109,6 +104,8 @@ public class TerrainManager : MonoBehaviour
 
     public void CreateChunk(Vector2 coord, Vector4 chunkNeighbors)
     {
+        if (terrainChunkDictionary.ContainsKey(coord)) terrainChunkDictionary[coord].GetComponent<ChunkManager>().DestroyChunk();
+
         GameObject newChunk = new GameObject("Terrain Chunk " + coord);
         newChunk.transform.parent = transform;
         newChunk.transform.position = new Vector3(coord.x * chunkWidth, 0, coord.y * chunkWidth);
