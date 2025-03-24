@@ -89,8 +89,6 @@ public class NoiseGeneratorTests
         float[] noiseValues = noiseGenerator.GenerateNoise(width, height, Vector2.zero, terrainData, Vector4.zero);
         yield return new WaitUntil(() => noiseValues != null || Time.time > startTime + 3f);
 
-        foreach (var noiseValue in noiseValues) Debug.Log(noiseValue);
-
         Assert.NotNull(noiseValues);
         Assert.AreEqual(width * width * height, noiseValues.Length);
     }

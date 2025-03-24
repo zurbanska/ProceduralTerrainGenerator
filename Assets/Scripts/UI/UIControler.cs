@@ -29,8 +29,8 @@ public class UIControler : MonoBehaviour
     private IntegerField seedField;
     private Slider isoLevelSlider;
     private SliderInt octavesSlider;
-    private FloatField persistenceField;
-    private FloatField lacunarityField;
+    private Slider persistenceSlider;
+    private Slider lacunarityField;
     private FloatField scaleField;
     private Slider smoothnessSlider;
 
@@ -107,11 +107,11 @@ public class UIControler : MonoBehaviour
         octavesSlider.RegisterValueChangedCallback(e => OctavesChanged(e.newValue));
         octavesSlider.value = terrainManager.terrainData.octaves;
 
-        persistenceField = root.Q<FloatField>("persistence-input");
-        persistenceField.RegisterValueChangedCallback(e => PersistenceChanged(e.newValue));
-        persistenceField.value = terrainManager.terrainData.persistence;
+        persistenceSlider = root.Q<Slider>("persistence-slider");
+        persistenceSlider.RegisterValueChangedCallback(e => PersistenceChanged(e.newValue));
+        persistenceSlider.value = terrainManager.terrainData.persistence;
 
-        lacunarityField = root.Q<FloatField>("lacunarity-input");
+        lacunarityField = root.Q<Slider>("lacunarity-slider");
         lacunarityField.RegisterValueChangedCallback(e => LacunarityChanged(e.newValue));
         lacunarityField.value = terrainManager.terrainData.lacunarity;
 

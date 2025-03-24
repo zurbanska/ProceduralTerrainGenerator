@@ -18,8 +18,8 @@
                     <ui:IntegerField label="Chosen Seed" value="42" name="seed-input" class="num-field" />
                     <ui:Slider picking-mode="Ignore" label="ISO level" value="0.8" high-value="1" name="iso-level-slider" show-input-field="true" class="num-field" />
                     <ui:SliderInt picking-mode="Ignore" label="Octaves" value="3" high-value="5" show-input-field="true" low-value="1" name="octaves-slider" class="num-field" />
-                    <ui:FloatField label="Persistence" value="0.7" name="persistence-input" class="num-field" />
-                    <ui:FloatField label="Lacunarity" value="2" name="lacunarity-input" class="num-field" />
+                    <ui:Slider picking-mode="Ignore" label="Persistence" value="0.75" high-value="1" name="persistence-slider" show-input-field="true" class="num-field" />
+                    <ui:Slider picking-mode="Ignore" label="Lacunarity" value="2" high-value="4" name="lacunarity-slider" show-input-field="true" class="num-field" />
                     <ui:FloatField label="Scale" value="10" name="scale-input" class="num-field" />
                     <ui:Slider picking-mode="Ignore" label="Terrain Smoothness" value="0" high-value="1" name="smoothness-slider" show-input-field="true" class="num-field" />
                     <ui:Label tabindex="-1" text="Terrain Settings" parse-escape-sequences="true" display-tooltip-when-elided="true" name="terrain-settings-label" class="sub-label" />
