@@ -23,7 +23,7 @@ public class OBJExporter
             mtlFilePath = Path.Combine(path, fileName + $"({count}).mtl");
         }
 
-        using (StreamWriter writer = new(objFilePath))
+        using (StreamWriter writer = new StreamWriter(objFilePath, false, new System.Text.UTF8Encoding(false)))
         {
             writer.Write(CombineTerrainChunksToObj(objectList));
         }
@@ -80,6 +80,8 @@ public class OBJExporter
                 sb.AppendLine($"v {worldPos.x} {worldPos.y} {worldPos.z}");
             }
 
+            if (mesh.normals == null || mesh.normals.Length == 0) mesh.RecalculateNormals();
+
             // normals (converted to world space)
             foreach (Vector3 n in mesh.normals)
             {
@@ -125,6 +127,8 @@ public class OBJExporter
                     Vector3 worldPos = childTransform.TransformPoint(v);
                     sb.AppendLine($"v {worldPos.x} {worldPos.y} {worldPos.z}");
                 }
+
+                if (childMesh.normals == null || childMesh.normals.Length == 0) childMesh.RecalculateNormals();
 
                 // normals (converted to world space)
                 foreach (Vector3 n in childMesh.normals)

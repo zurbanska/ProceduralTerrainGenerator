@@ -21,6 +21,7 @@ public class MeshGenerator
 
     public void CreateBuffers(int width, int height)
     {
+        ReleaseBuffers();
         if (width < 0 || height < 0) return;
 
         trianglesBuffer = new ComputeBuffer(maxTriangles, sizeof(float) * 3 * 3, ComputeBufferType.Append);
@@ -47,7 +48,7 @@ public class MeshGenerator
         {
             ReleaseBuffers();
             return new Mesh();
-        };
+        }
 
         // create buffers if none created
         if (trianglesBuffer == null || triangleCountBuffer == null || densityBuffer == null || vertexCacheBuffer == null) CreateBuffers(width, height);
@@ -186,6 +187,12 @@ public class MeshGenerator
 
         ReleaseBuffers();
         return newDensityMap;
+    }
+
+
+    void OnDestroy()
+    {
+        ReleaseBuffers();
     }
 
 

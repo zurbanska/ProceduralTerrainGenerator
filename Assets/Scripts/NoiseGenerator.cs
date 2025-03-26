@@ -21,6 +21,7 @@ public class NoiseGenerator
 
         float[] noiseValues = new float[width * height * width]; // 1D array of noise values
 
+        valuesBuffer?.Release();
         valuesBuffer = new ComputeBuffer(width * height * width, sizeof(float));
 
         noiseShader.SetBuffer(0, "_Values", valuesBuffer);
@@ -60,4 +61,10 @@ public class NoiseGenerator
 
         return noiseValues;
     }
+
+    void OnDestroy()
+    {
+        valuesBuffer?.Release();
+    }
+
 }
