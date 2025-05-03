@@ -142463,8 +142463,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   zoomStrength: 15
-  panStrength: 200
-  rotStrength: 0.5
+  panStrength: 230
+  rotStrength: 0.8
   allowMove: 1
 --- !u!1 &986039308
 GameObject:
